@@ -26,6 +26,13 @@
             "placeholder": "you@example.com"
           }
         },
+        "formEndpoint": {
+          "type": "Text",
+          "config": {
+            "label": "Form Endpoint (Formspree URL)",
+            "placeholder": "https://formspree.io/f/your_id"
+          }
+        },
         "description": {
           "type": "StructuredText",
           "config": {

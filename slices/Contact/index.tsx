@@ -19,12 +19,40 @@ const Contact = ({ slice }: ContactProps) => {
         e.preventDefault();
         setStatus("sending");
 
-        // Simulate form submission
-        setTimeout(() => {
-            setStatus("sent");
-            setFormData({ name: "", email: "", message: "" });
-            setTimeout(() => setStatus("idle"), 3000);
-        }, 1000);
+        if (!slice.primary.formEndpoint) {
+            // Simulator for demo purposes if no endpoint set
+            setTimeout(() => {
+                setStatus("sent");
+                setFormData({ name: "", email: "", message: "" });
+                setTimeout(() => setStatus("idle"), 3000);
+            }, 1000);
+            return;
+        }
+
+        try {
+            const response = await fetch(slice.primary.formEndpoint, {
+                method: "POST",
+                body: JSON.stringify(formData),
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+            });
+
+            if (response.ok) {
+                setStatus("sent");
+                setFormData({ name: "", email: "", message: "" });
+                setTimeout(() => setStatus("idle"), 5000);
+            } else {
+                console.error("Form submission failed");
+                setStatus("idle");
+                alert("Something went wrong. Please try again.");
+            }
+        } catch (error) {
+            console.error(error);
+            setStatus("idle");
+            alert("Error sending message.");
+        }
     };
 
     return (
