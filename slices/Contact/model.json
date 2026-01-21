@@ -1,0 +1,80 @@
+{
+  "id": "contact",
+  "type": "SharedSlice",
+  "name": "Contact",
+  "description": "Contact section with email button and optional form",
+  "variations": [
+    {
+      "id": "default",
+      "name": "Default",
+      "docURL": "...",
+      "version": "initial",
+      "description": "Contact section",
+      "imageUrl": "",
+      "primary": {
+        "sectionTitle": {
+          "type": "Text",
+          "config": {
+            "label": "Section Title",
+            "placeholder": "Get in Touch"
+          }
+        },
+        "email": {
+          "type": "Text",
+          "config": {
+            "label": "Email Address",
+            "placeholder": "you@example.com"
+          }
+        },
+        "description": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Description",
+            "placeholder": "Let's work together...",
+            "allowTargetBlank": true,
+            "multi": "paragraph,strong,em"
+          }
+        },
+        "contactImage": {
+          "type": "Image",
+          "config": {
+            "label": "Section Image (Wide)",
+            "constraint": {
+              "width": 1200,
+              "height": 400
+            },
+            "thumbnails": []
+          }
+        },
+        "showEmailButton": {
+          "type": "Boolean",
+          "config": {
+            "label": "Show Email Button",
+            "default_value": true,
+            "placeholder_true": "Yes",
+            "placeholder_false": "No"
+          }
+        },
+        "showContactForm": {
+          "type": "Boolean",
+          "config": {
+            "label": "Show Contact Form",
+            "default_value": true,
+            "placeholder_true": "Yes",
+            "placeholder_false": "No"
+          }
+        },
+        "showSocialIcons": {
+          "type": "Boolean",
+          "config": {
+            "label": "Show Social Icons",
+            "default_value": true,
+            "placeholder_true": "Yes",
+            "placeholder_false": "No"
+          }
+        }
+      },
+      "items": {}
+    }
+  ]
+}

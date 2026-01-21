@@ -1,0 +1,64 @@
+[
+	{
+		"__TYPE__": "SharedSliceContent",
+		"variation": "default",
+		"primary": {
+			"sectionTitle": {
+				"__TYPE__": "FieldContent",
+				"value": "them",
+				"type": "Text"
+			},
+			"description": {
+				"__TYPE__": "StructuredTextContent",
+				"value": [
+					{
+						"type": "paragraph",
+						"content": {
+							"text": "Magna deserunt officia laborum enim sunt non nisi voluptate duis eiusmod. Duis dolore eiusmod et Lorem consequat labore nostrud nisi. Est nisi veniam quis elit enim officia et elit et commodo irure voluptate adipisicing."
+						}
+					}
+				]
+			},
+			"contactImage": {
+				"__TYPE__": "ImageContent",
+				"origin": {
+					"id": "main",
+					"url": "https://images.unsplash.com/photo-1537498425277-c283d32ef9db",
+					"width": 4380,
+					"height": 2895
+				},
+				"url": "https://images.unsplash.com/photo-1537498425277-c283d32ef9db?rect=0%2C718%2C4380%2C1460&w=1200&h=400",
+				"width": 1200,
+				"height": 400,
+				"edit": {
+					"zoom": 1,
+					"crop": {
+						"x": 0,
+						"y": 718
+					},
+					"background": "transparent"
+				},
+				"alt": "several",
+				"thumbnails": {}
+			},
+			"showEmailButton": {
+				"__TYPE__": "BooleanContent",
+				"value": false
+			},
+			"showContactForm": {
+				"__TYPE__": "BooleanContent",
+				"value": true
+			},
+			"showSocialIcons": {
+				"__TYPE__": "BooleanContent",
+				"value": false
+			}
+		},
+		"items": [
+			{
+				"__TYPE__": "GroupItemContent",
+				"value": []
+			}
+		]
+	}
+]

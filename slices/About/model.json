@@ -1,0 +1,83 @@
+{
+    "id": "about",
+    "type": "SharedSlice",
+    "name": "About",
+    "description": "About section with clean typography",
+    "variations": [
+        {
+            "id": "default",
+            "name": "Default",
+            "docURL": "...",
+            "version": "initial",
+            "description": "About section",
+            "imageUrl": "",
+            "primary": {
+                "sectionTitle": {
+                    "type": "Text",
+                    "config": {
+                        "label": "Eyebrow",
+                        "placeholder": "About"
+                    }
+                },
+                "headline": {
+                    "type": "StructuredText",
+                    "config": {
+                        "label": "Headline",
+                        "placeholder": "Architecting systems...",
+                        "allowTargetBlank": true,
+                        "single": "heading2,heading3"
+                    }
+                },
+                "bioTitle": {
+                    "type": "StructuredText",
+                    "config": {
+                        "label": "Bio Title",
+                        "placeholder": "Bridging the gap...",
+                        "allowTargetBlank": true,
+                        "single": "heading3,strong,paragraph"
+                    }
+                },
+                "description": {
+                    "type": "StructuredText",
+                    "config": {
+                        "label": "Description",
+                        "placeholder": "Bridging the gap...",
+                        "allowTargetBlank": true,
+                        "multi": "paragraph,strong,em,hyperlink"
+                    }
+                },
+                "features": {
+                    "type": "Group",
+                    "config": {
+                        "label": "Features",
+                        "fields": {
+                            "title": {
+                                "type": "Text",
+                                "config": {
+                                    "label": "Title",
+                                    "placeholder": "SYSTEMIC"
+                                }
+                            },
+                            "description": {
+                                "type": "Text",
+                                "config": {
+                                    "label": "Description",
+                                    "placeholder": "Scalable design systems..."
+                                }
+                            }
+                        }
+                    }
+                },
+                "image": {
+                    "type": "Image",
+                    "config": {
+                        "label": "Profile Image",
+                        "constraint": {},
+                        "thumbnails": []
+                    }
+                }
+            },
+            "items": {}
+        }
+    ]
+}

@@ -1,0 +1,29 @@
+[
+    {
+        "variation": "default",
+        "name": "Default",
+        "slice_type": "skills",
+        "items": [
+            {
+                "groupTitle": "Design",
+                "skills": "Figma, Sketch, Adobe XD, Prototyping, User Research, Wireframing"
+            },
+            {
+                "groupTitle": "Research",
+                "skills": "User Interviews, Usability Testing, A/B Testing, Analytics, Personas"
+            },
+            {
+                "groupTitle": "Engineering Systems (EEE)",
+                "skills": "Systems Thinking, Circuit Design, Control Systems, Signal Processing"
+            },
+            {
+                "groupTitle": "AI & Automation",
+                "skills": "Machine Learning, Python, TensorFlow, Process Automation, Data Analysis"
+            }
+        ],
+        "primary": {
+            "sectionTitle": "Skills & Expertise"
+        },
+        "id": "_Default"
+    }
+]

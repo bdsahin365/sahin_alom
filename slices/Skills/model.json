@@ -1,0 +1,48 @@
+{
+    "id": "skills",
+    "type": "SharedSlice",
+    "name": "Skills",
+    "description": "Skills section with grouped tags",
+    "variations": [
+        {
+            "id": "default",
+            "name": "Default",
+            "docURL": "...",
+            "version": "initial",
+            "description": "Skills section with tag groups",
+            "imageUrl": "",
+            "primary": {
+                "sectionTitle": {
+                    "type": "Text",
+                    "config": {
+                        "label": "Section Title",
+                        "placeholder": "Skills"
+                    }
+                },
+                "intro": {
+                    "type": "Text",
+                    "config": {
+                        "label": "Section Intro",
+                        "placeholder": "Tools and strengths..."
+                    }
+                }
+            },
+            "items": {
+                "groupTitle": {
+                    "type": "Text",
+                    "config": {
+                        "label": "Group Title",
+                        "placeholder": "Design"
+                    }
+                },
+                "skills": {
+                    "type": "Text",
+                    "config": {
+                        "label": "Skills",
+                        "placeholder": "Figma, Sketch, Adobe XD"
+                    }
+                }
+            }
+        }
+    ]
+}
