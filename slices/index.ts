@@ -7,4 +7,7 @@ export const components = {
   about: dynamic(() => import("./About")),
   skills: dynamic(() => import("./Skills")),
   contact: dynamic(() => import("./Contact")),
+  experience: dynamic(() => import("./Experience")),
+  education: dynamic(() => import("./Education")),
+  certification: dynamic(() => import("./Certification")),
 };

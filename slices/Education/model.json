@@ -1,0 +1,55 @@
+{
+    "id": "education",
+    "type": "SharedSlice",
+    "name": "Education",
+    "description": "Education section",
+    "variations": [
+        {
+            "id": "default",
+            "name": "Default",
+            "docURL": "...",
+            "version": "initial",
+            "description": "Education list",
+            "imageUrl": "",
+            "primary": {
+                "sectionTitle": {
+                    "type": "Text",
+                    "config": {
+                        "label": "Section Title",
+                        "placeholder": "Education"
+                    }
+                }
+            },
+            "items": {
+                "degree": {
+                    "type": "Text",
+                    "config": {
+                        "label": "Degree",
+                        "placeholder": "BSc Computer Science"
+                    }
+                },
+                "institution": {
+                    "type": "Text",
+                    "config": {
+                        "label": "Institution",
+                        "placeholder": "University of Technology"
+                    }
+                },
+                "year": {
+                    "type": "Text",
+                    "config": {
+                        "label": "Year",
+                        "placeholder": "2016 - 2020"
+                    }
+                },
+                "details": {
+                    "type": "Text",
+                    "config": {
+                        "label": "Details",
+                        "placeholder": "Focus on HCI and Systems..."
+                    }
+                }
+            }
+        }
+    ]
+}

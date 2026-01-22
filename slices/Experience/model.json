@@ -1,0 +1,71 @@
+{
+    "id": "experience",
+    "type": "SharedSlice",
+    "name": "Experience",
+    "description": "Experience section with job details",
+    "variations": [
+        {
+            "id": "default",
+            "name": "Default",
+            "docURL": "...",
+            "version": "initial",
+            "description": "Experience list",
+            "imageUrl": "",
+            "primary": {
+                "sectionTitle": {
+                    "type": "Text",
+                    "config": {
+                        "label": "Section Title",
+                        "placeholder": "Experience"
+                    }
+                }
+            },
+            "items": {
+                "title": {
+                    "type": "Text",
+                    "config": {
+                        "label": "Job Title",
+                        "placeholder": "Senior UX Designer"
+                    }
+                },
+                "company": {
+                    "type": "Text",
+                    "config": {
+                        "label": "Company",
+                        "placeholder": "Google"
+                    }
+                },
+                "duration": {
+                    "type": "Text",
+                    "config": {
+                        "label": "Duration",
+                        "placeholder": "2020 - Present"
+                    }
+                },
+                "location": {
+                    "type": "Text",
+                    "config": {
+                        "label": "Location",
+                        "placeholder": "New York, NY"
+                    }
+                },
+                "description": {
+                    "type": "StructuredText",
+                    "config": {
+                        "label": "Description",
+                        "placeholder": "Describe your role...",
+                        "allowTargetBlank": true,
+                        "multi": "paragraph,strong,em,hyperlink,list-item,o-list-item"
+                    }
+                },
+                "skills": {
+                    "type": "Text",
+                    "config": {
+                        "label": "Skills Used",
+                        "placeholder": "Figma, React, Systems Thinking"
+                    }
+                }
+            }
+        }
+    ]
+}

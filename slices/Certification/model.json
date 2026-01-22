@@ -1,0 +1,55 @@
+{
+    "id": "certification",
+    "type": "SharedSlice",
+    "name": "Certification",
+    "description": "Certification section",
+    "variations": [
+        {
+            "id": "default",
+            "name": "Default",
+            "docURL": "...",
+            "version": "initial",
+            "description": "Certification list",
+            "imageUrl": "",
+            "primary": {
+                "sectionTitle": {
+                    "type": "Text",
+                    "config": {
+                        "label": "Section Title",
+                        "placeholder": "Certifications"
+                    }
+                }
+            },
+            "items": {
+                "name": {
+                    "type": "Text",
+                    "config": {
+                        "label": "Certificate Name",
+                        "placeholder": "AWS Certified Solutions Architect"
+                    }
+                },
+                "issuer": {
+                    "type": "Text",
+                    "config": {
+                        "label": "Issuer",
+                        "placeholder": "Amazon Web Services"
+                    }
+                },
+                "date": {
+                    "type": "Text",
+                    "config": {
+                        "label": "Date",
+                        "placeholder": "2023"
+                    }
+                },
+                "credentialLink": {
+                    "type": "Text",
+                    "config": {
+                        "label": "Credential URL",
+                        "placeholder": "https://..."
+                    }
+                }
+            }
+        }
+    ]
+}
