@@ -12,7 +12,7 @@ export type CertificationProps = SliceComponentProps<Content.CertificationSlice>
 /**
  * Component for "Certification" Slices.
  */
-const Certification = ({ slice }: CertificationProps): JSX.Element => {
+const Certification = ({ slice }: CertificationProps) => {
     return (
         <section
             data-slice-type={slice.slice_type}
