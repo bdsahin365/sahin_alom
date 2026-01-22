@@ -85,8 +85,8 @@ export default async function BiodataPage() {
                 />
             </div>
 
-            <main className="min-h-screen bg-[#0A0A0A] text-white pt-32 pb-20 px-6 print:bg-white print:text-black print:pt-0 print:pb-0 print:h-auto print:overflow-visible">
-                <div className="max-w-4xl mx-auto bg-[#111111] border border-white/5 rounded-2xl p-8 md:p-12 shadow-2xl print:shadow-none print:border-none print:bg-white print:text-black print:p-0 print:m-0 print:w-full print:max-w-none print:rounded-none">
+            <main className="min-h-screen bg-[#0A0A0A] text-white pt-24 md:pt-32 pb-16 md:pb-20 px-4 md:px-6 print:bg-white print:text-black print:pt-0 print:pb-0 print:h-auto print:overflow-visible">
+                <div className="max-w-4xl mx-auto bg-[#111111] border border-white/5 rounded-xl md:rounded-2xl p-5 md:p-8 lg:p-12 shadow-2xl print:shadow-none print:border-none print:bg-white print:text-black print:p-0 print:m-0 print:w-full print:max-w-none print:rounded-none">
 
                     <BiodataHeader
                         name={data.name}
