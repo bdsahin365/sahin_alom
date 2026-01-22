@@ -10,7 +10,7 @@ export type ExperienceProps = SliceComponentProps<Content.ExperienceSlice>;
 /**
  * Component for "Experience" Slices.
  */
-const Experience = ({ slice }: ExperienceProps): JSX.Element => {
+const Experience = ({ slice }: ExperienceProps) => {
     return (
         <section
             data-slice-type={slice.slice_type}

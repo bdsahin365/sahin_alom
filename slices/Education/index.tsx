@@ -9,7 +9,7 @@ export type EducationProps = SliceComponentProps<Content.EducationSlice>;
 /**
  * Component for "Education" Slices.
  */
-const Education = ({ slice }: EducationProps): JSX.Element => {
+const Education = ({ slice }: EducationProps) => {
     return (
         <section
             data-slice-type={slice.slice_type}
