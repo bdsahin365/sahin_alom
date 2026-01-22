@@ -42,6 +42,17 @@
                         "placeholder": "2023"
                     }
                 },
+                "issuerLogo": {
+                    "type": "Image",
+                    "config": {
+                        "label": "Issuer Logo",
+                        "constraint": {
+                            "width": 100,
+                            "height": 100
+                        },
+                        "thumbnails": []
+                    }
+                },
                 "credentialLink": {
                     "type": "Text",
                     "config": {

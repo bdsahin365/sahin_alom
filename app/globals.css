@@ -44,7 +44,7 @@ p {
   padding: 0 1.5rem;
 }
 
-section {
+/* section {
   padding: 5rem 0;
   position: relative;
 }
@@ -53,7 +53,7 @@ section {
   section {
     padding: 7.5rem 0;
   }
-}
+} */
 
 .section-title {
   font-size: 2rem;
@@ -375,18 +375,59 @@ section {
   color: var(--accent);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-size: 0.875rem;
+  letter-spacing: 0.15em;
+  font-size: 0.7rem;
   margin-bottom: 2rem;
-  background: rgba(99, 102, 241, 0.1);
-  padding: 0.5rem 1.5rem;
+  padding: 0.5rem 1.25rem;
   border-radius: 9999px;
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  position: relative;
+  z-index: 1;
+  border: none;
+  background: transparent;
+}
+
+/* Animated Gradient Border via Pseudo-element */
+.hero-eyebrow::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -2;
+  border-radius: 9999px;
+  background: linear-gradient(90deg,
+      rgba(99, 102, 241, 0) 0%,
+      rgba(99, 102, 241, 0.5) 25%,
+      #ffffff 50%,
+      rgba(99, 102, 241, 0.5) 75%,
+      rgba(99, 102, 241, 0) 100%);
+  background-size: 200% 100%;
+  animation: borderShimmer 3s linear infinite;
+}
+
+/* Inner bg coverage */
+.hero-eyebrow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: rgba(10, 10, 10, 0.9);
+  z-index: -1;
   backdrop-filter: blur(4px);
+}
+
+@keyframes borderShimmer {
+  0% {
+    background-position: 100% 0;
+  }
+
+  100% {
+    background-position: -100% 0;
+  }
 }
 
 .hero-name {
   font-size: 3rem;
+  font-weight: 800;
+  /* Bold on mobile */
   margin-bottom: 0.5rem;
   background: linear-gradient(to right, #fff, #9ca3af);
   -webkit-background-clip: text;
@@ -396,9 +437,12 @@ section {
 
 .hero-headline h1,
 .hero-headline h2 {
-  font-size: 1.8rem;
-  line-height: 1.2;
+  font-size: 1.25rem;
+  line-height: 1.4;
   margin-bottom: 1.5rem;
+  font-weight: 400;
+  /* Regular weight for mobile */
+  color: #e5e5e5;
 }
 
 @media (min-width: 768px) {
@@ -409,8 +453,10 @@ section {
 
   .hero-headline h1,
   .hero-headline h2 {
-    font-size: 2.5rem;
+    font-size: 2rem;
     font-weight: 400;
+    /* Keep it lighter on desktop too */
+    line-height: 1.3;
   }
 }
 

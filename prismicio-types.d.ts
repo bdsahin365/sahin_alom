@@ -69,6 +69,330 @@ type ContentRelationshipFieldWithData<
   >;
 }[Exclude<TCustomType[number], string>["id"]];
 
+/**
+ * Content for Biodata Page documents
+ */
+interface BiodataPageDocumentData {
+  /**
+   * Name field in *Biodata Page*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: Full Name
+   * - **API ID Path**: biodata_page.name
+   * - **Tab**: Main
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  name: prismic.KeyTextField;
+
+  /**
+   * Professional Headline field in *Biodata Page*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. UX Designer with Engineering Systems Thinking
+   * - **API ID Path**: biodata_page.professional_headline
+   * - **Tab**: Main
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  professional_headline: prismic.KeyTextField;
+
+  /**
+   * Summary field in *Biodata Page*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: Short professional summary...
+   * - **API ID Path**: biodata_page.summary
+   * - **Tab**: Main
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  summary: prismic.RichTextField;
+
+  /**
+   * Profile Photo field in *Biodata Page*
+   *
+   * - **Field Type**: Image
+   * - **Placeholder**: *None*
+   * - **API ID Path**: biodata_page.profile_photo
+   * - **Tab**: Main
+   * - **Documentation**: https://prismic.io/docs/fields/image
+   */
+  profile_photo: prismic.ImageField<never>;
+
+  /**
+   * Core Skills field in *Biodata Page*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: Comma separated list, e.g. UX Research, Systems Design, React
+   * - **API ID Path**: biodata_page.core_skills
+   * - **Tab**: Main
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  core_skills: prismic.KeyTextField;
+
+  /**
+   * Education field in *Biodata Page*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. BSc in EEE
+   * - **API ID Path**: biodata_page.education
+   * - **Tab**: Main
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  education: prismic.KeyTextField;
+
+  /**
+   * Work Type field in *Biodata Page*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Freelance / Remote
+   * - **API ID Path**: biodata_page.work_type
+   * - **Tab**: Main
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  work_type: prismic.KeyTextField;
+
+  /**
+   * Current Focus field in *Biodata Page*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. UX, systems, AI workflows
+   * - **API ID Path**: biodata_page.current_focus
+   * - **Tab**: Main
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  current_focus: prismic.KeyTextField; /**
+   * Show Personal Details field in *Biodata Page*
+   *
+   * - **Field Type**: Boolean
+   * - **Placeholder**: *None*
+   * - **Default Value**: true
+   * - **API ID Path**: biodata_page.show_personal_details
+   * - **Tab**: Personal
+   * - **Documentation**: https://prismic.io/docs/fields/boolean
+   */
+  show_personal_details: prismic.BooleanField;
+
+  /**
+   * Nationality field in *Biodata Page*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Bangladeshi
+   * - **API ID Path**: biodata_page.nationality
+   * - **Tab**: Personal
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  nationality: prismic.KeyTextField;
+
+  /**
+   * Current Location field in *Biodata Page*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: City, Country
+   * - **API ID Path**: biodata_page.current_location
+   * - **Tab**: Personal
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  current_location: prismic.KeyTextField;
+
+  /**
+   * Languages field in *Biodata Page*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. English, Bengali
+   * - **API ID Path**: biodata_page.languages
+   * - **Tab**: Personal
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  languages: prismic.KeyTextField; /**
+   * Show Extended Profile (Marriage/Personal) field in *Biodata Page*
+   *
+   * - **Field Type**: Boolean
+   * - **Placeholder**: *None*
+   * - **Default Value**: false
+   * - **API ID Path**: biodata_page.show_marriage_section
+   * - **Tab**: Extended Profile
+   * - **Documentation**: https://prismic.io/docs/fields/boolean
+   */
+  show_marriage_section: prismic.BooleanField;
+
+  /**
+   * Religion field in *Biodata Page*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Islam
+   * - **API ID Path**: biodata_page.religion
+   * - **Tab**: Extended Profile
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  religion: prismic.KeyTextField;
+
+  /**
+   * Marital Status field in *Biodata Page*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Single
+   * - **API ID Path**: biodata_page.marital_status
+   * - **Tab**: Extended Profile
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  marital_status: prismic.KeyTextField;
+
+  /**
+   * Date of Birth field in *Biodata Page*
+   *
+   * - **Field Type**: Date
+   * - **Placeholder**: *None*
+   * - **API ID Path**: biodata_page.date_of_birth
+   * - **Tab**: Extended Profile
+   * - **Documentation**: https://prismic.io/docs/fields/date
+   */
+  date_of_birth: prismic.DateField;
+
+  /**
+   * Height field in *Biodata Page*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. 5' 8"
+   * - **API ID Path**: biodata_page.height
+   * - **Tab**: Extended Profile
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  height: prismic.KeyTextField;
+
+  /**
+   * Blood Group field in *Biodata Page*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. O+
+   * - **API ID Path**: biodata_page.blood_group
+   * - **Tab**: Extended Profile
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  blood_group: prismic.KeyTextField;
+
+  /**
+   * Family Information field in *Biodata Page*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: *None*
+   * - **API ID Path**: biodata_page.family_information
+   * - **Tab**: Extended Profile
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  family_information: prismic.RichTextField;
+
+  /**
+   * Partner Preference field in *Biodata Page*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: *None*
+   * - **API ID Path**: biodata_page.partner_preference
+   * - **Tab**: Extended Profile
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  partner_preference: prismic.RichTextField;
+
+  /**
+   * Additional Information field in *Biodata Page*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: *None*
+   * - **API ID Path**: biodata_page.additional_information
+   * - **Tab**: Extended Profile
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  additional_information: prismic.RichTextField; /**
+   * Professional Contact Email field in *Biodata Page*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: hello@example.com
+   * - **API ID Path**: biodata_page.contact_email
+   * - **Tab**: Contact
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  contact_email: prismic.KeyTextField;
+
+  /**
+   * Show Guardian Contact field in *Biodata Page*
+   *
+   * - **Field Type**: Boolean
+   * - **Placeholder**: *None*
+   * - **Default Value**: false
+   * - **API ID Path**: biodata_page.show_guardian_contact
+   * - **Tab**: Contact
+   * - **Documentation**: https://prismic.io/docs/fields/boolean
+   */
+  show_guardian_contact: prismic.BooleanField;
+
+  /**
+   * Guardian Contact Label field in *Biodata Page*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Father's Number
+   * - **API ID Path**: biodata_page.guardian_contact_label
+   * - **Tab**: Contact
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  guardian_contact_label: prismic.KeyTextField;
+
+  /**
+   * Guardian Contact Info field in *Biodata Page*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: Phone number or email
+   * - **API ID Path**: biodata_page.guardian_contact_info
+   * - **Tab**: Contact
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  guardian_contact_info: prismic.KeyTextField; /**
+   * Meta Title field in *Biodata Page*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: Title for SEO
+   * - **API ID Path**: biodata_page.meta_title
+   * - **Tab**: SEO
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  meta_title: prismic.KeyTextField;
+
+  /**
+   * Meta Description field in *Biodata Page*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: Description for SEO
+   * - **API ID Path**: biodata_page.meta_description
+   * - **Tab**: SEO
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  meta_description: prismic.KeyTextField;
+
+  /**
+   * Meta Image field in *Biodata Page*
+   *
+   * - **Field Type**: Image
+   * - **Placeholder**: *None*
+   * - **API ID Path**: biodata_page.meta_image
+   * - **Tab**: SEO
+   * - **Documentation**: https://prismic.io/docs/fields/image
+   */
+  meta_image: prismic.ImageField<never>;
+}
+
+/**
+ * Biodata Page document from Prismic
+ *
+ * - **API ID**: `biodata_page`
+ * - **Repeatable**: `false`
+ * - **Documentation**: https://prismic.io/docs/content-modeling
+ *
+ * @typeParam Lang - Language API ID of the document.
+ */
+export type BiodataPageDocument<Lang extends string = string> =
+  prismic.PrismicDocumentWithoutUID<
+    Simplify<BiodataPageDocumentData>,
+    "biodata_page",
+    Lang
+  >;
+
 type HomepageDocumentDataSlicesSlice =
   | HeroSlice
   | AboutSlice
@@ -138,6 +462,75 @@ export type HomepageDocument<Lang extends string = string> =
     Lang
   >;
 
+type ResumeDocumentDataSlicesSlice =
+  | SkillsSlice
+  | CertificationSlice
+  | EducationSlice
+  | ExperienceSlice;
+
+/**
+ * Content for Resume documents
+ */
+interface ResumeDocumentData {
+  /**
+   * Slice Zone field in *Resume*
+   *
+   * - **Field Type**: Slice Zone
+   * - **Placeholder**: *None*
+   * - **API ID Path**: resume.slices[]
+   * - **Tab**: Main
+   * - **Documentation**: https://prismic.io/docs/slices
+   */
+  slices: prismic.SliceZone<ResumeDocumentDataSlicesSlice>; /**
+   * Meta Title field in *Resume*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: A title of the page used for social media and search engines
+   * - **API ID Path**: resume.meta_title
+   * - **Tab**: SEO & Metadata
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  meta_title: prismic.KeyTextField;
+
+  /**
+   * Meta Description field in *Resume*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: A brief summary of the page
+   * - **API ID Path**: resume.meta_description
+   * - **Tab**: SEO & Metadata
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  meta_description: prismic.KeyTextField;
+
+  /**
+   * Meta Image field in *Resume*
+   *
+   * - **Field Type**: Image
+   * - **Placeholder**: *None*
+   * - **API ID Path**: resume.meta_image
+   * - **Tab**: SEO & Metadata
+   * - **Documentation**: https://prismic.io/docs/fields/image
+   */
+  meta_image: prismic.ImageField<never>;
+}
+
+/**
+ * Resume document from Prismic
+ *
+ * - **API ID**: `resume`
+ * - **Repeatable**: `false`
+ * - **Documentation**: https://prismic.io/docs/content-modeling
+ *
+ * @typeParam Lang - Language API ID of the document.
+ */
+export type ResumeDocument<Lang extends string = string> =
+  prismic.PrismicDocumentWithoutUID<
+    Simplify<ResumeDocumentData>,
+    "resume",
+    Lang
+  >;
+
 /**
  * Item in *Settings → Navigation Items*
  */
@@ -187,7 +580,18 @@ interface SettingsDocumentData {
    * - **Tab**: Main
    * - **Documentation**: https://prismic.io/docs/fields/text
    */
-  contactEmail: prismic.KeyTextField; /**
+  contactEmail: prismic.KeyTextField;
+
+  /**
+   * Phone Number field in *Settings*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: +1 234 567 890
+   * - **API ID Path**: settings.phoneNumber
+   * - **Tab**: Main
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  phoneNumber: prismic.KeyTextField; /**
    * Navigation Items field in *Settings*
    *
    * - **Field Type**: Group
@@ -309,7 +713,11 @@ export type SettingsDocument<Lang extends string = string> =
     Lang
   >;
 
-export type AllDocumentTypes = HomepageDocument | SettingsDocument;
+export type AllDocumentTypes =
+  | BiodataPageDocument
+  | HomepageDocument
+  | ResumeDocument
+  | SettingsDocument;
 
 /**
  * Item in *About → Default → Primary → Features*
@@ -429,6 +837,106 @@ type AboutSliceVariation = AboutSliceDefault;
 export type AboutSlice = prismic.SharedSlice<"about", AboutSliceVariation>;
 
 /**
+ * Primary content in *Certification → Default → Primary*
+ */
+export interface CertificationSliceDefaultPrimary {
+  /**
+   * Section Title field in *Certification → Default → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: Certifications
+   * - **API ID Path**: certification.default.primary.sectionTitle
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  sectionTitle: prismic.KeyTextField;
+}
+
+/**
+ * Primary content in *Certification → Items*
+ */
+export interface CertificationSliceDefaultItem {
+  /**
+   * Certificate Name field in *Certification → Items*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: AWS Certified Solutions Architect
+   * - **API ID Path**: certification.items[].name
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  name: prismic.KeyTextField;
+
+  /**
+   * Issuer field in *Certification → Items*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: Amazon Web Services
+   * - **API ID Path**: certification.items[].issuer
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  issuer: prismic.KeyTextField;
+
+  /**
+   * Date field in *Certification → Items*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: 2023
+   * - **API ID Path**: certification.items[].date
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  date: prismic.KeyTextField;
+
+  /**
+   * Issuer Logo field in *Certification → Items*
+   *
+   * - **Field Type**: Image
+   * - **Placeholder**: *None*
+   * - **API ID Path**: certification.items[].issuerLogo
+   * - **Documentation**: https://prismic.io/docs/fields/image
+   */
+  issuerLogo: prismic.ImageField<never>;
+
+  /**
+   * Credential URL field in *Certification → Items*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: https://...
+   * - **API ID Path**: certification.items[].credentialLink
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  credentialLink: prismic.KeyTextField;
+}
+
+/**
+ * Default variation for Certification Slice
+ *
+ * - **API ID**: `default`
+ * - **Description**: Certification list
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type CertificationSliceDefault = prismic.SharedSliceVariation<
+  "default",
+  Simplify<CertificationSliceDefaultPrimary>,
+  Simplify<CertificationSliceDefaultItem>
+>;
+
+/**
+ * Slice variation for *Certification*
+ */
+type CertificationSliceVariation = CertificationSliceDefault;
+
+/**
+ * Certification Shared Slice
+ *
+ * - **API ID**: `certification`
+ * - **Description**: Certification section
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type CertificationSlice = prismic.SharedSlice<
+  "certification",
+  CertificationSliceVariation
+>;
+
+/**
  * Primary content in *Contact → Default → Primary*
  */
 export interface ContactSliceDefaultPrimary {
@@ -441,6 +949,26 @@ export interface ContactSliceDefaultPrimary {
    * - **Documentation**: https://prismic.io/docs/fields/text
    */
   sectionTitle: prismic.KeyTextField;
+
+  /**
+   * Email Address field in *Contact → Default → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: you@example.com
+   * - **API ID Path**: contact.default.primary.email
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  email: prismic.KeyTextField;
+
+  /**
+   * Form Endpoint (Formspree URL) field in *Contact → Default → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: https://formspree.io/f/your_id
+   * - **API ID Path**: contact.default.primary.formEndpoint
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  formEndpoint: prismic.KeyTextField;
 
   /**
    * Description field in *Contact → Default → Primary*
@@ -524,6 +1052,206 @@ type ContactSliceVariation = ContactSliceDefault;
 export type ContactSlice = prismic.SharedSlice<
   "contact",
   ContactSliceVariation
+>;
+
+/**
+ * Primary content in *Education → Default → Primary*
+ */
+export interface EducationSliceDefaultPrimary {
+  /**
+   * Section Title field in *Education → Default → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: Education
+   * - **API ID Path**: education.default.primary.sectionTitle
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  sectionTitle: prismic.KeyTextField;
+}
+
+/**
+ * Primary content in *Education → Items*
+ */
+export interface EducationSliceDefaultItem {
+  /**
+   * Degree field in *Education → Items*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: BSc Computer Science
+   * - **API ID Path**: education.items[].degree
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  degree: prismic.KeyTextField;
+
+  /**
+   * Institution field in *Education → Items*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: University of Technology
+   * - **API ID Path**: education.items[].institution
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  institution: prismic.KeyTextField;
+
+  /**
+   * Year field in *Education → Items*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: 2016 - 2020
+   * - **API ID Path**: education.items[].year
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  year: prismic.KeyTextField;
+
+  /**
+   * Details field in *Education → Items*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: Focus on HCI and Systems...
+   * - **API ID Path**: education.items[].details
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  details: prismic.KeyTextField;
+}
+
+/**
+ * Default variation for Education Slice
+ *
+ * - **API ID**: `default`
+ * - **Description**: Education list
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type EducationSliceDefault = prismic.SharedSliceVariation<
+  "default",
+  Simplify<EducationSliceDefaultPrimary>,
+  Simplify<EducationSliceDefaultItem>
+>;
+
+/**
+ * Slice variation for *Education*
+ */
+type EducationSliceVariation = EducationSliceDefault;
+
+/**
+ * Education Shared Slice
+ *
+ * - **API ID**: `education`
+ * - **Description**: Education section
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type EducationSlice = prismic.SharedSlice<
+  "education",
+  EducationSliceVariation
+>;
+
+/**
+ * Primary content in *Experience → Default → Primary*
+ */
+export interface ExperienceSliceDefaultPrimary {
+  /**
+   * Section Title field in *Experience → Default → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: Experience
+   * - **API ID Path**: experience.default.primary.sectionTitle
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  sectionTitle: prismic.KeyTextField;
+}
+
+/**
+ * Primary content in *Experience → Items*
+ */
+export interface ExperienceSliceDefaultItem {
+  /**
+   * Job Title field in *Experience → Items*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: Senior UX Designer
+   * - **API ID Path**: experience.items[].title
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  title: prismic.KeyTextField;
+
+  /**
+   * Company field in *Experience → Items*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: Google
+   * - **API ID Path**: experience.items[].company
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  company: prismic.KeyTextField;
+
+  /**
+   * Duration field in *Experience → Items*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: 2020 - Present
+   * - **API ID Path**: experience.items[].duration
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  duration: prismic.KeyTextField;
+
+  /**
+   * Location field in *Experience → Items*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: New York, NY
+   * - **API ID Path**: experience.items[].location
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  location: prismic.KeyTextField;
+
+  /**
+   * Description field in *Experience → Items*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: Describe your role...
+   * - **API ID Path**: experience.items[].description
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  description: prismic.RichTextField;
+
+  /**
+   * Skills Used field in *Experience → Items*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: Figma, React, Systems Thinking
+   * - **API ID Path**: experience.items[].skills
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  skills: prismic.KeyTextField;
+}
+
+/**
+ * Default variation for Experience Slice
+ *
+ * - **API ID**: `default`
+ * - **Description**: Experience list
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type ExperienceSliceDefault = prismic.SharedSliceVariation<
+  "default",
+  Simplify<ExperienceSliceDefaultPrimary>,
+  Simplify<ExperienceSliceDefaultItem>
+>;
+
+/**
+ * Slice variation for *Experience*
+ */
+type ExperienceSliceVariation = ExperienceSliceDefault;
+
+/**
+ * Experience Shared Slice
+ *
+ * - **API ID**: `experience`
+ * - **Description**: Experience section with job details
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type ExperienceSlice = prismic.SharedSlice<
+  "experience",
+  ExperienceSliceVariation
 >;
 
 /**
@@ -753,9 +1481,14 @@ declare module "@prismicio/client" {
 
   namespace Content {
     export type {
+      BiodataPageDocument,
+      BiodataPageDocumentData,
       HomepageDocument,
       HomepageDocumentData,
       HomepageDocumentDataSlicesSlice,
+      ResumeDocument,
+      ResumeDocumentData,
+      ResumeDocumentDataSlicesSlice,
       SettingsDocument,
       SettingsDocumentData,
       SettingsDocumentDataNavigationItemsItem,
@@ -765,10 +1498,25 @@ declare module "@prismicio/client" {
       AboutSliceDefaultPrimary,
       AboutSliceVariation,
       AboutSliceDefault,
+      CertificationSlice,
+      CertificationSliceDefaultPrimary,
+      CertificationSliceDefaultItem,
+      CertificationSliceVariation,
+      CertificationSliceDefault,
       ContactSlice,
       ContactSliceDefaultPrimary,
       ContactSliceVariation,
       ContactSliceDefault,
+      EducationSlice,
+      EducationSliceDefaultPrimary,
+      EducationSliceDefaultItem,
+      EducationSliceVariation,
+      EducationSliceDefault,
+      ExperienceSlice,
+      ExperienceSliceDefaultPrimary,
+      ExperienceSliceDefaultItem,
+      ExperienceSliceVariation,
+      ExperienceSliceDefault,
       HeroSlice,
       HeroSliceDefaultPrimary,
       HeroSliceVariation,

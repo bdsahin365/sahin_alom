@@ -15,18 +15,18 @@ const Experience = ({ slice }: ExperienceProps): JSX.Element => {
         <section
             data-slice-type={slice.slice_type}
             data-slice-variation={slice.variation}
-            className="py-20 relative"
+            className="py-0 md:py-4 relative"
         >
-            <div className="container mx-auto px-6">
+            <div className="container mx-auto px-4 md:px-6">
                 {slice.primary.sectionTitle && (
-                    <div className="mb-12">
-                        <h2 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60 inline-block">
+                    <div className="mb-6 md:mb-8">
+                        <h2 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60 inline-block">
                             {slice.primary.sectionTitle}
                         </h2>
                     </div>
                 )}
 
-                <div className="space-y-12">
+                <div className="space-y-4 md:space-y-8">
                     {slice.items.map((item, index) => (
                         <div key={index} className="group relative pl-8 border-l border-white/10 hover:border-indigo-500/50 transition-colors">
                             <div className="absolute left-[-5px] top-0 w-2.5 h-2.5 rounded-full bg-zinc-800 border border-white/20 group-hover:bg-indigo-500 group-hover:border-indigo-400 transition-colors shadow-[0_0_10px_rgba(79,70,229,0)] group-hover:shadow-[0_0_10px_rgba(79,70,229,0.5)]"></div>

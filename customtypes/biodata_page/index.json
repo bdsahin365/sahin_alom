@@ -1,0 +1,222 @@
+{
+    "id": "biodata_page",
+    "label": "Biodata Page",
+    "repeatable": false,
+    "status": true,
+    "json": {
+        "Main": {
+            "name": {
+                "type": "Text",
+                "config": {
+                    "label": "Name",
+                    "placeholder": "Full Name"
+                }
+            },
+            "professional_headline": {
+                "type": "Text",
+                "config": {
+                    "label": "Professional Headline",
+                    "placeholder": "e.g. UX Designer with Engineering Systems Thinking"
+                }
+            },
+            "summary": {
+                "type": "StructuredText",
+                "config": {
+                    "label": "Summary",
+                    "placeholder": "Short professional summary...",
+                    "multi": "paragraph"
+                }
+            },
+            "profile_photo": {
+                "type": "Image",
+                "config": {
+                    "label": "Profile Photo",
+                    "constraint": {},
+                    "thumbnails": []
+                }
+            },
+            "core_skills": {
+                "type": "Text",
+                "config": {
+                    "label": "Core Skills",
+                    "placeholder": "Comma separated list, e.g. UX Research, Systems Design, React"
+                }
+            },
+            "education": {
+                "type": "Text",
+                "config": {
+                    "label": "Education",
+                    "placeholder": "e.g. BSc in EEE"
+                }
+            },
+            "work_type": {
+                "type": "Text",
+                "config": {
+                    "label": "Work Type",
+                    "placeholder": "e.g. Freelance / Remote"
+                }
+            },
+            "current_focus": {
+                "type": "Text",
+                "config": {
+                    "label": "Current Focus",
+                    "placeholder": "e.g. UX, systems, AI workflows"
+                }
+            }
+        },
+        "Personal": {
+            "show_personal_details": {
+                "type": "Boolean",
+                "config": {
+                    "label": "Show Personal Details",
+                    "placeholder_false": "Hidden",
+                    "placeholder_true": "Visible",
+                    "default_value": true
+                }
+            },
+            "nationality": {
+                "type": "Text",
+                "config": {
+                    "label": "Nationality",
+                    "placeholder": "e.g. Bangladeshi"
+                }
+            },
+            "current_location": {
+                "type": "Text",
+                "config": {
+                    "label": "Current Location",
+                    "placeholder": "City, Country"
+                }
+            },
+            "languages": {
+                "type": "Text",
+                "config": {
+                    "label": "Languages",
+                    "placeholder": "e.g. English, Bengali"
+                }
+            }
+        },
+        "Extended Profile": {
+            "show_marriage_section": {
+                "type": "Boolean",
+                "config": {
+                    "label": "Show Extended Profile (Marriage/Personal)",
+                    "placeholder_false": "Hidden",
+                    "placeholder_true": "Visible",
+                    "default_value": false
+                }
+            },
+            "religion": {
+                "type": "Text",
+                "config": {
+                    "label": "Religion",
+                    "placeholder": "e.g. Islam"
+                }
+            },
+            "marital_status": {
+                "type": "Text",
+                "config": {
+                    "label": "Marital Status",
+                    "placeholder": "e.g. Single"
+                }
+            },
+            "date_of_birth": {
+                "type": "Date",
+                "config": {
+                    "label": "Date of Birth"
+                }
+            },
+            "height": {
+                "type": "Text",
+                "config": {
+                    "label": "Height",
+                    "placeholder": "e.g. 5' 8\""
+                }
+            },
+            "blood_group": {
+                "type": "Text",
+                "config": {
+                    "label": "Blood Group",
+                    "placeholder": "e.g. O+"
+                }
+            },
+            "family_information": {
+                "type": "StructuredText",
+                "config": {
+                    "label": "Family Information",
+                    "multi": "paragraph,strong,em,list-item"
+                }
+            },
+            "partner_preference": {
+                "type": "StructuredText",
+                "config": {
+                    "label": "Partner Preference",
+                    "multi": "paragraph,strong,em,list-item"
+                }
+            },
+            "additional_information": {
+                "type": "StructuredText",
+                "config": {
+                    "label": "Additional Information",
+                    "multi": "paragraph,strong,em,list-item,heading3,heading4"
+                }
+            }
+        },
+        "Contact": {
+            "contact_email": {
+                "type": "Text",
+                "config": {
+                    "label": "Professional Contact Email",
+                    "placeholder": "hello@example.com"
+                }
+            },
+            "show_guardian_contact": {
+                "type": "Boolean",
+                "config": {
+                    "label": "Show Guardian Contact",
+                    "placeholder_false": "Hidden",
+                    "placeholder_true": "Visible",
+                    "default_value": false
+                }
+            },
+            "guardian_contact_label": {
+                "type": "Text",
+                "config": {
+                    "label": "Guardian Contact Label",
+                    "placeholder": "e.g. Father's Number"
+                }
+            },
+            "guardian_contact_info": {
+                "type": "Text",
+                "config": {
+                    "label": "Guardian Contact Info",
+                    "placeholder": "Phone number or email"
+                }
+            }
+        },
+        "SEO": {
+            "meta_title": {
+                "type": "Text",
+                "config": {
+                    "label": "Meta Title",
+                    "placeholder": "Title for SEO"
+                }
+            },
+            "meta_description": {
+                "type": "Text",
+                "config": {
+                    "label": "Meta Description",
+                    "placeholder": "Description for SEO"
+                }
+            },
+            "meta_image": {
+                "type": "Image",
+                "config": {
+                    "label": "Meta Image",
+                    "constraint": {},
+                    "thumbnails": []
+                }
+            }
+        }
+    }
+}

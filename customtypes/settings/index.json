@@ -1,101 +1,108 @@
 {
-    "format": "custom",
-    "id": "settings",
-    "label": "Settings",
-    "repeatable": false,
-    "status": true,
-    "json": {
-        "Main": {
-            "siteName": {
-                "type": "Text",
-                "config": {
-                    "label": "Site Name",
-                    "placeholder": "Sahin Alom"
-                }
-            },
-            "contactEmail": {
-                "type": "Text",
-                "config": {
-                    "label": "Contact Email",
-                    "placeholder": "hello@sahinalom.com"
-                }
-            }
-        },
-        "Navigation": {
-            "navigationItems": {
-                "type": "Group",
-                "config": {
-                    "label": "Navigation Items",
-                    "fields": {
-                        "label": {
-                            "type": "Text",
-                            "config": {
-                                "label": "Label",
-                                "placeholder": "Home"
-                            }
-                        },
-                        "link": {
-                            "type": "Text",
-                            "config": {
-                                "label": "Link",
-                                "placeholder": "#home"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "Social Links": {
-            "linkedinUrl": {
-                "type": "Link",
-                "config": {
-                    "label": "LinkedIn URL",
-                    "placeholder": "LinkedIn profile",
-                    "select": "web"
-                }
-            },
-            "behanceUrl": {
-                "type": "Link",
-                "config": {
-                    "label": "Behance URL",
-                    "placeholder": "Behance profile",
-                    "select": "web"
-                }
-            },
-            "dribbbleUrl": {
-                "type": "Link",
-                "config": {
-                    "label": "Dribbble URL",
-                    "placeholder": "Dribbble profile",
-                    "select": "web"
-                }
-            },
-            "githubUrl": {
-                "type": "Link",
-                "config": {
-                    "label": "GitHub URL",
-                    "placeholder": "GitHub profile",
-                    "select": "web"
-                }
-            },
-            "instagramUrl": {
-                "type": "Link",
-                "config": {
-                    "label": "Instagram URL",
-                    "placeholder": "Instagram profile",
-                    "select": "web"
-                }
-            }
-        },
-        "Footer": {
-            "footerText": {
-                "type": "StructuredText",
-                "config": {
-                    "label": "Footer Text",
-                    "placeholder": "© 2026 Sahin Alom. All rights reserved.",
-                    "single": "paragraph,strong,em"
-                }
-            }
+  "format": "custom",
+  "id": "settings",
+  "label": "Settings",
+  "repeatable": false,
+  "status": true,
+  "json": {
+    "Main": {
+      "siteName": {
+        "type": "Text",
+        "config": {
+          "label": "Site Name",
+          "placeholder": "Sahin Alom"
         }
+      },
+      "contactEmail": {
+        "type": "Text",
+        "config": {
+          "label": "Contact Email",
+          "placeholder": "hello@sahinalom.com"
+        }
+      },
+      "phoneNumber": {
+        "type": "Text",
+        "config": {
+          "label": "Phone Number",
+          "placeholder": "+1 234 567 890"
+        }
+      }
+    },
+    "Navigation": {
+      "navigationItems": {
+        "type": "Group",
+        "config": {
+          "label": "Navigation Items",
+          "fields": {
+            "label": {
+              "type": "Text",
+              "config": {
+                "label": "Label",
+                "placeholder": "Home"
+              }
+            },
+            "link": {
+              "type": "Text",
+              "config": {
+                "label": "Link",
+                "placeholder": "#home"
+              }
+            }
+          }
+        }
+      }
+    },
+    "Social Links": {
+      "linkedinUrl": {
+        "type": "Link",
+        "config": {
+          "label": "LinkedIn URL",
+          "placeholder": "LinkedIn profile",
+          "select": "web"
+        }
+      },
+      "behanceUrl": {
+        "type": "Link",
+        "config": {
+          "label": "Behance URL",
+          "placeholder": "Behance profile",
+          "select": "web"
+        }
+      },
+      "dribbbleUrl": {
+        "type": "Link",
+        "config": {
+          "label": "Dribbble URL",
+          "placeholder": "Dribbble profile",
+          "select": "web"
+        }
+      },
+      "githubUrl": {
+        "type": "Link",
+        "config": {
+          "label": "GitHub URL",
+          "placeholder": "GitHub profile",
+          "select": "web"
+        }
+      },
+      "instagramUrl": {
+        "type": "Link",
+        "config": {
+          "label": "Instagram URL",
+          "placeholder": "Instagram profile",
+          "select": "web"
+        }
+      }
+    },
+    "Footer": {
+      "footerText": {
+        "type": "StructuredText",
+        "config": {
+          "label": "Footer Text",
+          "placeholder": "© 2026 Sahin Alom. All rights reserved.",
+          "single": "paragraph,strong,em"
+        }
+      }
     }
+  }
 }
