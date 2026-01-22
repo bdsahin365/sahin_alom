@@ -64,13 +64,13 @@ export default function Header({ siteName, navigationItems, socialLinks }: Heade
             <ul className="header-nav-list">
                 {navigationItems.map((item, index) => (
                     <li key={index}>
-                        <a
+                        <Link
                             href={item.link}
                             onClick={(e) => handleNavClick(e, item.link)}
                             className="header-nav-link"
                         >
                             {item.label}
-                        </a>
+                        </Link>
                     </li>
                 ))}
             </ul>

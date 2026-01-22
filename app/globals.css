@@ -141,6 +141,46 @@ section {
   color: var(--foreground);
 }
 
+/* Hamburger Menu */
+.header-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 30px;
+  height: 21px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 60;
+}
+
+.hamburger-line {
+  width: 100%;
+  height: 3px;
+  background-color: var(--foreground);
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+
+.hamburger-line-1-open {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.hamburger-line-2-open {
+  opacity: 0;
+}
+
+.hamburger-line-3-open {
+  transform: rotate(-45deg) translate(7px, -8px);
+}
+
+@media (max-width: 768px) {
+  .header-hamburger {
+    display: flex;
+  }
+}
+
 /* Mobile Nav (Portal) */
 .header-nav-mobile {
   position: fixed;

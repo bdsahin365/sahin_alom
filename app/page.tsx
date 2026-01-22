@@ -106,6 +106,7 @@ export default async function Home() {
         { label: "Home", link: "#home" },
         { label: "About", link: "#about" },
         { label: "Skills", link: "#skills" },
+        { label: "Resume", link: "/resume" },
         { label: "Contact", link: "#contact" },
       ],
       linkedinUrl: { url: "" },
