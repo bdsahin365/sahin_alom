@@ -108,10 +108,17 @@ section {
   z-index: 51;
 }
 
-.header-nav {
+/* Desktop Nav */
+.header-nav-desktop {
   display: flex;
   align-items: center;
   gap: 2rem;
+}
+
+@media (max-width: 768px) {
+  .header-nav-desktop {
+    display: none;
+  }
 }
 
 .header-nav-list {
@@ -134,6 +141,104 @@ section {
   color: var(--foreground);
 }
 
+/* Mobile Nav (Portal) */
+.header-nav-mobile {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(10, 10, 10, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 10000;
+  /* Extremely high z-index for portal */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  padding: 2rem;
+}
+
+.header-nav-mobile.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* Mobile Nav specific list styles */
+.header-nav-mobile .header-nav-list {
+  flex-direction: column;
+  align-items: center;
+  gap: 2.5rem;
+  font-size: 2rem;
+  margin-bottom: 3rem;
+}
+
+.header-nav-mobile .header-nav-link {
+  font-weight: 600;
+  color: var(--foreground);
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+}
+
+.header-nav-mobile.open .header-nav-link {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Staggered animation */
+.header-nav-mobile.open li:nth-child(1) .header-nav-link {
+  transition-delay: 0.1s;
+}
+
+.header-nav-mobile.open li:nth-child(2) .header-nav-link {
+  transition-delay: 0.2s;
+}
+
+.header-nav-mobile.open li:nth-child(3) .header-nav-link {
+  transition-delay: 0.3s;
+}
+
+.header-nav-mobile.open li:nth-child(4) .header-nav-link {
+  transition-delay: 0.4s;
+}
+
+.header-nav-mobile.open li:nth-child(5) .header-nav-link {
+  transition-delay: 0.5s;
+}
+
+/* Mobile Social Styles */
+.header-nav-mobile .header-social {
+  display: flex;
+  gap: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 2rem;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s ease 0.6s;
+}
+
+.header-nav-mobile.open .header-social {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.header-nav-mobile .social-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+/* Hide portal on desktop to be safe */
+@media (min-width: 769px) {
+  .header-nav-mobile {
+    display: none !important;
+  }
+}
+
+/* Original Social Wrapper (Desktop) */
 .header-social {
   display: flex;
   gap: 1rem;
@@ -142,104 +247,10 @@ section {
   border-left: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.social-icon {
-  color: var(--text-secondary);
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.social-icon:hover {
-  color: var(--foreground);
-  transform: translateY(-2px);
-}
-
-/* Mobile Menu */
-.header-hamburger {
-  display: none;
-  background: none;
-  border: none;
-  cursor: pointer;
-  z-index: 51;
-  padding: 0;
-  width: 30px;
-  height: 20px;
-  position: relative;
-}
-
-.hamburger-line {
-  display: block;
-  width: 100%;
-  height: 2px;
-  background: var(--foreground);
-  position: absolute;
-  transition: all 0.3s ease;
-}
-
-.hamburger-line:nth-child(1) {
-  top: 0;
-}
-
-.hamburger-line:nth-child(2) {
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.hamburger-line:nth-child(3) {
-  bottom: 0;
-}
-
-.hamburger-line-1-open {
-  transform: rotate(45deg);
-  top: 9px !important;
-}
-
-.hamburger-line-2-open {
-  opacity: 0;
-}
-
-.hamburger-line-3-open {
-  transform: rotate(-45deg);
-  bottom: 9px !important;
-}
-
+/* Hide desktop social on mobile if it was visible before */
 @media (max-width: 768px) {
-  .header-hamburger {
-    display: block;
-  }
-
-  .header-nav {
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 80%;
-    max-width: 300px;
-    background: var(--surface);
-    flex-direction: column;
-    justify-content: center;
-    transform: translateX(100%);
-    transition: transform 0.3s ease;
-    padding: 2rem;
-    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
-  }
-
-  .header-nav-open {
-    transform: translateX(0);
-  }
-
-  .header-nav-list {
-    flex-direction: column;
-    align-items: center;
-    font-size: 1.25rem;
-  }
-
-  .header-social {
-    margin: 2rem 0 0;
-    padding: 2rem 0 0;
-    border-left: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  .header-nav-desktop .header-social {
+    display: none;
   }
 }
 

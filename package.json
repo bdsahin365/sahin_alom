@@ -13,9 +13,11 @@
     "@prismicio/client": "^7.21.3",
     "@prismicio/next": "^2.2.1",
     "@prismicio/react": "^3.3.0",
+    "lucide-react": "^0.562.0",
     "next": "16.1.4",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "react-pdf": "^10.3.0"
   },
   "devDependencies": {
     "@slicemachine/adapter-next": "^0.3.94",
