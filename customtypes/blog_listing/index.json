@@ -1,0 +1,69 @@
+{
+    "id": "blog_listing",
+    "label": "Blog Listing",
+    "format": "page",
+    "repeatable": false,
+    "status": true,
+    "json": {
+        "Main": {
+            "page_title": {
+                "type": "Text",
+                "config": {
+                    "label": "Page Title",
+                    "placeholder": "Blog"
+                }
+            },
+            "page_description": {
+                "type": "StructuredText",
+                "config": {
+                    "label": "Page Description",
+                    "placeholder": "Intro text for the blog page",
+                    "allowTargetBlank": true,
+                    "single": "paragraph,strong,em,hyperlink"
+                }
+            },
+            "featured_posts": {
+                "type": "Group",
+                "config": {
+                    "label": "Featured Posts",
+                    "fields": {
+                        "post": {
+                            "type": "Link",
+                            "config": {
+                                "label": "Post",
+                                "select": "document",
+                                "customtypes": [
+                                    "blog_post"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "SEO": {
+            "meta_title": {
+                "type": "Text",
+                "config": {
+                    "label": "Meta Title",
+                    "placeholder": "SEO title"
+                }
+            },
+            "meta_description": {
+                "type": "Text",
+                "config": {
+                    "label": "Meta Description",
+                    "placeholder": "SEO description"
+                }
+            },
+            "meta_image": {
+                "type": "Image",
+                "config": {
+                    "label": "Meta Image",
+                    "constraint": {},
+                    "thumbnails": []
+                }
+            }
+        }
+    }
+}
