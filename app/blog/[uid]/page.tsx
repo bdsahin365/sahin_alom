@@ -118,7 +118,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ uid: 
                         <figure className="blog-featured-image-container">
                             <Image
                                 src={post.data.featured_image.url}
-                                alt={post.data.featured_image.alt || post.data.title}
+                                alt={post.data.featured_image.alt || post.data.title || ""}
                                 width={1200}
                                 height={630}
                                 priority

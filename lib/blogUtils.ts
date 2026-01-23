@@ -45,7 +45,7 @@ export function extractHeadings(content: any): Array<{ id: string; text: string;
 /**
  * Format date to readable string
  */
-export function formatDate(dateString: string): string {
+export function formatDate(dateString: string | null | undefined): string {
     if (!dateString) return '';
 
     const date = new Date(dateString);
@@ -61,7 +61,7 @@ export function formatDate(dateString: string): string {
 /**
  * Get category color scheme
  */
-export function getCategoryColor(category: string): { bg: string; text: string; border: string } {
+export function getCategoryColor(category: string | null | undefined): { bg: string; text: string; border: string } {
     const colors: Record<string, { bg: string; text: string; border: string }> = {
         Design: {
             bg: 'rgba(139, 92, 246, 0.1)',
@@ -95,7 +95,11 @@ export function getCategoryColor(category: string): { bg: string; text: string; 
         }
     };
 
-    return colors[category] || {
+    if (category && colors[category]) {
+        return colors[category];
+    }
+
+    return {
         bg: 'rgba(107, 114, 128, 0.1)',
         text: '#6b7280',
         border: 'rgba(107, 114, 128, 0.3)'
