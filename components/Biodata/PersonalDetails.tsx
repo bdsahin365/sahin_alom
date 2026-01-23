@@ -1,18 +1,52 @@
+import { MapPin, Globe, Languages, Calendar, Heart, Ruler, Droplet, User, Home } from "lucide-react";
 
 interface PersonalDetailsProps {
     nationality: string;
     location: string;
+    permanentAddress?: string;
     languages: string;
+    religion?: string;
+    maritalStatus?: string;
+    dateOfBirth?: string | null;
+    height?: string;
+    bloodGroup?: string;
     show: boolean;
 }
 
 export default function PersonalDetails({
     nationality,
     location,
+    permanentAddress,
     languages,
+    religion,
+    maritalStatus,
+    dateOfBirth,
+    height,
+    bloodGroup,
     show,
 }: PersonalDetailsProps) {
     if (!show) return null;
+
+    // Calculate age if DOB exists
+    let age = "";
+    if (dateOfBirth) {
+        const dob = new Date(dateOfBirth);
+        const diff_ms = Date.now() - dob.getTime();
+        const age_dt = new Date(diff_ms);
+        age = Math.abs(age_dt.getUTCFullYear() - 1970).toString();
+    }
+
+    const details = [
+        { label: "Nationality", value: nationality, icon: Globe },
+        { label: "Present Address", value: location, icon: MapPin },
+        { label: "Permanent Address", value: permanentAddress, icon: Home },
+        { label: "Languages", value: languages, icon: Languages },
+        { label: "Religion", value: religion, icon: User }, // Using User as generic for now, or Star/Moon if preferred
+        { label: "Marital Status", value: maritalStatus, icon: Heart },
+        { label: "Age / DOB", value: dateOfBirth ? `${age} yrs (${dateOfBirth})` : null, icon: Calendar },
+        { label: "Height", value: height, icon: Ruler },
+        { label: "Blood Group", value: bloodGroup, icon: Droplet },
+    ].filter(item => item.value); // Only show items with values
 
     return (
         <section className="mb-12 print:mb-8">
@@ -21,25 +55,18 @@ export default function PersonalDetails({
                 Personal Details
             </h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 print:gap-4">
-                {nationality && (
-                    <div className="flex flex-col p-4 rounded-lg bg-transparent border-none print:border print:border-gray-200 print:p-3">
-                        <span className="text-xs text-gray-500 uppercase tracking-wider mb-1 print:text-slate-600 print:font-semibold">Nationality</span>
-                        <span className="text-gray-300 print:text-black font-medium">{nationality}</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 print:gap-4">
+                {details.map((item, index) => (
+                    <div key={index} className="flex items-start p-4 rounded-xl bg-white/5 border border-white/5 hover:border-white/10 transition-colors print:border-gray-200 print:bg-transparent print:p-3">
+                        <div className="p-2 rounded-lg bg-white/5 text-gray-400 mr-4 print:hidden">
+                            <item.icon size={18} />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-xs text-gray-500 uppercase tracking-wider mb-1 print:text-slate-600 print:font-semibold">{item.label}</span>
+                            <span className="text-gray-200 font-medium print:text-black">{item.value}</span>
+                        </div>
                     </div>
-                )}
-                {location && (
-                    <div className="flex flex-col p-4 rounded-lg bg-transparent border-none print:border print:border-gray-200 print:p-3">
-                        <span className="text-xs text-gray-500 uppercase tracking-wider mb-1 print:text-slate-600 print:font-semibold">Location</span>
-                        <span className="text-gray-300 print:text-black font-medium">{location}</span>
-                    </div>
-                )}
-                {languages && (
-                    <div className="flex flex-col p-4 rounded-lg bg-transparent border-none print:border print:border-gray-200 print:p-3">
-                        <span className="text-xs text-gray-500 uppercase tracking-wider mb-1 print:text-slate-600 print:font-semibold">Languages</span>
-                        <span className="text-gray-300 print:text-black font-medium">{languages}</span>
-                    </div>
-                )}
+                ))}
             </div>
         </section>
     );

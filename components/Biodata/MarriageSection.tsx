@@ -1,100 +1,114 @@
 import { PrismicRichText } from "@prismicio/react";
+import { Users, HeartHandshake, Sparkles } from "lucide-react";
 
 interface MarriageSectionProps {
     show: boolean;
-    religion: string;
-    maritalStatus: string;
-    dateOfBirth: string | null;
-    height: string;
-    bloodGroup: string;
-    familyInfo: any; // RichTextField
+    fatherName: string;
+    fatherProfession: string;
+    motherName: string;
+    motherProfession: string;
+    familyMembers: any[]; // Group field
     partnerPreference: any; // RichTextField
     additionalInfo: any; // RichTextField
 }
 
 export default function MarriageSection({
     show,
-    religion,
-    maritalStatus,
-    dateOfBirth,
-    height,
-    bloodGroup,
-    familyInfo,
+    fatherName,
+    fatherProfession,
+    motherName,
+    motherProfession,
+    familyMembers,
     partnerPreference,
     additionalInfo,
 }: MarriageSectionProps) {
     if (!show) return null;
 
-    // Calculate age if DOB exists
-    let age = "";
-    if (dateOfBirth) {
-        const dob = new Date(dateOfBirth);
-        const diff_ms = Date.now() - dob.getTime();
-        const age_dt = new Date(diff_ms);
-        age = Math.abs(age_dt.getUTCFullYear() - 1970).toString();
-    }
-
     return (
-        <section className="mb-12 pt-12 border-t border-white/10 print:border-gray-200 print:pt-8 print:mb-0">
-            <h2 className="text-xl font-bold text-white mb-8 border-l-4 border-indigo-500 pl-4 print:text-black print:border-black print:mb-6">
-                Personal Profile
+        <section className="mb-12 border-t border-white/5 pt-12 print:border-gray-200 print:pt-8 print:mb-0">
+            <h2 className="text-xl font-bold text-white mb-8 border-l-4 border-indigo-500 pl-4 print:text-black print:border-black print:mb-6 hidden">
+                Extended Details
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 print:gap-x-8 print:gap-y-4">
-                <div className="space-y-4">
-                    <InfoRow label="Religion" value={religion} />
-                    <InfoRow label="Marital Status" value={maritalStatus} />
-                    <InfoRow label="Blood Group" value={bloodGroup} />
-                </div>
-                <div className="space-y-4">
-                    <InfoRow label="Height" value={height} />
-                    <InfoRow label="Age" value={dateOfBirth ? `${age} years (${dateOfBirth})` : ""} />
-                </div>
-            </div>
-
-            <div className="space-y-8 print:space-y-6">
+            <div className="space-y-6 print:space-y-6">
                 {/* Family Information */}
-                <div className="bg-white/5 rounded-xl p-6 md:p-8 print:bg-transparent print:border print:border-gray-200 print:p-6 print:rounded-md">
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-indigo-400 mb-4 print:text-black">
-                        Family Information
-                    </h3>
-                    <div className="prose prose-invert prose-p:text-gray-300 max-w-none print:prose print:text-black print:prose-p:text-black">
-                        <PrismicRichText field={familyInfo} />
+                <div className="bg-white/5 rounded-xl p-6 md:p-8 border border-white/5 hover:border-white/10 transition-colors print:bg-transparent print:border print:border-gray-200 print:p-6 print:rounded-md">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 print:hidden">
+                            <Users size={20} />
+                        </div>
+                        <h3 className="text-sm font-bold uppercase tracking-widest text-indigo-400 print:text-black">
+                            Family Information
+                        </h3>
+                    </div>
+
+                    <div className="space-y-4 pl-0 md:pl-[52px]">
+                        {/* Parents */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="bg-white/5 md:bg-transparent rounded-lg p-3 md:p-0">
+                                <span className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Father</span>
+                                <span className="block text-gray-200 font-medium">{fatherName}</span>
+                                <span className="block text-gray-400 text-sm">{fatherProfession}</span>
+                            </div>
+                            <div className="bg-white/5 md:bg-transparent rounded-lg p-3 md:p-0">
+                                <span className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Mother</span>
+                                <span className="block text-gray-200 font-medium">{motherName}</span>
+                                <span className="block text-gray-400 text-sm">{motherProfession}</span>
+                            </div>
+                        </div>
+
+                        {/* Siblings / Members */}
+                        {familyMembers && familyMembers.length > 0 && (
+                            <div className="mt-4 pt-4 border-t border-white/5">
+                                <span className="block text-xs text-gray-500 uppercase tracking-wider mb-3">Family Members</span>
+                                <div className="space-y-3">
+                                    {familyMembers.map((member, index) => (
+                                        <div key={index} className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2 text-sm">
+                                            <span className="text-indigo-300 font-medium min-w-[80px]">{member.relation}</span>
+                                            <span className="text-gray-300">
+                                                {member.name && <span className="text-gray-200 font-medium mr-2">{member.name}</span>}
+                                                <span className="text-gray-400">({member.profession})</span>
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 {/* Partner Preference */}
-                <div className="bg-white/5 rounded-xl p-6 md:p-8 print:bg-transparent print:border print:border-gray-200 print:p-6 print:rounded-md">
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-indigo-400 mb-4 print:text-black">
-                        Partner Preference
-                    </h3>
-                    <div className="prose prose-invert prose-p:text-gray-300 max-w-none print:prose print:text-black print:prose-p:text-black">
+                <div className="bg-white/5 rounded-xl p-6 md:p-8 border border-white/5 hover:border-white/10 transition-colors print:bg-transparent print:border print:border-gray-200 print:p-6 print:rounded-md">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2 rounded-lg bg-pink-500/10 text-pink-400 print:hidden">
+                            <HeartHandshake size={20} />
+                        </div>
+                        <h3 className="text-sm font-bold uppercase tracking-widest text-pink-400 print:text-black">
+                            Partner Preference
+                        </h3>
+                    </div>
+                    <div className="prose prose-invert prose-p:text-gray-300 max-w-none print:prose print:text-black print:prose-p:text-black pl-0 md:pl-[52px]">
                         <PrismicRichText field={partnerPreference} />
                     </div>
                 </div>
 
                 {/* Additional Information */}
                 {additionalInfo && additionalInfo.length > 0 && (
-                    <div className="bg-white/5 rounded-xl p-6 md:p-8 print:bg-transparent print:border print:border-gray-200 print:p-6 print:rounded-md">
-                        <h3 className="text-sm font-bold uppercase tracking-widest text-indigo-400 mb-4 print:text-black">
-                            Additional Information
-                        </h3>
-                        <div className="prose prose-invert prose-p:text-gray-300 max-w-none print:prose print:text-black print:prose-p:text-black">
+                    <div className="bg-white/5 rounded-xl p-6 md:p-8 border border-white/5 hover:border-white/10 transition-colors print:bg-transparent print:border print:border-gray-200 print:p-6 print:rounded-md">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 print:hidden">
+                                <Sparkles size={20} />
+                            </div>
+                            <h3 className="text-sm font-bold uppercase tracking-widest text-emerald-400 print:text-black">
+                                Additional Information
+                            </h3>
+                        </div>
+                        <div className="prose prose-invert prose-p:text-gray-300 max-w-none print:prose print:text-black print:prose-p:text-black pl-0 md:pl-[52px]">
                             <PrismicRichText field={additionalInfo} />
                         </div>
                     </div>
                 )}
             </div>
         </section>
-    );
-}
-
-function InfoRow({ label, value }: { label: string; value: string }) {
-    if (!value) return null;
-    return (
-        <div className="flex border-b border-white/5 pb-2 print:border-gray-200">
-            <span className="w-1/3 text-gray-500 text-sm font-medium print:text-slate-600 print:font-semibold">{label}</span>
-            <span className="flex-1 text-gray-200 print:text-black">{value}</span>
-        </div>
     );
 }

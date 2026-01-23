@@ -88,6 +88,13 @@
                     "placeholder": "City, Country"
                 }
             },
+            "permanent_address": {
+                "type": "Text",
+                "config": {
+                    "label": "Permanent Address",
+                    "placeholder": "City, Country or Full Address"
+                }
+            },
             "languages": {
                 "type": "Text",
                 "config": {
@@ -140,11 +147,61 @@
                     "placeholder": "e.g. O+"
                 }
             },
-            "family_information": {
-                "type": "StructuredText",
+            "father_name": {
+                "type": "Text",
                 "config": {
-                    "label": "Family Information",
-                    "multi": "paragraph,strong,em,list-item"
+                    "label": "Father's Name",
+                    "placeholder": "e.g. Abdur Rahman"
+                }
+            },
+            "father_profession": {
+                "type": "Text",
+                "config": {
+                    "label": "Father's Profession",
+                    "placeholder": "e.g. Govt. Officer (Retired)"
+                }
+            },
+            "mother_name": {
+                "type": "Text",
+                "config": {
+                    "label": "Mother's Name",
+                    "placeholder": "e.g. Ayesha Begum"
+                }
+            },
+            "mother_profession": {
+                "type": "Text",
+                "config": {
+                    "label": "Mother's Profession",
+                    "placeholder": "e.g. Homemaker"
+                }
+            },
+            "family_members": {
+                "type": "Group",
+                "config": {
+                    "label": "Family Members (Siblings etc.)",
+                    "fields": {
+                        "relation": {
+                            "type": "Text",
+                            "config": {
+                                "label": "Relation",
+                                "placeholder": "e.g. Elder Brother"
+                            }
+                        },
+                        "name": {
+                            "type": "Text",
+                            "config": {
+                                "label": "Name (Optional)",
+                                "placeholder": "Name"
+                            }
+                        },
+                        "profession": {
+                            "type": "Text",
+                            "config": {
+                                "label": "Profession / Status",
+                                "placeholder": "e.g. Software Engineer at Google"
+                            }
+                        }
+                    }
                 }
             },
             "partner_preference": {

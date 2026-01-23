@@ -46,13 +46,21 @@ export default async function BiodataPage() {
         show_personal_details: true,
         nationality: "Bangladeshi",
         current_location: "Sylhet, Bangladesh",
+        permanent_address: "Sylhet, Bangladesh",
         languages: "English, Bengali",
         show_marriage_section: true, // Enabled for preview
         religion: "Islam (Sunni)",
         marital_status: "Single",
         date_of_birth: "1998-01-01",
         height: "5' 8\"",
-        family_information: [{ type: "paragraph", text: "Father: Retired Govt Officer. Mother: Homemaker. 1 Brother (Engineer), 1 Sister (Doctor).", spans: [] }],
+        father_name: "Md. Abdul Mannan",
+        father_profession: "Retired Govt. Officer (Food Dept.)",
+        mother_name: "Begum Sufia Mannan",
+        mother_profession: "Homemaker",
+        family_members: [
+            { relation: "Brother", name: "Engr. Asif Alom", profession: "Software Engineer at Google (Emigrant)" },
+            { relation: "Sister", name: "Dr. Nadia Alom", profession: "Medical Officer (Married)" }
+        ],
         partner_preference: [{ type: "paragraph", text: "Looking for someone educated, pious, and family-oriented.", spans: [] }],
         blood_group: "B+",
         additional_information: [{ type: "paragraph", text: "Hobbies include photography and traveling.", spans: [] }],
@@ -112,18 +120,23 @@ export default async function BiodataPage() {
                     <PersonalDetails
                         nationality={data.nationality}
                         location={data.current_location}
+                        permanentAddress={data.permanent_address}
                         languages={data.languages}
-                        show={data.show_personal_details}
-                    />
-
-                    <MarriageSection
-                        show={data.show_marriage_section}
                         religion={data.religion}
                         maritalStatus={data.marital_status}
                         dateOfBirth={data.date_of_birth}
                         height={data.height}
                         bloodGroup={data.blood_group}
-                        familyInfo={data.family_information}
+                        show={data.show_personal_details}
+                    />
+
+                    <MarriageSection
+                        show={data.show_marriage_section}
+                        fatherName={data.father_name}
+                        fatherProfession={data.father_profession}
+                        motherName={data.mother_name}
+                        motherProfession={data.mother_profession}
+                        familyMembers={data.family_members}
                         partnerPreference={data.partner_preference}
                         additionalInfo={data.additional_information}
                     />
