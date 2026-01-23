@@ -6,10 +6,10 @@ type Simplify<T> = { [KeyType in keyof T]: T[KeyType] };
 
 type PickContentRelationshipFieldData<
   TRelationship extends
-    | prismic.CustomTypeModelFetchCustomTypeLevel1
-    | prismic.CustomTypeModelFetchCustomTypeLevel2
-    | prismic.CustomTypeModelFetchGroupLevel1
-    | prismic.CustomTypeModelFetchGroupLevel2,
+  | prismic.CustomTypeModelFetchCustomTypeLevel1
+  | prismic.CustomTypeModelFetchCustomTypeLevel2
+  | prismic.CustomTypeModelFetchGroupLevel1
+  | prismic.CustomTypeModelFetchGroupLevel2,
   TData extends Record<
     string,
     | prismic.AnyRegularField
@@ -37,10 +37,10 @@ type PickContentRelationshipFieldData<
     > as TGroup["id"]]: TData[TGroup["id"]] extends prismic.GroupField<
       infer TGroupData
     >
-      ? prismic.GroupField<
-          PickContentRelationshipFieldData<TGroup, TGroupData, TLang>
-        >
-      : never;
+    ? prismic.GroupField<
+      PickContentRelationshipFieldData<TGroup, TGroupData, TLang>
+    >
+    : never;
   } & // Other fields
   {
     [TFieldKey in Extract<
@@ -51,8 +51,8 @@ type PickContentRelationshipFieldData<
 
 type ContentRelationshipFieldWithData<
   TCustomType extends
-    | readonly (prismic.CustomTypeModelFetchCustomTypeLevel1 | string)[]
-    | readonly (prismic.CustomTypeModelFetchCustomTypeLevel2 | string)[],
+  | readonly (prismic.CustomTypeModelFetchCustomTypeLevel1 | string)[]
+  | readonly (prismic.CustomTypeModelFetchCustomTypeLevel2 | string)[],
   TLang extends string = string,
 > = {
   [ID in Exclude<
@@ -717,7 +717,9 @@ export type AllDocumentTypes =
   | BiodataPageDocument
   | HomepageDocument
   | ResumeDocument
-  | SettingsDocument;
+  | SettingsDocument
+  | BlogPostDocument
+  | BlogListingDocument;
 
 /**
  * Item in *About → Default → Primary → Features*
@@ -1529,3 +1531,221 @@ declare module "@prismicio/client" {
     };
   }
 }
+/**
+ * Content for Blog Post documents
+ */
+interface BlogPostDocumentData {
+  /**
+   * Title field in *Blog Post*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: *None*
+   * - **API ID Path**: blog_post.title
+   * - **Tab**: Main
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  title: prismic.KeyTextField;
+
+  /**
+   * Publish Date field in *Blog Post*
+   *
+   * - **Field Type**: Date
+   * - **Placeholder**: *None*
+   * - **API ID Path**: blog_post.publish_date
+   * - **Tab**: Main
+   * - **Documentation**: https://prismic.io/docs/fields/date
+   */
+  publish_date: prismic.DateField;
+
+  /**
+   * Category field in *Blog Post*
+   *
+   * - **Field Type**: Select
+   * - **Placeholder**: *None*
+   * - **API ID Path**: blog_post.category
+   * - **Tab**: Main
+   * - **Documentation**: https://prismic.io/docs/fields/select
+   */
+  category: prismic.SelectField<"Engineering" | "Design" | "Career" | "Systems" | "Personal">;
+
+  /**
+   * Excerpt field in *Blog Post*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: Short summary...
+   * - **API ID Path**: blog_post.excerpt
+   * - **Tab**: Main
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  excerpt: prismic.KeyTextField;
+
+  /**
+   * Featured Image field in *Blog Post*
+   *
+   * - **Field Type**: Image
+   * - **Placeholder**: *None*
+   * - **API ID Path**: blog_post.featured_image
+   * - **Tab**: Main
+   * - **Documentation**: https://prismic.io/docs/fields/image
+   */
+  featured_image: prismic.ImageField<never>;
+
+  /**
+   * Content field in *Blog Post*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: *None*
+   * - **API ID Path**: blog_post.content
+   * - **Tab**: Main
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  content: prismic.RichTextField;
+
+  /**
+   * Author Name field in *Blog Post*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Sahin Alom
+   * - **API ID Path**: blog_post.author_name
+   * - **Tab**: Main
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  author_name: prismic.KeyTextField;
+
+  /**
+   * Author Avatar field in *Blog Post*
+   *
+   * - **Field Type**: Image
+   * - **Placeholder**: *None*
+   * - **API ID Path**: blog_post.author_avatar
+   * - **Tab**: Main
+   * - **Documentation**: https://prismic.io/docs/fields/image
+   */
+  author_avatar: prismic.ImageField<never>;
+
+  /**
+   * Meta Title field in *Blog Post*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: *None*
+   * - **API ID Path**: blog_post.meta_title
+   * - **Tab**: SEO
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  meta_title: prismic.KeyTextField;
+
+  /**
+   * Meta Description field in *Blog Post*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: *None*
+   * - **API ID Path**: blog_post.meta_description
+   * - **Tab**: SEO
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  meta_description: prismic.KeyTextField;
+
+  /**
+   * Meta Image field in *Blog Post*
+   *
+   * - **Field Type**: Image
+   * - **Placeholder**: *None*
+   * - **API ID Path**: blog_post.meta_image
+   * - **Tab**: SEO
+   * - **Documentation**: https://prismic.io/docs/fields/image
+   */
+  meta_image: prismic.ImageField<never>;
+}
+
+/**
+ * Blog Post document from Prismic
+ *
+ * - **API ID**: `blog_post`
+ * - **Repeatable**: `true`
+ * - **Documentation**: https://prismic.io/docs/content-modeling
+ *
+ * @typeParam Lang - Language API ID of the document.
+ */
+export type BlogPostDocument<Lang extends string = string> =
+  prismic.PrismicDocumentWithUID<
+    Simplify<BlogPostDocumentData>,
+    "blog_post",
+    Lang
+  >;
+
+/**
+ * Content for Blog Listing documents
+ */
+interface BlogListingDocumentData {
+  /**
+   * Title field in *Blog Listing*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: Blog
+   * - **API ID Path**: blog_listing.title
+   * - **Tab**: Main
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  title: prismic.KeyTextField;
+
+  /**
+   * Description field in *Blog Listing*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: Thoughts on engineering...
+   * - **API ID Path**: blog_listing.description
+   * - **Tab**: Main
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  description: prismic.RichTextField;
+
+  /**
+   * Meta Title field in *Blog Listing*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: *None*
+   * - **API ID Path**: blog_listing.meta_title
+   * - **Tab**: SEO
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  meta_title: prismic.KeyTextField;
+
+  /**
+   * Meta Description field in *Blog Listing*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: *None*
+   * - **API ID Path**: blog_listing.meta_description
+   * - **Tab**: SEO
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  meta_description: prismic.KeyTextField;
+
+  /**
+   * Meta Image field in *Blog Listing*
+   *
+   * - **Field Type**: Image
+   * - **Placeholder**: *None*
+   * - **API ID Path**: blog_listing.meta_image
+   * - **Tab**: SEO
+   * - **Documentation**: https://prismic.io/docs/fields/image
+   */
+  meta_image: prismic.ImageField<never>;
+}
+
+/**
+ * Blog Listing document from Prismic
+ *
+ * - **API ID**: `blog_listing`
+ * - **Repeatable**: `false`
+ * - **Documentation**: https://prismic.io/docs/content-modeling
+ *
+ * @typeParam Lang - Language API ID of the document.
+ */
+export type BlogListingDocument<Lang extends string = string> =
+  prismic.PrismicDocumentWithoutUID<
+    Simplify<BlogListingDocumentData>,
+    "blog_listing",
+    Lang
+  >;
+export type { BlogPostDocumentData, BlogListingDocumentData };
