@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 
 interface NavItem {
@@ -27,6 +28,8 @@ export default function Header({ siteName, navigationItems, socialLinks }: Heade
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const [mounted, setMounted] = useState(false);
+    const pathname = usePathname();
+    const router = useRouter();
 
     useEffect(() => {
         setMounted(true);
@@ -37,6 +40,20 @@ export default function Header({ siteName, navigationItems, socialLinks }: Heade
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
+
+    // Handle hash scrolling after navigation
+    useEffect(() => {
+        const hash = window.location.hash;
+        if (hash) {
+            // Small delay to ensure DOM is ready
+            setTimeout(() => {
+                const element = document.querySelector(hash);
+                if (element) {
+                    element.scrollIntoView({ behavior: "smooth" });
+                }
+            }, 100);
+        }
+    }, [pathname]);
 
     // Lock body scroll when menu is open
     useEffect(() => {
@@ -49,12 +66,20 @@ export default function Header({ siteName, navigationItems, socialLinks }: Heade
     }, [isMenuOpen]);
 
     const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, link: string) => {
+        setIsMenuOpen(false);
+
         if (link.startsWith("#")) {
-            e.preventDefault();
-            const element = document.querySelector(link);
-            if (element) {
-                element.scrollIntoView({ behavior: "smooth" });
-                setIsMenuOpen(false);
+            if (pathname === "/") {
+                // On homepage, just scroll
+                e.preventDefault();
+                const element = document.querySelector(link);
+                if (element) {
+                    element.scrollIntoView({ behavior: "smooth" });
+                }
+            } else {
+                // On other pages, navigate to homepage with hash
+                e.preventDefault();
+                router.push(`/${link}`);
             }
         }
     };
