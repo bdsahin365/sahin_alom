@@ -8,6 +8,7 @@ import Image from "next/image";
 
 import { filter } from "@prismicio/client";
 import { FeaturedPostsGrid } from "@/components/Blog/FeaturedPostsGrid";
+import BlogCard from "@/components/Blog/BlogCard";
 import "../blog.css";
 
 
@@ -73,8 +74,20 @@ export default async function BlogPostPage({ params }: { params: Promise<{ uid: 
             />
 
             <main className="blog-post-template">
-                <article className="blog-post-article">
-                    <header className="blog-post-header">
+                <article className="blog-post-article pt-12 md:pt-20">
+                    <div className="mb-12">
+                        <a 
+                            href="/blog" 
+                            className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors group"
+                        >
+                            <svg className="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            Back to Blog
+                        </a>
+                    </div>
+
+                    <header className="blog-post-header mb-16">
                         <div className="blog-post-meta-top">
                             <span
                                 className="blog-category-label"
@@ -97,34 +110,38 @@ export default async function BlogPostPage({ params }: { params: Promise<{ uid: 
                         )}
 
                         {post.data.author_name && (
-                            <div className="blog-author-block">
+                            <div className="flex items-center justify-center gap-4 mt-10 p-6 bg-[var(--surface)] rounded-2xl border border-[var(--card-border)] max-w-sm mx-auto">
                                 {post.data.author_avatar?.url && (
-                                    <Image
-                                        src={post.data.author_avatar.url}
-                                        alt={post.data.author_name}
-                                        width={40}
-                                        height={40}
-                                        className="author-avatar"
-                                    />
+                                    <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-[var(--accent)]/20 shadow-sm">
+                                        <Image
+                                            src={post.data.author_avatar.url}
+                                            alt={post.data.author_name}
+                                            fill
+                                            className="object-cover"
+                                        />
+                                    </div>
                                 )}
-                                <div className="author-info">
-                                    <span className="author-name">{post.data.author_name}</span>
+                                <div className="text-left">
+                                    <span className="block text-xs uppercase tracking-widest text-[var(--accent)] font-bold mb-0.5">Author</span>
+                                    <span className="block text-base font-bold text-[var(--foreground)]">{post.data.author_name}</span>
                                 </div>
                             </div>
                         )}
                     </header>
 
                     {post.data.featured_image?.url && (
-                        <figure className="blog-featured-image-container">
-                            <Image
-                                src={post.data.featured_image.url}
-                                alt={post.data.featured_image.alt || post.data.title || ""}
-                                width={1200}
-                                height={630}
-                                priority
-                                className="blog-featured-image"
-                                sizes="(max-width: 768px) 100vw, 900px"
-                            />
+                        <figure className="blog-featured-image-container group mb-16">
+                            <div className="relative aspect-[16/9] md:aspect-[21/9] rounded-3xl overflow-hidden shadow-2xl border border-[var(--card-border)] bg-[var(--surface)]">
+                                <Image
+                                    src={post.data.featured_image.url}
+                                    alt={post.data.featured_image.alt || post.data.title || ""}
+                                    fill
+                                    priority
+                                    className="object-cover group-hover:scale-[1.02] transition-transform duration-1000"
+                                    sizes="(max-width: 1200px) 100vw, 1200px"
+                                />
+                                <div className="absolute inset-0 ring-1 ring-inset ring-white/10" />
+                            </div>
                         </figure>
                     )}
 
@@ -133,14 +150,32 @@ export default async function BlogPostPage({ params }: { params: Promise<{ uid: 
                     </div>
                 </article>
 
-                {/* Related Posts */}
+                {/* Related Posts: More Compact and Nice */}
                 {relatedPosts.length > 0 && (
-                    <section className="blog-related-section">
-                        <div className="related-header">
-                            <h2 className="related-title">Read Next</h2>
-                            <a href="/blog" className="view-all-link">View all posts</a>
+                    <section className="blog-related-section mt-24 border-t border-[var(--divider)] pt-16">
+                        <div className="max-w-4xl mx-auto px-4 md:px-6">
+                            <div className="flex items-center justify-between mb-10">
+                                <h2 className="text-2xl font-black text-[var(--foreground)] tracking-tight">Read Next</h2>
+                                <a href="/blog" className="text-sm font-bold text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors">
+                                    All articles →
+                                </a>
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                {relatedPosts.map((rp: any) => (
+                                    <BlogCard 
+                                        key={rp.id}
+                                        uid={rp.uid}
+                                        title={rp.data.title}
+                                        excerpt={rp.data.excerpt}
+                                        featuredImage={rp.data.featured_image}
+                                        category={rp.data.category}
+                                        publishDate={rp.data.publish_date}
+                                        content={rp.data.content}
+                                        variant="list" 
+                                    />
+                                ))}
+                            </div>
                         </div>
-                        <FeaturedPostsGrid posts={relatedPosts} />
                     </section>
                 )}
             </main>

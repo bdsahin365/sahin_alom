@@ -11,18 +11,34 @@ export default async function BlogPage() {
     const blogListing: any = await client.getSingle("blog_listing").catch(() => ({
         data: {
             page_title: "Blog",
-            page_description: [{ type: "paragraph", text: "Thoughts on design, development, and systems thinking.", spans: [] }],
+            page_description: [{ type: "paragraph", text: "Thoughts on electrical engineering, industrial maintenance, and systems stability.", spans: [] }],
             meta_title: "Blog - Sahin Alom",
-            meta_description: "Articles and insights on UX design, development, and systems thinking."
+            meta_description: "Articles and insights on electrical engineering and industrial maintenance."
         }
     }));
 
-    // Fetch all blog posts
-    const blogPosts = await client.getAllByType("blog_post", {
+    let blogPosts = await client.getAllByType("blog_post", {
         orderings: [
             { field: "my.blog_post.publish_date", direction: "desc" }
         ]
     }).catch(() => []);
+
+    // Create a dummy post if no posts are found
+    if (!blogPosts || blogPosts.length === 0) {
+        blogPosts = [
+            {
+                id: "dummy-1",
+                data: {
+                    title: "The Importance of Preventive Maintenance in Industrial Scalability",
+                    excerpt: "Preventive maintenance is crucial for preventing unexpected failures and ensuring smooth operations...",
+                    publish_date: "2026-04-10",
+                    category: "Maintenance",
+                    featured_image: { url: "" },
+                    read_time: 5
+                }
+            } as any
+        ];
+    }
 
     // Fetch settings for header/footer
     const settings: any = await client.getSingle("settings" as any).catch(() => ({
@@ -33,6 +49,7 @@ export default async function BlogPage() {
                 { label: "About", link: "#about" },
                 { label: "Skills", link: "#skills" },
                 { label: "Resume", link: "/resume" },
+                { label: "Tools", link: "/tools" },
                 { label: "Blog", link: "/blog" },
                 { label: "Contact", link: "#contact" },
             ],
@@ -80,7 +97,7 @@ export async function generateMetadata() {
 
     return {
         title: blogListing?.data?.meta_title || "Blog - Sahin Alom",
-        description: blogListing?.data?.meta_description || "Articles and insights on UX design, development, and systems thinking.",
+        description: blogListing?.data?.meta_description || "Articles and insights on electrical engineering and industrial maintenance.",
         openGraph: {
             images: [blogListing?.data?.meta_image?.url || ""],
         },

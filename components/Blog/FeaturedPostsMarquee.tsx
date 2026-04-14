@@ -39,7 +39,7 @@ export function FeaturedPostsMarquee({ posts }: FeaturedPostsMarqueeProps) {
                             category={post.data.category}
                             publishDate={post.data.publish_date}
                             content={post.data.content}
-                            variant="dark"
+                            variant="grid"
                         />
                     </div>
                 ))}

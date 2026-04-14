@@ -53,78 +53,88 @@ export default async function ResumePage() {
                 socialLinks={socialLinks}
             />
 
-            <div className="min-h-screen relative overflow-hidden bg-black text-white selection:bg-indigo-500/30 pt-24 md:pt-32">
-                {/* Aurora Background */}
-                <div className="fixed inset-0 z-0 pointer-events-none">
+            <div className="min-h-screen relative overflow-hidden bg-[var(--background)] text-[var(--foreground)] pt-24 md:pt-36">
+                {/* Re-introduced Aurora Background */}
+                <div className="fixed inset-0 z-0 pointer-events-none opacity-40 dark:opacity-60">
                     <div className="aurora-background">
-                        <div className="aurora-gradient aurora-gradient-1"></div>
-                        <div className="aurora-gradient aurora-gradient-2"></div>
-                        <div className="aurora-gradient aurora-gradient-3"></div>
+                        <div className="aurora-gradient aurora-gradient-1 bg-amber-500/30 blur-[120px]"></div>
+                        <div className="aurora-gradient aurora-gradient-2 bg-orange-600/20 blur-[120px]"></div>
+                        <div className="aurora-gradient aurora-gradient-3 bg-yellow-400/20 blur-[120px]"></div>
                     </div>
                 </div>
 
-                <div className="relative z-10 container mx-auto px-4 md:px-6 py-12 md:py-20">
-                    <div className="max-w-6xl mx-auto w-full flex flex-col items-start gap-2 mb-0 md:mb-12 mt-0 md:mt-8 pb-12 border-b border-white/10">
+                <div className="relative z-10 container mx-auto px-4 md:px-6">
+                    {/* Minimal Header */}
+                    <div className="max-w-6xl mx-auto mb-16 md:mb-24">
                         <Link
                             href="/"
-                            className="group flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 text-sm text-white/80 transition-all hover:pr-6"
+                            className="group inline-flex items-center gap-2 mb-8 text-sm font-bold text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
                         >
-                            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-                            <span className="text-xs font-medium uppercase tracking-wider">Back to Home</span>
+                            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                            <span>BACK TO HOME</span>
                         </Link>
 
-                        <div>
-                            <h1 className="text-3xl font-bold text-white mb-2">
+                        <div className="border-l-8 border-[var(--accent)] pl-8 md:pl-12">
+                            <h1 className="text-5xl md:text-8xl lg:text-9xl font-black text-[var(--foreground)] mb-4 tracking-tighter uppercase leading-[0.85]">
                                 Resume
                             </h1>
-                            <p className="text-white/50 text-base">Professional Experience & Education</p>
+                            <p className="text-xl md:text-3xl text-[var(--text-secondary)] font-medium max-w-3xl leading-relaxed">
+                                Professional Experience & Academic Foundation.
+                            </p>
                         </div>
                     </div>
 
-                    <div className="max-w-6xl mx-auto space-y-24 mb-16 mt-12">
+                    {/* Slices Grid / Layout */}
+                    <div className="max-w-6xl mx-auto space-y-32 mb-32">
                         {resume ? (
                             <SliceZone slices={resume.data.slices} components={components} />
                         ) : (
-                            <div className="text-center py-20 text-white/50">
+                            <div className="text-center py-20 text-[var(--text-secondary)]">
                                 <p>Content is being updated. Please check back soon.</p>
                             </div>
                         )}
                     </div>
 
-                    {/* Download Section - Redesigned */}
-                    <div className="max-w-6xl mx-auto mb-20">
-                        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-zinc-900 to-black border border-white/10 p-8 md:p-12 text-center">
-                            <div className="relative z-10">
-                                <h3 className="text-2xl font-bold text-white mb-3">Download Resume</h3>
-                                <p className="text-white/60 mb-8 max-w-lg mx-auto">Get a copy of my resume in PDF format for offline viewing or printing.</p>
+                    {/* Download Section - Redesigned & Vibrant */}
+                    <div className="max-w-6xl mx-auto mb-32">
+                        <div className="p-8 md:p-20 rounded-[3rem] bg-gradient-to-br from-[var(--surface)] to-[var(--background)] border border-[var(--card-border)] relative overflow-hidden group shadow-2xl">
+                            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-16">
+                                <div className="max-w-2xl">
+                                    <div className="inline-block px-4 py-1.5 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] text-xs font-black tracking-widest uppercase mb-6 border border-[var(--accent)]/20">
+                                        RESOURCES
+                                    </div>
+                                    <h3 className="text-4xl md:text-6xl font-black text-[var(--foreground)] mb-6 tracking-tighter leading-none">Need a hard copy?</h3>
+                                    <p className="text-[var(--text-secondary)] text-xl md:text-2xl leading-relaxed font-medium">Download a professional PDF version of my resume or full CV for offline review.</p>
+                                </div>
 
-                                <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
+                                <div className="flex flex-col sm:flex-row gap-4 shrink-0">
                                     <a
                                         href="/Resume.pdf"
                                         download
-                                        className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20"
+                                        className="inline-flex items-center justify-center gap-3 px-8 py-3.5 rounded-2xl bg-[var(--accent)] text-black text-sm font-black hover:scale-[1.05] active:scale-[0.98] transition-all shadow-xl shadow-[var(--accent)]/20 uppercase tracking-widest"
                                     >
                                         <FileText className="w-5 h-5" />
-                                        <span>Download Resume</span>
-                                        <ChevronRight className="w-4 h-4 opacity-50" />
+                                        <span>RESUME</span>
                                     </a>
                                     <a
                                         href="/MdSahinAlom_CV_BSc_EEE.pdf"
                                         download
-                                        className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium backdrop-blur-sm border border-white/10 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+                                        className="inline-flex items-center justify-center gap-3 px-8 py-3.5 rounded-2xl bg-white dark:bg-black/40 border-2 border-[var(--card-border)] text-[var(--foreground)] text-sm font-black hover:bg-[var(--foreground)] hover:text-[var(--background)] transition-all shadow-lg uppercase tracking-widest"
                                     >
                                         <Download className="w-5 h-5" />
-                                        <span>Download CV</span>
+                                        <span>CV</span>
                                     </a>
                                 </div>
                             </div>
-
-                            {/* Decorative background elements */}
-                            <div className="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
-                            <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                            
+                            {/* Visual Richness: Decorative Accents */}
+                            <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--accent)]/10 rounded-full blur-[100px] -mr-32 -mt-32 group-hover:bg-[var(--accent)]/20 transition-colors duration-700" />
+                            <div className="absolute bottom-0 left-0 w-64 h-64 bg-yellow-400/5 rounded-full blur-[80px] -ml-24 -mb-24 group-hover:bg-yellow-400/10 transition-colors duration-700" />
+                            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03] pointer-events-none" />
                         </div>
                     </div>
                 </div>
+                
                 {/* Let's Connect Section */}
                 <ResumeContact email={settings.data.contactEmail} phone={settings.data.phoneNumber} socialLinks={socialLinks} />
             </div>

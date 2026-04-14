@@ -4,9 +4,34 @@ import { components } from "@/slices";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SocialIcons from "@/components/SocialIcons";
+import { FeaturedPostsGrid } from "@/components/Blog/FeaturedPostsGrid";
 
 export default async function Home() {
   const client = createClient();
+
+  let blogPosts = await client.getAllByType("blog_post", {
+      orderings: [
+          { field: "my.blog_post.publish_date", direction: "desc" }
+      ]
+  }).catch(() => []);
+
+  // Create a dummy post if no posts are found
+  if (!blogPosts || blogPosts.length === 0) {
+      blogPosts = [
+          {
+              id: "dummy-1",
+              uid: "preventive-maintenance",
+              data: {
+                  title: "The Importance of Preventive Maintenance in Industrial Scalability",
+                  excerpt: "Preventive maintenance is crucial for preventing unexpected failures and ensuring smooth operations...",
+                  publish_date: "2026-04-10",
+                  category: "Maintenance",
+                  featured_image: { url: "" },
+                  read_time: 5
+              }
+          } as any
+      ];
+  }
 
   // Fetch homepage data
   const homepage: any = await client.getSingle("homepage").catch(() => ({
@@ -17,10 +42,10 @@ export default async function Home() {
           slice_type: "hero",
           variation: "default",
           primary: {
-            eyebrow: "UX • Systems • AI",
+            eyebrow: "Electrical • Maintenance • Systems",
             name: "Sahin Alom",
-            headline: [{ type: "heading1", text: "UX Designer with Engineering Systems Thinking", spans: [] }],
-            description: [{ type: "paragraph", text: "I combine design thinking with systems engineering principles to create intuitive, scalable digital experiences.", spans: [] }],
+            headline: [{ type: "heading1", text: "Electrical Engineer with Systems Thinking.", spans: [] }],
+            description: [{ type: "paragraph", text: "I combine electrical engineering principles with systems maintenance to ensure scalable and reliable industrial operations.", spans: [] }],
             primaryCtaLabel: "Get in Touch",
             primaryCtaLink: "#contact",
             secondaryCtaLabel: "Linkedin",
@@ -35,10 +60,10 @@ export default async function Home() {
           variation: "default",
           primary: {
             sectionTitle: "About",
-            headline: [{ type: "heading2", text: "Architecting systems, not just screens.", spans: [] }],
+            headline: [{ type: "heading2", text: "Maintaining systems, ensuring reliability.", spans: [] }],
             description: [
               { type: "paragraph", text: "Bridging the gap between vision and execution.", spans: [{ start: 0, end: 46, type: "strong" }] },
-              { type: "paragraph", text: "I bring an engineering mindset to creative problems. With a background in Electrical Engineering and hands-on experience building SaaS products, I don't just make things look good—I ensure they work, scale, and drive specific business outcomes.", spans: [] }
+              { type: "paragraph", text: "I bring an engineering mindset to industrial problems. As a Maintenance Engineer at Styllent Knitt Limited with a background in Electrical Engineering, I ensure operations run smoothly, safely, and efficiently.", spans: [] }
             ],
             image: {
               url: "/sahinalom-about.png",
@@ -48,9 +73,9 @@ export default async function Home() {
             }
           },
           items: [
-            { title: "SYSTEMIC", description: "Scalable design systems over one-off artifacts." },
-            { title: "TECHNICAL", description: "Deep understanding of the code that powers the design." },
-            { title: "STRATEGIC", description: "Focus on metrics, conversion, and user retention." }
+            { title: "MAINTENANCE", description: "Preventive and corrective maintenance of industrial systems." },
+            { title: "TECHNICAL", description: "Deep understanding of electrical infrastructure and PLCs." },
+            { title: "SYSTEMIC", description: "Scalable solutions for continuous industrial improvement." }
           ]
         },
         {
@@ -59,24 +84,24 @@ export default async function Home() {
           variation: "default",
           primary: {
             sectionTitle: "Skills",
-            intro: "Tools and strengths I use to design, validate, and execute digital systems."
+            intro: "Tools and strengths I use to maintain and optimize electrical systems."
           },
           items: [
             {
-              groupTitle: "Design",
-              skills: "UI/UX Design, Design Systems, Wireframing, Interaction Design, Visual Hierarchy, Prototyping"
+              groupTitle: "Electrical Engineering",
+              skills: "Circuit Design, Power Distribution, Motor Controls, Switchgears, Electrical Safety"
             },
             {
-              groupTitle: "Research",
-              skills: "User Journeys, Usability Testing, Competitor Analysis, Personas, A/B Testing"
+              groupTitle: "Maintenance",
+              skills: "Preventive Maintenance, Corrective Maintenance, Troubleshooting, Fault Analysis"
             },
             {
-              groupTitle: "Engineering Systems",
-              skills: "Systems Thinking, Workflow Optimization, Technical Specs, Scalability, Logical Architecture"
+              groupTitle: "Systems Operation",
+              skills: "Industrial Automation, Logic Controllers (PLCs), Process Optimization, Equipment Reliability"
             },
             {
-              groupTitle: "AI & Automation",
-              skills: "Prompt Engineering, AI Workflows, Cursor/V0, Process Automation, LLM Integration"
+              groupTitle: "Tools & Software",
+              skills: "AutoCAD Electrical, SCADA, Maintenance Management Systems, Diagnostic Equipment"
             }
           ]
         },
@@ -91,8 +116,8 @@ export default async function Home() {
           items: []
         }
       ],
-      meta_title: "Sahin Alom - UX Designer",
-      meta_description: "UX Designer with Engineering Systems Thinking",
+      meta_title: "Sahin Alom - Electrical Engineer",
+      meta_description: "Electrical Engineer based in Bangladesh, currently working in Maintenance at Styllent Knitt Limited.",
       meta_image: {}
     },
   }));
@@ -107,6 +132,7 @@ export default async function Home() {
         { label: "About", link: "#about" },
         { label: "Skills", link: "#skills" },
         { label: "Resume", link: "/resume" },
+        { label: "Tools", link: "/tools" },
         { label: "Contact", link: "#contact" },
       ],
       linkedinUrl: { url: "" },
@@ -126,16 +152,57 @@ export default async function Home() {
     instagramUrl: settings.data.instagramUrl,
   };
 
+  // Ensure Tools is always in the nav even if Prismic settings don't include it
+  const rawNavItems: { label: string; link: string }[] = settings.data.navigationItems || [];
+  const navigationItems = rawNavItems.some((item: any) => item.link === '/tools')
+    ? rawNavItems
+    : [...rawNavItems, { label: "Tools", link: "/tools" }];
+
+  // Split slices: hero+about first, then blog preview, then skills+contact below
+  const allSlices: any[] = homepage.data.slices || [];
+  const aboveSlices = allSlices.filter((s: any) => ['hero', 'about'].includes(s.slice_type));
+  const belowSlices = allSlices.filter((s: any) => !['hero', 'about'].includes(s.slice_type));
+
   return (
     <>
       <Header
         siteName={settings.data.siteName || "Sahin Alom"}
-        navigationItems={settings.data.navigationItems || []}
+        navigationItems={navigationItems}
         socialLinks={socialLinks}
       />
 
       <main>
-        <SliceZone slices={homepage.data.slices} components={components} />
+        {/* Hero, About, Skills */}
+        <SliceZone slices={aboveSlices} components={components} />
+
+        {/* Latest Insights — between About/Skills and Contact */}
+        <section id="blog" className="py-20 bg-[var(--surface)] relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--card-border)] to-transparent" />
+          <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--card-border)] to-transparent" />
+
+          <div className="max-w-6xl mx-auto px-4 md:px-6">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-12">
+              <div>
+                <span className="skills-title mb-3 inline-block">From the Blog</span>
+                <h2 className="text-2xl md:text-3xl font-bold text-[var(--foreground)]">Latest Insights</h2>
+              </div>
+              <a
+                href="/blog"
+                className="inline-flex items-center gap-2 text-[var(--accent)] hover:text-[var(--accent-hover)] font-semibold text-sm transition-colors group"
+              >
+                View all articles
+                <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </a>
+            </div>
+
+            <FeaturedPostsGrid posts={blogPosts.slice(0, 3)} variant="grid" />
+          </div>
+        </section>
+
+        {/* Contact and remaining slices */}
+        <SliceZone slices={belowSlices} components={components} />
       </main>
 
       <Footer footerText={settings.data.footerText} />
@@ -145,6 +212,7 @@ export default async function Home() {
       <SocialIcons socialLinks={socialLinks} targetId="contact-social-icons" />
     </>
   );
+
 }
 
 export async function generateMetadata() {
@@ -152,8 +220,8 @@ export async function generateMetadata() {
   const homepage = await client.getSingle("homepage").catch(() => null);
 
   return {
-    title: homepage?.data?.meta_title || "Sahin Alom - UX Designer",
-    description: homepage?.data?.meta_description || "UX Designer with Engineering Systems Thinking",
+    title: homepage?.data?.meta_title || "Sahin Alom - Electrical Engineer",
+    description: homepage?.data?.meta_description || "Electrical Engineer based in Bangladesh.",
     openGraph: {
       images: [homepage?.data?.meta_image?.url || ""],
     },

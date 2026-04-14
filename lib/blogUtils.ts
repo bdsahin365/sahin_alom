@@ -63,27 +63,27 @@ export function formatDate(dateString: string | null | undefined): string {
  */
 export function getCategoryColor(category: string | null | undefined): { bg: string; text: string; border: string } {
     const colors: Record<string, { bg: string; text: string; border: string }> = {
-        Design: {
+        Electrical: {
             bg: 'rgba(139, 92, 246, 0.1)',
             text: '#8b5cf6',
             border: 'rgba(139, 92, 246, 0.3)'
         },
-        Development: {
+        Maintenance: {
             bg: 'rgba(59, 130, 246, 0.1)',
             text: '#3b82f6',
             border: 'rgba(59, 130, 246, 0.3)'
         },
-        AI: {
+        Automation: {
             bg: 'rgba(236, 72, 153, 0.1)',
             text: '#ec4899',
             border: 'rgba(236, 72, 153, 0.3)'
         },
-        Business: {
+        Engineering: {
             bg: 'rgba(34, 197, 94, 0.1)',
             text: '#22c55e',
             border: 'rgba(34, 197, 94, 0.3)'
         },
-        UX: {
+        Safety: {
             bg: 'rgba(249, 115, 22, 0.1)',
             text: '#f97316',
             border: 'rgba(249, 115, 22, 0.3)'

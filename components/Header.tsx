@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface NavItem {
     label: string;
@@ -178,8 +179,9 @@ export default function Header({ siteName, navigationItems, socialLinks }: Heade
                 </Link>
 
                 {/* Desktop Nav */}
-                <nav className="header-nav-desktop">
+                <nav className="header-nav-desktop flex items-center gap-6">
                     <NavContent />
+                    <ThemeToggle />
                 </nav>
 
                 {/* Mobile Nav Portal */}
@@ -189,13 +191,16 @@ export default function Header({ siteName, navigationItems, socialLinks }: Heade
                             className="header-hamburger"
                             onClick={() => setIsMenuOpen(false)}
                             aria-label="Close menu"
-                            style={{ position: 'absolute', top: '2rem', right: '1.5rem', display: 'block', zIndex: 10001 }}
+                            style={{ position: 'absolute', top: '2rem', right: '1.5rem', display: 'flex', zIndex: 10001 }}
                         >
                             <span className="hamburger-line hamburger-line-1-open"></span>
                             <span className="hamburger-line hamburger-line-2-open"></span>
                             <span className="hamburger-line hamburger-line-3-open"></span>
                         </button>
                         <NavContent mobile />
+                        <div className="mt-8 flex justify-center w-full opacity-0 animate-in fade-in slide-in-from-bottom-5 duration-300 delay-500 fill-mode-forwards" style={{ animationDelay: '0.7s' }}>
+                            <ThemeToggle />
+                        </div>
                     </div>,
                     document.body
                 )}

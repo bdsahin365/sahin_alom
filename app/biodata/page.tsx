@@ -15,8 +15,8 @@ export async function generateMetadata(): Promise<Metadata> {
     const biodata = await client.getSingle("biodata_page" as any).catch(() => null);
 
     return {
-        title: (biodata?.data as any)?.meta_title || "Sahin Alom - Professional Biodata",
-        description: (biodata?.data as any)?.meta_description || "Professional Biodata of Sahin Alom",
+        title: (biodata?.data as any)?.meta_title || "Sahin Alom - Electrical Engineer Biodata",
+        description: (biodata?.data as any)?.meta_description || "Professional Biodata of Sahin Alom, Electrical Engineer",
         openGraph: {
             images: [(biodata?.data as any)?.meta_image?.url || ""],
         },
@@ -34,15 +34,15 @@ export default async function BiodataPage() {
     // Mock data for development if Prismic doc doesn't exist yet
     const data = (biodata?.data as any) || {
         name: "Sahin Alom",
-        professional_headline: "UX Designer with Engineering Systems Thinking",
+        professional_headline: "Electrical Engineer • Maintenance @ Styllent Knitt Limited",
         summary: [
-            { type: "paragraph", text: "I combine design thinking with systems engineering principles to create intuitive, scalable digital experiences. My background in Electrical Engineering allows me to bridge the gap between technical constraints and user needs.", spans: [] }
+            { type: "paragraph", text: "I am an Electrical Engineer currently working in Maintenance at Styllent Knitt Limited. I specialize in maintaining, troubleshooting, and optimizing industrial electrical systems to keep operations running smoothly, safely, and efficiently.", spans: [] }
         ],
         profile_photo: { url: "" }, // Placeholder will be shown
-        core_skills: "UX Research, Systems Design, React, Next.js, AI Workflows",
+        core_skills: "Electrical Engineering, Industrial Maintenance, PLCs, Troubleshooting, Power Systems",
         education: "BSc in Electrical & Electronic Engineering (EEE)",
-        work_type: "Freelance / Remote",
-        current_focus: "UX Systems, AI-driven Design",
+        work_type: "Full-Time On-site",
+        current_focus: "Industrial Automation, Preventive Maintenance",
         show_personal_details: true,
         nationality: "Bangladeshi",
         current_location: "Sylhet, Bangladesh",
@@ -81,6 +81,7 @@ export default async function BiodataPage() {
     const navItems = (settings?.data?.navigationItems as any) || [
         { label: "Home", link: "/" },
         { label: "Biodata", link: "/biodata" },
+        { label: "Tools", link: "/tools" },
     ];
 
     return (
@@ -93,8 +94,8 @@ export default async function BiodataPage() {
                 />
             </div>
 
-            <main className="min-h-screen bg-[#0A0A0A] text-white pt-24 md:pt-32 pb-16 md:pb-20 px-4 md:px-6 print:bg-white print:text-black print:pt-0 print:pb-0 print:h-auto print:overflow-visible">
-                <div className="max-w-4xl mx-auto bg-[#111111] border border-white/5 rounded-xl md:rounded-2xl p-5 md:p-8 lg:p-12 shadow-2xl print:shadow-none print:border-none print:bg-white print:text-black print:p-0 print:m-0 print:w-full print:max-w-none print:rounded-none">
+            <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)] pt-24 md:pt-32 pb-16 md:pb-20 px-4 md:px-6 print:bg-white print:text-black print:pt-0 print:pb-0 print:h-auto print:overflow-visible">
+                <div className="max-w-4xl mx-auto bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl md:rounded-2xl p-5 md:p-8 lg:p-12 shadow-2xl print:shadow-none print:border-none print:bg-white print:text-black print:p-0 print:m-0 print:w-full print:max-w-none print:rounded-none">
 
                     <BiodataHeader
                         name={data.name}
@@ -150,8 +151,8 @@ export default async function BiodataPage() {
                         guardianInfo={data.guardian_contact_info}
                     />
 
-                    <div className="mt-12 text-center print:hidden border-t border-white/5 pt-8">
-                        <p className="text-gray-500 mb-4 text-sm">Need a hard copy?</p>
+                    <div className="mt-12 text-center print:hidden border-t border-[var(--card-border)] pt-8">
+                        <p className="text-[var(--text-secondary)] mb-4 text-sm">Need a hard copy?</p>
                         <PrintButton />
                     </div>
                 </div>
