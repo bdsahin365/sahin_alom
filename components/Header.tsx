@@ -205,16 +205,19 @@ export default function Header({ siteName, navigationItems, socialLinks }: Heade
                     document.body
                 )}
 
-                {/* Hamburger Toggle (Visible when menu closed) */}
-                <button
-                    className="header-hamburger"
-                    onClick={() => setIsMenuOpen(true)}
-                    aria-label="Toggle menu"
-                >
-                    <span className="hamburger-line"></span>
-                    <span className="hamburger-line"></span>
-                    <span className="hamburger-line"></span>
-                </button>
+                <div className="flex items-center gap-3 md:hidden">
+                    <ThemeToggle />
+                    {/* Hamburger Toggle (Visible when menu closed) */}
+                    <button
+                        className="header-hamburger"
+                        onClick={() => setIsMenuOpen(true)}
+                        aria-label="Toggle menu"
+                    >
+                        <span className="hamburger-line"></span>
+                        <span className="hamburger-line"></span>
+                        <span className="hamburger-line"></span>
+                    </button>
+                </div>
             </div>
         </header>
     );
