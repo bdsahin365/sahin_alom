@@ -105,31 +105,6 @@ export default function SiteView() {
           </div>
         </div>
       </button>
-
-      {/* Subtle admin trigger */}
-      <button
-        onClick={() => navigate('/admin')}
-        title="Open dashboard (Ctrl+Shift+E)"
-        style={{
-          position: 'fixed', bottom: 20, right: 20, zIndex: 400,
-          width: 36, height: 36, borderRadius: '50%',
-          background: 'rgba(196,125,14,0.12)',
-          border: '1px solid rgba(196,125,14,0.25)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', transition: 'all 0.2s', color: 'var(--accent)',
-          fontSize: 14,
-        }}
-        onMouseEnter={e => {
-          (e.currentTarget as HTMLElement).style.background = 'rgba(196,125,14,0.22)'
-          ;(e.currentTarget as HTMLElement).style.transform = 'scale(1.1)'
-        }}
-        onMouseLeave={e => {
-          (e.currentTarget as HTMLElement).style.background = 'rgba(196,125,14,0.12)'
-          ;(e.currentTarget as HTMLElement).style.transform = 'scale(1)'
-        }}
-      >
-        ✎
-      </button>
     </>
   )
 }
