@@ -132,9 +132,9 @@ export const PROJECTS: Project[] = [
     client: 'Styllent Knit Limited',
     location: 'Dhaka, Bangladesh',
     capacity: '1250 KVA',
-    year: '2024',
+    year: '2026',
     category: 'Industrial Power · Standby Generation',
-    img: 'https://images.unsplash.com/photo-1581091226033-d5c48150dbaa?w=1400&h=900&fit=crop&auto=format&q=85',
+    img: '/src/img/projects/1250-kva-cummins-diesel-generator.jpg',
     imgColor: '#1A1208',
     summary: 'End-to-end engineering, installation, and commissioning of a 1250 KVA standby diesel generator set with Automatic Transfer Switch (ATS) for Styllent Knit Limited — ensuring 100% power reliability for continuous garment knitting and sewing lines.',
     scope: [
@@ -180,7 +180,7 @@ export const PROJECTS: Project[] = [
     capacity: '2500 KVA',
     year: '2023',
     category: 'Substation Engineering · Power Quality',
-    img: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1400&h=900&fit=crop&auto=format&q=85',
+    img: '/src/img/projects/pfi.jpg',
     imgColor: '#0F0A00',
     summary: 'Modernization of an 11/0.415 kV 2500 KVA indoor substation, HT vacuum circuit breaker (VCB) overhaul, and installation of a 1200 kVAR microprocessor-controlled Power Factor Improvement (PFI) plant.',
     scope: [
@@ -203,7 +203,7 @@ export const PROJECTS: Project[] = [
     capacity: '1600A / 1000 KVA',
     year: '2023',
     category: 'Industrial Safety · RSC Compliance',
-    img: 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=1400&h=900&fit=crop&auto=format&q=85',
+    img: '/src/img/projects/busbar-trunking.webp',
     imgColor: '#050D1A',
     summary: 'Comprehensive electrical safety remediation and installation of 1600A sandwich-type Busbar Trunking (BBT) across 4 production floors to satisfy RMG Sustainability Council (RSC) and Accord/Alliance safety guidelines.',
     scope: [
@@ -245,7 +245,7 @@ export const EXPERIENCE: Experience[] = [
     role: 'Junior Electrical Engineer',
     company: 'Styllent Knit Limited',
     location: 'Dhaka, Bangladesh',
-    period: '2024 — Present',
+    period: 'Apr 2026 — Present',
     current: true,
     description: 'Responsible for electrical system maintenance, power distribution, and infrastructure projects at a large garment manufacturing facility.',
     highlights: [
