@@ -461,6 +461,19 @@ export default function StoryModal({ isOpen, onClose, initialIndex = 0 }: Props)
           }}
         />
 
+        {/* ── Silent background preloader for next story ── */}
+        {STORIES[currentIndex + 1] && (
+          <video
+            key={`preload-${STORIES[currentIndex + 1].id}`}
+            src={STORIES[currentIndex + 1].videoUrl}
+            preload="auto"
+            muted
+            playsInline
+            style={{ display: 'none' }}
+            aria-hidden
+          />
+        )}
+
         {/* ── Video Player Core ── */}
         <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
 
@@ -541,6 +554,7 @@ export default function StoryModal({ isOpen, onClose, initialIndex = 0 }: Props)
             src={currentStory.videoUrl}
             autoPlay
             playsInline
+            preload="auto"
             muted={isMuted}
             onTimeUpdate={handleTimeUpdate}
             onEnded={handleVideoEnded}
