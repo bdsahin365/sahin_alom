@@ -56,6 +56,7 @@ export default function StoryModal({ isOpen, onClose, initialIndex = 0 }: Props)
   const [reactions, setReactions] = useState<FloatingReaction[]>([])
   const [replyText, setReplyText] = useState('')
   const [replySent, setReplySent] = useState(false)
+  const [isVideoLoading, setIsVideoLoading] = useState(true)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -80,6 +81,7 @@ export default function StoryModal({ isOpen, onClose, initialIndex = 0 }: Props)
     if (currentIndex < STORIES.length - 1) {
       setCurrentIndex(prev => prev + 1)
       setProgress(0)
+      setIsVideoLoading(true)
     } else {
       onClose()
     }
@@ -89,6 +91,7 @@ export default function StoryModal({ isOpen, onClose, initialIndex = 0 }: Props)
     if (currentIndex > 0) {
       setCurrentIndex(prev => prev - 1)
       setProgress(0)
+      setIsVideoLoading(true)
     } else {
       setProgress(0)
       if (videoRef.current) videoRef.current.currentTime = 0
@@ -460,6 +463,78 @@ export default function StoryModal({ isOpen, onClose, initialIndex = 0 }: Props)
 
         {/* ── Video Player Core ── */}
         <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+
+          {/* ── Facebook-style Skeleton Loader ── */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 40,
+              background: '#0D1218',
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '80px 16px 120px',
+              opacity: isVideoLoading ? 1 : 0,
+              pointerEvents: isVideoLoading ? 'auto' : 'none',
+              transition: 'opacity 0.4s ease',
+            }}
+          >
+            {/* Shimmer video area */}
+            <div style={{
+              flex: 1,
+              borderRadius: 12,
+              background: 'linear-gradient(90deg, #1a2230 25%, #243040 50%, #1a2230 75%)',
+              backgroundSize: '200% 100%',
+              animation: 'shimmer 1.5s infinite linear',
+              marginBottom: 20,
+            }} />
+
+            {/* Shimmer text lines */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{
+                height: 20,
+                width: '75%',
+                borderRadius: 6,
+                background: 'linear-gradient(90deg, #1a2230 25%, #243040 50%, #1a2230 75%)',
+                backgroundSize: '200% 100%',
+                animation: 'shimmer 1.5s infinite linear',
+              }} />
+              <div style={{
+                height: 14,
+                width: '55%',
+                borderRadius: 6,
+                background: 'linear-gradient(90deg, #1a2230 25%, #243040 50%, #1a2230 75%)',
+                backgroundSize: '200% 100%',
+                animation: 'shimmer 1.5s 0.2s infinite linear',
+              }} />
+              <div style={{
+                height: 14,
+                width: '40%',
+                borderRadius: 6,
+                background: 'linear-gradient(90deg, #1a2230 25%, #243040 50%, #1a2230 75%)',
+                backgroundSize: '200% 100%',
+                animation: 'shimmer 1.5s 0.4s infinite linear',
+              }} />
+            </div>
+
+            {/* Loading label */}
+            <div style={{
+              marginTop: 24,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}>
+              <div style={{
+                width: 8, height: 8, borderRadius: '50%',
+                background: '#C47D0E',
+                animation: 'pulse 1s ease-in-out infinite',
+              }} />
+              <span style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
+                Loading video…
+              </span>
+            </div>
+          </div>
+
           <video
             ref={videoRef}
             key={currentStory.id}
@@ -469,6 +544,8 @@ export default function StoryModal({ isOpen, onClose, initialIndex = 0 }: Props)
             muted={isMuted}
             onTimeUpdate={handleTimeUpdate}
             onEnded={handleVideoEnded}
+            onCanPlay={() => setIsVideoLoading(false)}
+            onWaiting={() => setIsVideoLoading(true)}
             style={{
               width: '100%',
               height: '100%',
@@ -647,6 +724,14 @@ export default function StoryModal({ isOpen, onClose, initialIndex = 0 }: Props)
             opacity: 0;
             transform: translateY(-160px) scale(1.8) rotate(-15deg);
           }
+        }
+        @keyframes shimmer {
+          0%   { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50%       { opacity: 0.4; transform: scale(0.75); }
         }
       `}</style>
     </div>
