@@ -25,6 +25,7 @@ import { fetchArticleBySlug, Article } from '../lib/articlesService'
 import { CalcBlock } from './blog/extensions/CalcBlock'
 import { MermaidBlock } from './blog/extensions/MermaidBlock'
 import { FileAttachment } from './blog/extensions/FileAttachment'
+import EngineerNav from '../components/EngineerNav'
 
 const lowlight = createLowlight()
 lowlight.register('python', python)
@@ -197,20 +198,26 @@ export default function BlogPost() {
   }
 
   if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '80vh', fontFamily: 'Outfit,sans-serif', color: '#94A3B8' }}>
-      Loading…
-    </div>
+    <>
+      <EngineerNav />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh', paddingTop: 'var(--nav-h)', fontFamily: 'Outfit,sans-serif', color: '#94A3B8' }}>
+        Loading…
+      </div>
+    </>
   )
 
   if (notFound) return (
-    <div style={{ textAlign: 'center', padding: '80px 24px', fontFamily: 'Outfit,sans-serif' }}>
-      <div style={{ fontSize: 48, marginBottom: 16 }}>📄</div>
-      <h1 style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: 32, textTransform: 'uppercase', color: '#0F172A', marginBottom: 12 }}>Article Not Found</h1>
-      <p style={{ color: '#64748B', marginBottom: 24 }}>This article may have been moved or doesn't exist.</p>
-      <button onClick={() => navigate('/blog')} style={{ background: '#C47D0E', border: 'none', borderRadius: 6, color: '#fff', padding: '10px 20px', cursor: 'pointer', fontFamily: 'Outfit,sans-serif', fontWeight: 600 }}>
-        ← Back to Blog
-      </button>
-    </div>
+    <>
+      <EngineerNav />
+      <div style={{ textAlign: 'center', padding: '120px 24px 80px', paddingTop: 'calc(var(--nav-h) + 60px)', fontFamily: 'Outfit,sans-serif' }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>📄</div>
+        <h1 style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: 32, textTransform: 'uppercase', color: '#0F172A', marginBottom: 12 }}>Article Not Found</h1>
+        <p style={{ color: '#64748B', marginBottom: 24 }}>This article may have been moved or doesn't exist.</p>
+        <button onClick={() => navigate('/blog')} style={{ background: '#C47D0E', border: 'none', borderRadius: 6, color: '#fff', padding: '10px 20px', cursor: 'pointer', fontFamily: 'Outfit,sans-serif', fontWeight: 600 }}>
+          ← Back to Blog
+        </button>
+      </div>
+    </>
   )
 
   if (!article) return null
@@ -218,20 +225,35 @@ export default function BlogPost() {
   return (
     <>
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+      <EngineerNav />
 
-      <div style={{ background: '#F7F5F0', minHeight: '100vh' }}>
+      <div style={{ background: '#F7F5F0', minHeight: '100vh', paddingTop: 'var(--nav-h)' }}>
 
         {/* Back nav */}
         <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-          <div style={{ maxWidth: 760, margin: '0 auto', padding: '0 24px' }}>
+          <div style={{ maxWidth: 760, margin: '0 auto', padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
             <button
               onClick={() => navigate('/blog')}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, height: 44, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Outfit,sans-serif', fontSize: 12, color: '#64748B', padding: 0, transition: 'color 0.15s' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#C47D0E' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#64748B' }}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '6px 14px', borderRadius: 4,
+                background: '#FAF8F5', border: '1px solid #E2E8F0',
+                cursor: 'pointer', fontFamily: 'Outfit,sans-serif',
+                fontSize: 12, fontWeight: 600, letterSpacing: '0.04em',
+                textTransform: 'uppercase', color: '#475569',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+                transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#C47D0E'; (e.currentTarget as HTMLElement).style.color = '#C47D0E' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0'; (e.currentTarget as HTMLElement).style.color = '#475569' }}
             >
-              <ArrowLeft size={14} /> All Articles
+              <ArrowLeft size={13} strokeWidth={2} /> Back to Blog
             </button>
+
+            {/* Breadcrumb path */}
+            <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 10, letterSpacing: '0.12em', color: '#94A3B8', textTransform: 'uppercase' }}>
+              <span style={{ cursor: 'pointer' }} onClick={() => navigate('/blog')}>BLOG</span> / <span style={{ color: '#C47D0E' }}>{article.category || 'ARTICLE'}</span>
+            </div>
           </div>
         </div>
 

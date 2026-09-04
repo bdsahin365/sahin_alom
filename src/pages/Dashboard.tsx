@@ -9,7 +9,7 @@ import {
   Search, ImageIcon, X, Tag,
   ToggleLeft, ToggleRight,
   AlertTriangle, Globe, Pencil,
-  Inbox, LogOut, Mail, Clock, BookOpen,
+  Inbox, LogOut, Mail, Clock, BookOpen, Menu,
 } from 'lucide-react'
 import ArticlesList from './blog/ArticlesList'
 import { supabase } from '../lib/supabase'
@@ -33,7 +33,7 @@ function Card({ className, children, style }: { className?: string; children: Re
 }
 
 function CardHeader({ className, children }: { className?: string; children: ReactNode }) {
-  return <div className={cn('flex flex-col space-y-1.5 p-6', className)} style={{ padding: '20px 24px 16px' }}>{children}</div>
+  return <div className={cn('flex flex-col space-y-1.5', className)} style={{ padding: '16px clamp(14px, 3vw, 24px) 12px' }}>{children}</div>
 }
 
 function CardTitle({ className, children }: { className?: string; children: ReactNode }) {
@@ -45,7 +45,7 @@ function CardDescription({ children }: { children: ReactNode }) {
 }
 
 function CardContent({ className, children }: { className?: string; children: ReactNode }) {
-  return <div className={cn('p-6 pt-0', className)} style={{ padding: '0 24px 24px' }}>{children}</div>
+  return <div className={cn('pt-0', className)} style={{ padding: '0 clamp(14px, 3vw, 24px) 20px' }}>{children}</div>
 }
 
 function Button({
@@ -180,7 +180,7 @@ function Textarea({
 }
 
 function Grid2({ children }: { children: ReactNode }) {
-  return <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '0 20px' }}>{children}</div>
+  return <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '0 16px' }}>{children}</div>
 }
 
 function Separator() {
@@ -341,7 +341,7 @@ function Section({ title, description, defaultOpen = true, children }: { title: 
   return (
     <Card style={{ marginBottom: 16 } as any}>
       <button onClick={() => setOpen(o => !o)}
-        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px clamp(14px, 3vw, 24px)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
         <div>
           <div style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 600, fontSize: 14, color: '#0F172A' }}>{title}</div>
           {description && <div style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12, color: '#64748B', marginTop: 2 }}>{description}</div>}
@@ -349,8 +349,8 @@ function Section({ title, description, defaultOpen = true, children }: { title: 
         <ChevronDown size={15} style={{ color: '#94A3B8', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }} />
       </button>
       {open && (
-        <div style={{ padding: '0 24px 24px', borderTop: '1px solid #F1F5F9' }}>
-          <div style={{ paddingTop: 20 }}>{children}</div>
+        <div style={{ padding: '0 clamp(14px, 3vw, 24px) 20px', borderTop: '1px solid #F1F5F9' }}>
+          <div style={{ paddingTop: 16 }}>{children}</div>
         </div>
       )}
     </Card>
@@ -865,10 +865,11 @@ const PANELS: Record<SectionId, (props: { onNavigate: (s: SectionId) => void }) 
 export default function Dashboard() {
   const navigate = useNavigate()
   const onViewSite = () => navigate('/')
-  const { data, saved, resetToDefaults } = useSite()
+  const { data, saved, resetToDefaults, updateEngineer } = useSite()
   const [section, setSection] = useState<SectionId>('overview')
   const [collapsed, setCollapsed] = useState(false)
   const [showReset, setShowReset] = useState(false)
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
   const active = NAV_ITEMS.find(n => n.id === section)!
 
   useEffect(() => {
@@ -876,11 +877,18 @@ export default function Dashboard() {
     return () => { document.title = data.settings.siteTitle || document.title }
   }, [data.settings.siteTitle])
 
-  return (
-    <div style={{ display: 'flex', height: '100vh', background: '#F8FAFC', fontFamily: 'Outfit,sans-serif', overflow: 'hidden' }}>
+  const selectSection = (s: SectionId) => {
+    setSection(s)
+    setMobileDrawerOpen(false)
+  }
 
-      {/* ── Sidebar ── */}
-      <aside style={{
+  const isMoreTab = !['overview', 'articles', 'projects', 'messages'].includes(section)
+
+  return (
+    <div className="admin-shell" style={{ display: 'flex', height: '100vh', background: '#F8FAFC', fontFamily: 'Outfit,sans-serif', overflow: 'hidden', position: 'relative' }}>
+
+      {/* ── Desktop Sidebar (Hidden on <= 768px via CSS) ── */}
+      <aside className="admin-desktop-sidebar" style={{
         width: collapsed ? 56 : 232,
         flexShrink: 0, background: '#FFFFFF',
         borderRight: '1px solid #E2E8F0',
@@ -963,52 +971,237 @@ export default function Dashboard() {
         </div>
       </aside>
 
-      {/* ── Main ── */}
+      {/* ── Mobile Slide-Over Drawer Overlay ── */}
+      {mobileDrawerOpen && (
+        <div
+          onClick={() => setMobileDrawerOpen(false)}
+          className="admin-mobile-backdrop"
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.45)',
+            backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
+            zIndex: 998, animation: 'fadeIn 0.2s ease-out',
+          }}
+        />
+      )}
+
+      {/* ── Mobile Slide-Over Drawer ── */}
+      <aside
+        className="admin-mobile-drawer"
+        style={{
+          position: 'fixed', top: 0, bottom: 0, left: 0,
+          width: 'min(310px, 84vw)', background: '#FFFFFF',
+          zIndex: 999, display: 'flex', flexDirection: 'column',
+          boxShadow: mobileDrawerOpen ? '4px 0 32px rgba(0,0,0,0.18)' : 'none',
+          transform: mobileDrawerOpen ? 'translateX(0)' : 'translateX(-100%)',
+          transition: 'transform 0.28s cubic-bezier(0.16,1,0.3,1)',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Drawer Header with user pill & close */}
+        <div style={{ padding: '16px 16px 14px', borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', background: '#F1F5F9', border: '1px solid #E2E8F0', flexShrink: 0 }}>
+              <img src={data.engineer.photo || sahinPhoto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+            <div>
+              <div style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 600, fontSize: 13, color: '#0F172A', lineHeight: 1.2 }}>{data.engineer.name}</div>
+              <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9, color: '#C47D0E', letterSpacing: '0.1em' }}>SITE EDITOR</div>
+            </div>
+          </div>
+          <button
+            onClick={() => setMobileDrawerOpen(false)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: '#64748B', display: 'flex', borderRadius: 4 }}
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Quick Availability Status Banner */}
+        <div style={{ padding: '10px 16px', background: '#FAF8F5', borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 12, fontFamily: 'Outfit,sans-serif', color: '#475569', fontWeight: 500 }}>
+            Availability Status
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 11, fontFamily: 'Outfit,sans-serif', color: data.engineer.available ? '#16A34A' : '#94A3B8', fontWeight: 500 }}>
+              {data.engineer.available ? 'Available' : 'Busy'}
+            </span>
+            <Switch checked={data.engineer.available} onChange={v => updateEngineer({ available: v })} />
+          </div>
+        </div>
+
+        {/* Drawer Navigation items */}
+        <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
+          <div style={{ padding: '4px 16px 8px', fontFamily: 'JetBrains Mono,monospace', fontSize: 9, letterSpacing: '0.15em', color: '#94A3B8', textTransform: 'uppercase' }}>
+            All Sections
+          </div>
+          {NAV_ITEMS.map(item => {
+            const isActive = section === item.id
+            return (
+              <button
+                key={item.id}
+                onClick={() => selectSection(item.id)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  width: '100%', padding: '12px 16px',
+                  background: isActive ? '#FEF3C7' : 'transparent',
+                  border: 'none', color: isActive ? '#92400E' : '#374151',
+                  cursor: 'pointer', fontSize: 14, fontWeight: isActive ? 600 : 500,
+                  fontFamily: 'Outfit,sans-serif', textAlign: 'left',
+                  borderLeft: isActive ? '4px solid #C47D0E' : '4px solid transparent',
+                  transition: 'all 0.15s',
+                }}
+              >
+                <span style={{ color: isActive ? '#C47D0E' : '#64748B', display: 'flex', flexShrink: 0 }}>{item.icon}</span>
+                <span style={{ flex: 1 }}>{item.label}</span>
+                {isActive && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#C47D0E' }} />}
+              </button>
+            )
+          })}
+        </nav>
+
+        {/* Drawer Footer actions */}
+        <div style={{ padding: '12px 16px', borderTop: '1px solid #F1F5F9', display: 'flex', flexDirection: 'column', gap: 8, background: '#FFFFFF' }}>
+          <Button onClick={() => { setMobileDrawerOpen(false); onViewSite(); }} style={{ width: '100%', justifyContent: 'center' } as any}>
+            <Eye size={14} /> Preview site
+          </Button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button
+              variant="ghost"
+              onClick={() => { setMobileDrawerOpen(false); setShowReset(true); }}
+              style={{ flex: 1, justifyContent: 'center', color: '#EF4444', fontSize: 11, padding: '0 8px' } as any}
+            >
+              <RotateCcw size={12} /> Reset
+            </Button>
+            <Button
+              variant="outline"
+              onClick={async () => { await supabase.auth.signOut(); navigate('/admin/login') }}
+              style={{ flex: 1, justifyContent: 'center', fontSize: 11, padding: '0 8px' } as any}
+            >
+              <LogOut size={12} /> Sign out
+            </Button>
+          </div>
+        </div>
+      </aside>
+
+      {/* ── Main View ── */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
 
-        {/* Header */}
-        <header style={{ height: 56, borderBottom: '1px solid #E2E8F0', background: '#FFFFFF', display: 'flex', alignItems: 'center', padding: '0 20px', gap: 14, flexShrink: 0 }}>
-          <button onClick={() => setCollapsed(c => !c)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', display: 'flex', padding: 4, borderRadius: 4, transition: 'all 0.15s' }}
+        {/* Top Header */}
+        <header style={{
+          height: 56, borderBottom: '1px solid #E2E8F0', background: '#FFFFFF',
+          display: 'flex', alignItems: 'center', padding: '0 clamp(12px, 3vw, 20px)',
+          gap: 12, flexShrink: 0, zIndex: 10,
+        }}>
+          {/* Desktop collapse toggle */}
+          <button
+            onClick={() => setCollapsed(c => !c)}
+            className="admin-collapse-toggle"
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: '#94A3B8', display: 'flex', padding: 4, borderRadius: 4, transition: 'all 0.15s',
+            }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F1F5F9'; (e.currentTarget as HTMLElement).style.color = '#374151' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#94A3B8' }}>
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#94A3B8' }}
+          >
             {collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
           </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
-            <span style={{ color: '#C47D0E' }}>{active.icon}</span>
-            <h1 style={{ fontWeight: 600, fontSize: 14, color: '#0F172A', margin: 0 }}>{active.label}</h1>
+          {/* Mobile hamburger menu button */}
+          <button
+            onClick={() => setMobileDrawerOpen(true)}
+            className="admin-mobile-menu-btn"
+            aria-label="Open menu"
+            style={{
+              background: '#FAF8F5', border: '1px solid #E2E8F0', cursor: 'pointer',
+              color: '#0F172A', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 36, height: 36, borderRadius: 6, flexShrink: 0,
+            }}
+          >
+            <Menu size={18} />
+          </button>
+
+          {/* Title & Icon */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+            <span style={{ color: '#C47D0E', display: 'flex', flexShrink: 0 }}>{active.icon}</span>
+            <h1 style={{ fontWeight: 600, fontSize: 14, color: '#0F172A', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {active.label}
+            </h1>
           </div>
 
-          {/* Save indicator */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {/* Live Save indicator */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
             {saved
               ? <><Check size={13} style={{ color: '#16A34A' }} /><span style={{ fontSize: 11, color: '#16A34A', fontWeight: 500 }}>Saved</span></>
               : <><Loader2 size={13} style={{ color: '#C47D0E', animation: 'spin 1s linear infinite' }} /><span style={{ fontSize: 11, color: '#C47D0E', fontWeight: 500 }}>Saving…</span></>
             }
           </div>
 
+          {/* Preview button */}
           <Button onClick={onViewSite} size="sm">
-            <Eye size={12} /> Preview
+            <Eye size={12} /> <span className="btn-preview-text">Preview</span>
           </Button>
         </header>
 
         {/* Content area */}
-        <main style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
+        <main className="admin-content-main" style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
           <div style={{ maxWidth: 820, margin: '0 auto' }}>
             {PANELS[section]({ onNavigate: s => setSection(s) })}
           </div>
         </main>
       </div>
 
+      {/* ── Native Mobile App Bottom Navigation Bar (Visible only <= 768px) ── */}
+      <nav className="admin-bottom-bar">
+        {[
+          { id: 'overview' as SectionId, label: 'Overview', icon: <LayoutDashboard size={19} /> },
+          { id: 'articles' as SectionId, label: 'Articles', icon: <BookOpen size={19} /> },
+          { id: 'projects' as SectionId, label: 'Projects', icon: <FolderOpen size={19} /> },
+          { id: 'messages' as SectionId, label: 'Messages', icon: <Inbox size={19} /> },
+          { id: 'more' as const,         label: 'More',     icon: <Menu size={19} /> },
+        ].map(tab => {
+          const isCurrent = tab.id === 'more' ? isMoreTab : section === tab.id
+          return (
+            <button
+              key={tab.id}
+              onClick={() => {
+                if (tab.id === 'more') {
+                  setMobileDrawerOpen(true)
+                } else {
+                  setSection(tab.id)
+                }
+              }}
+              style={{
+                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
+                justifyContent: 'center', gap: 3, height: '100%', background: 'none',
+                border: 'none', cursor: 'pointer', padding: '6px 0',
+                color: isCurrent ? '#C47D0E' : '#64748B',
+                transition: 'color 0.15s, transform 0.15s',
+                position: 'relative',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', transform: isCurrent ? 'translateY(-1px)' : 'none', transition: 'transform 0.15s' }}>
+                {tab.icon}
+              </div>
+              <span style={{ fontFamily: 'Outfit,sans-serif', fontSize: 10, fontWeight: isCurrent ? 600 : 500, letterSpacing: '0.01em', lineHeight: 1 }}>
+                {tab.label}
+              </span>
+              {isCurrent && (
+                <div style={{ position: 'absolute', top: 4, width: 4, height: 4, borderRadius: '50%', background: '#C47D0E' }} />
+              )}
+            </button>
+          )
+        })}
+      </nav>
+
       {/* Reset confirmation dialog */}
       {showReset && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#FFFFFF', borderRadius: 10, padding: 28, maxWidth: 400, width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
-            <div style={{ display: 'flex', gap: 14, marginBottom: 20 }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: 16 }}>
+          <div style={{ background: '#FFFFFF', borderRadius: 10, padding: 24, maxWidth: 400, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+            <div style={{ display: 'flex', gap: 14, marginBottom: 18 }}>
               <AlertTriangle size={20} style={{ color: '#EF4444', flexShrink: 0, marginTop: 2 }} />
               <div>
                 <h3 style={{ fontWeight: 700, fontSize: 15, color: '#0F172A', margin: '0 0 8px' }}>Reset to defaults?</h3>
-                <p style={{ fontSize: 13, color: '#64748B', lineHeight: 1.65, margin: 0 }}>All edits will be permanently discarded and replaced with the original sample content.</p>
+                <p style={{ fontSize: 13, color: '#64748B', lineHeight: 1.6, margin: 0 }}>All edits will be permanently discarded and replaced with the original sample content.</p>
               </div>
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
@@ -1019,8 +1212,49 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Spin keyframe */}
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      {/* Global CSS Styles for Mobile Responsive App Shell */}
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Desktop defaults */
+        .admin-mobile-menu-btn { display: none !important; }
+        .admin-mobile-drawer { display: none; }
+        .admin-mobile-backdrop { display: none; }
+        .admin-bottom-bar { display: none !important; }
+        .admin-content-main { padding: 24px; }
+
+        /* Mobile app styling (<= 768px) */
+        @media (max-width: 768px) {
+          .admin-desktop-sidebar { display: none !important; }
+          .admin-collapse-toggle { display: none !important; }
+          .admin-mobile-menu-btn { display: flex !important; }
+          .admin-mobile-drawer { display: flex !important; }
+          .admin-mobile-backdrop { display: block !important; }
+          .admin-content-main { padding: 14px 12px 88px !important; }
+
+          .admin-bottom-bar {
+            display: flex !important;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 58px;
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-top: 1px solid #E2E8F0;
+            box-shadow: 0 -4px 16px rgba(0,0,0,0.04);
+            z-index: 950;
+            padding-bottom: env(safe-area-inset-bottom, 0);
+          }
+
+          /* Compact preview text on narrow phone screens */
+          @media (max-width: 400px) {
+            .btn-preview-text { display: none; }
+          }
+        }
+      `}</style>
     </div>
   )
 }

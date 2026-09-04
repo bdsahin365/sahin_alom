@@ -1,6 +1,7 @@
 import { useState, useEffect, type ReactNode } from 'react'
 import { Link } from 'react-router'
-import { ChevronRight, RotateCcw, Copy, Check, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react'
+import { ChevronRight, RotateCcw, Copy, Check, ChevronDown, ChevronUp, AlertTriangle, ArrowLeft } from 'lucide-react'
+import EngineerNav from '../../components/EngineerNav'
 
 type Props = {
   title: string
@@ -41,28 +42,53 @@ export default function CalculatorShell({
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', paddingTop: 'var(--nav-h)' }}>
+    <>
+      <EngineerNav />
+      <div style={{ minHeight: '100vh', background: 'var(--bg)', paddingTop: 'var(--nav-h)' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 var(--px)' }}>
 
-        {/* ── Breadcrumb ── */}
-        <nav aria-label="breadcrumb" style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          paddingTop: 28, paddingBottom: 20,
-          fontFamily: 'JetBrains Mono, monospace',
-          fontSize: 10, letterSpacing: '0.14em', color: 'var(--muted)',
+        {/* ── Top Navigation Bar: Back button & Breadcrumb ── */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          paddingTop: 24, paddingBottom: 16, flexWrap: 'wrap', gap: 12,
         }}>
-          <Link to="/" style={{ color: 'var(--muted)', textDecoration: 'none' }}
-            onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}
-          >HOME</Link>
-          <ChevronRight size={10} strokeWidth={2} />
-          <Link to="/tools" style={{ color: 'var(--muted)', textDecoration: 'none' }}
-            onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}
-          >TOOLS</Link>
-          <ChevronRight size={10} strokeWidth={2} />
-          <span style={{ color: 'var(--accent)', textTransform: 'uppercase' }}>{title}</span>
-        </nav>
+          <Link
+            to="/tools"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '7px 14px', borderRadius: 4,
+              background: '#FFFFFF', border: '1px solid var(--border)',
+              color: 'var(--fg-dim)', fontFamily: 'Outfit, sans-serif',
+              fontSize: 12, fontWeight: 600, letterSpacing: '0.04em',
+              textTransform: 'uppercase', textDecoration: 'none',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)'; (e.currentTarget as HTMLElement).style.color = 'var(--accent)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--fg-dim)' }}
+          >
+            <ArrowLeft size={13} strokeWidth={2} /> Back to Tools
+          </Link>
+
+          {/* ── Breadcrumb ── */}
+          <nav aria-label="breadcrumb" style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: 10, letterSpacing: '0.14em', color: 'var(--muted)',
+          }}>
+            <Link to="/" style={{ color: 'var(--muted)', textDecoration: 'none' }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'var(--accent)'}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'var(--muted)'}
+            >HOME</Link>
+            <ChevronRight size={10} strokeWidth={2} />
+            <Link to="/tools" style={{ color: 'var(--muted)', textDecoration: 'none' }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'var(--accent)'}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'var(--muted)'}
+            >TOOLS</Link>
+            <ChevronRight size={10} strokeWidth={2} />
+            <span style={{ color: 'var(--accent)', textTransform: 'uppercase' }}>{title}</span>
+          </nav>
+        </div>
 
         {/* ── Page header ── */}
         <header style={{ marginBottom: 36, borderBottom: '1px solid var(--border)', paddingBottom: 28 }}>
@@ -222,6 +248,7 @@ export default function CalculatorShell({
         }
       `}</style>
     </div>
+    </>
   )
 }
 

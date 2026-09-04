@@ -1,5 +1,6 @@
 import { useParams, Link } from 'react-router'
 import { TOOLS } from '../../data/tools'
+import EngineerNav from '../../components/EngineerNav'
 
 // Lazy-loaded calculator components
 import OhmsLaw from './calculators/OhmsLaw'
@@ -53,22 +54,25 @@ export default function ToolPage() {
 
   if (!Calculator) {
     return (
-      <div style={{ minHeight: '100vh', background: 'var(--bg)', paddingTop: 'var(--nav-h)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center', padding: 'var(--px)' }}>
-          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.2em', color: 'var(--accent)', textTransform: 'uppercase' }}>
-            404 — Tool Not Found
-          </span>
-          <h1 style={{ fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 800, fontSize: 'clamp(32px, 6vw, 56px)', textTransform: 'uppercase', marginTop: 16, marginBottom: 24 }}>
-            Unknown Tool
-          </h1>
-          <p style={{ color: 'var(--fg-dim)', marginBottom: 32 }}>
-            No calculator found for "<code>{slug}</code>".
-          </p>
-          <Link to="/tools" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', background: 'var(--accent)', color: '#fff', fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none' }}>
-            ← Back to Tools
-          </Link>
+      <>
+        <EngineerNav />
+        <div style={{ minHeight: '100vh', background: 'var(--bg)', paddingTop: 'var(--nav-h)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center', padding: 'var(--px)' }}>
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.2em', color: 'var(--accent)', textTransform: 'uppercase' }}>
+              404 — Tool Not Found
+            </span>
+            <h1 style={{ fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 800, fontSize: 'clamp(32px, 6vw, 56px)', textTransform: 'uppercase', marginTop: 16, marginBottom: 24 }}>
+              Unknown Tool
+            </h1>
+            <p style={{ color: 'var(--fg-dim)', marginBottom: 32 }}>
+              No calculator found for "<code>{slug}</code>".
+            </p>
+            <Link to="/tools" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', background: 'var(--accent)', color: '#fff', fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none' }}>
+              ← Back to Tools
+            </Link>
+          </div>
         </div>
-      </div>
+      </>
     )
   }
 

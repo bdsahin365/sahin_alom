@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { Clock, Tag, ArrowRight, Search, BookOpen } from 'lucide-react'
 import { fetchPublishedArticles, Article } from '../lib/articlesService'
+import EngineerNav from '../components/EngineerNav'
 
 export default function BlogIndex() {
   const navigate = useNavigate()
@@ -37,7 +38,10 @@ export default function BlogIndex() {
       {/* Inline KaTeX CSS */}
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
 
-      <div style={{ background: '#F7F5F0', minHeight: '100vh' }}>
+      {/* Navigation Header */}
+      <EngineerNav />
+
+      <div style={{ background: '#F7F5F0', minHeight: '100vh', paddingTop: 'var(--nav-h)' }}>
 
         {/* Header */}
         <header style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '48px 0 40px' }}>

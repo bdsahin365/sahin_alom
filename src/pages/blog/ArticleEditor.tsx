@@ -373,6 +373,8 @@ export default function ArticleEditor() {
         onPreviewMode={setPreviewMode}
         canUndo={editor?.can().undo() ?? false}
         canRedo={editor?.can().redo() ?? false}
+        onToggleSettings={() => setPanelOpen(o => !o)}
+        settingsOpen={panelOpen}
       />
 
       {/* Body */}
@@ -381,12 +383,12 @@ export default function ArticleEditor() {
         {/* Editor canvas */}
         <main style={{
           flex: 1, overflowY: 'auto', display: 'flex', justifyContent: 'center',
-          padding: '0 24px 80px',
+          padding: '0 clamp(12px, 3vw, 24px) 80px',
         }}>
           <div style={{
             width: '100%',
             maxWidth: previewMode === 'mobile' ? 375 : previewMode === 'tablet' ? 768 : 760,
-            paddingTop: 56,
+            paddingTop: 32,
             transition: 'max-width 0.3s cubic-bezier(0.16,1,0.3,1)',
           }}>
 
@@ -493,6 +495,7 @@ export default function ArticleEditor() {
           meta={meta}
           onChange={patch => { setMeta(m => ({ ...m, ...patch })); setSaved(false) }}
           visible={panelOpen && !previewMode}
+          onClose={() => setPanelOpen(false)}
           onOpenImageUpload={() => setShowFeaturedImageUpload(true)}
         />
       </div>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import {
   ChevronLeft, Eye, RotateCcw, Monitor, Tablet, Smartphone,
   Check, Loader2, MoreHorizontal, Copy, Download, History, Archive, Trash2, FileInput,
+  Settings2,
 } from 'lucide-react'
 
 interface EditorTopBarProps {
@@ -20,6 +21,8 @@ interface EditorTopBarProps {
   onPreviewMode: (m: 'desktop' | 'tablet' | 'mobile' | null) => void
   canUndo: boolean
   canRedo: boolean
+  onToggleSettings?: () => void
+  settingsOpen?: boolean
 }
 
 const STATUS_LABELS: Record<string, { label: string; bg: string; color: string; border: string }> = {
@@ -65,14 +68,14 @@ function Divider() {
 export default function EditorTopBar({
   status, saved, lastSaved, onBack, onUndo, onRedo, onPreview,
   onPublish, onHistory, onShortcuts, previewMode, onPreviewMode,
-  canUndo, canRedo,
+  canUndo, canRedo, onToggleSettings, settingsOpen,
 }: EditorTopBarProps) {
   const [moreOpen, setMoreOpen] = useState(false)
   const s = STATUS_LABELS[status] || STATUS_LABELS.draft
 
   return (
     <header style={{
-      height: 48, display: 'flex', alignItems: 'center', padding: '0 16px',
+      height: 48, display: 'flex', alignItems: 'center', padding: '0 14px',
       background: '#FFFFFF', borderBottom: '1px solid #E2E8F0',
       gap: 8, flexShrink: 0, position: 'relative', zIndex: 50,
     }}>
@@ -83,13 +86,13 @@ export default function EditorTopBar({
           display: 'flex', alignItems: 'center', gap: 4,
           background: 'none', border: 'none', cursor: 'pointer',
           color: '#64748B', fontSize: 12, fontFamily: 'Outfit,sans-serif',
-          padding: '4px 8px', borderRadius: 5, transition: 'all 0.15s',
+          padding: '4px 6px', borderRadius: 5, transition: 'all 0.15s',
           whiteSpace: 'nowrap',
         }}
         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#0F172A'; (e.currentTarget as HTMLElement).style.background = '#F1F5F9' }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#64748B'; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
       >
-        <ChevronLeft size={14} /> Articles
+        <ChevronLeft size={15} /> <span className="editor-back-text">Articles</span>
       </button>
 
       <Divider />
@@ -97,72 +100,82 @@ export default function EditorTopBar({
       {/* Status badge */}
       <span style={{
         fontFamily: 'JetBrains Mono,monospace', fontSize: 9, letterSpacing: '0.18em',
-        padding: '3px 8px', borderRadius: 4, border: `1px solid ${s.border}`,
+        padding: '3px 7px', borderRadius: 4, border: `1px solid ${s.border}`,
         background: s.bg, color: s.color, whiteSpace: 'nowrap',
       }}>
         {s.label}
       </span>
 
       {/* Autosave */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginLeft: 4, minWidth: 120 }}>
+      <div className="editor-autosave-box" style={{ display: 'flex', alignItems: 'center', gap: 5, marginLeft: 2 }}>
         {saved
-          ? <><Check size={11} style={{ color: '#16A34A' }} /><span style={{ fontSize: 11, color: '#16A34A', fontFamily: 'Outfit,sans-serif' }}>{lastSaved}</span></>
-          : <><Loader2 size={11} style={{ color: '#C47D0E', animation: 'spin 1s linear infinite' }} /><span style={{ fontSize: 11, color: '#C47D0E', fontFamily: 'Outfit,sans-serif' }}>Saving…</span></>
+          ? <><Check size={11} style={{ color: '#16A34A' }} /><span className="editor-autosave-text" style={{ fontSize: 11, color: '#16A34A', fontFamily: 'Outfit,sans-serif' }}>{lastSaved}</span></>
+          : <><Loader2 size={11} style={{ color: '#C47D0E', animation: 'spin 1s linear infinite' }} /><span className="editor-autosave-text" style={{ fontSize: 11, color: '#C47D0E', fontFamily: 'Outfit,sans-serif' }}>Saving…</span></>
         }
       </div>
 
       {/* Spacer */}
       <div style={{ flex: 1 }} />
 
-      {/* Undo / Redo */}
-      <IconBtn title="Undo (Ctrl+Z)" onClick={onUndo} disabled={!canUndo}>
-        <RotateCcw size={14} />
-      </IconBtn>
-      <IconBtn title="Redo (Ctrl+Shift+Z)" onClick={onRedo} disabled={!canRedo}>
-        <RotateCcw size={14} style={{ transform: 'scaleX(-1)' }} />
-      </IconBtn>
+      {/* Desktop Actions */}
+      <div className="editor-desktop-actions" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        {/* Undo / Redo */}
+        <IconBtn title="Undo (Ctrl+Z)" onClick={onUndo} disabled={!canUndo}>
+          <RotateCcw size={14} />
+        </IconBtn>
+        <IconBtn title="Redo (Ctrl+Shift+Z)" onClick={onRedo} disabled={!canRedo}>
+          <RotateCcw size={14} style={{ transform: 'scaleX(-1)' }} />
+        </IconBtn>
 
-      <Divider />
+        <Divider />
 
-      {/* Preview button */}
-      <button
-        onClick={onPreview}
-        style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          height: 30, padding: '0 10px', border: '1px solid #E2E8F0',
-          borderRadius: 5, background: 'transparent', cursor: 'pointer',
-          fontFamily: 'JetBrains Mono,monospace', fontSize: 10, letterSpacing: '0.1em',
-          color: '#64748B', transition: 'all 0.15s',
-        }}
-        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#C47D0E'; (e.currentTarget as HTMLElement).style.color = '#C47D0E' }}
-        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0'; (e.currentTarget as HTMLElement).style.color = '#64748B' }}
-      >
-        <Eye size={12} /> PREVIEW
-      </button>
+        {/* Preview button */}
+        <button
+          onClick={onPreview}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            height: 30, padding: '0 10px', border: '1px solid #E2E8F0',
+            borderRadius: 5, background: 'transparent', cursor: 'pointer',
+            fontFamily: 'JetBrains Mono,monospace', fontSize: 10, letterSpacing: '0.1em',
+            color: '#64748B', transition: 'all 0.15s',
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#C47D0E'; (e.currentTarget as HTMLElement).style.color = '#C47D0E' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0'; (e.currentTarget as HTMLElement).style.color = '#64748B' }}
+        >
+          <Eye size={12} /> PREVIEW
+        </button>
 
-      {/* Preview modes */}
-      <IconBtn title="Desktop preview" onClick={() => onPreviewMode(previewMode === 'desktop' ? null : 'desktop')} active={previewMode === 'desktop'}>
-        <Monitor size={14} />
-      </IconBtn>
-      <IconBtn title="Tablet preview" onClick={() => onPreviewMode(previewMode === 'tablet' ? null : 'tablet')} active={previewMode === 'tablet'}>
-        <Tablet size={14} />
-      </IconBtn>
-      <IconBtn title="Mobile preview" onClick={() => onPreviewMode(previewMode === 'mobile' ? null : 'mobile')} active={previewMode === 'mobile'}>
-        <Smartphone size={14} />
-      </IconBtn>
+        {/* Preview modes */}
+        <IconBtn title="Desktop preview" onClick={() => onPreviewMode(previewMode === 'desktop' ? null : 'desktop')} active={previewMode === 'desktop'}>
+          <Monitor size={14} />
+        </IconBtn>
+        <IconBtn title="Tablet preview" onClick={() => onPreviewMode(previewMode === 'tablet' ? null : 'tablet')} active={previewMode === 'tablet'}>
+          <Tablet size={14} />
+        </IconBtn>
+        <IconBtn title="Mobile preview" onClick={() => onPreviewMode(previewMode === 'mobile' ? null : 'mobile')} active={previewMode === 'mobile'}>
+          <Smartphone size={14} />
+        </IconBtn>
 
-      <Divider />
+        <Divider />
+      </div>
+
+      {/* Settings Toggle */}
+      {onToggleSettings && (
+        <IconBtn title="Article Settings" onClick={onToggleSettings} active={settingsOpen}>
+          <Settings2 size={15} />
+        </IconBtn>
+      )}
 
       {/* Publish */}
       <button
         onClick={onPublish}
         style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          height: 32, padding: '0 16px', border: 'none',
+          display: 'flex', alignItems: 'center', gap: 5,
+          height: 32, padding: '0 14px', border: 'none',
           borderRadius: 5, background: '#C47D0E', cursor: 'pointer',
           fontFamily: 'Outfit,sans-serif', fontSize: 12, fontWeight: 600,
-          letterSpacing: '0.06em', textTransform: 'uppercase', color: '#FFFFFF',
-          transition: 'opacity 0.15s',
+          letterSpacing: '0.04em', textTransform: 'uppercase', color: '#FFFFFF',
+          transition: 'opacity 0.15s', flexShrink: 0,
         }}
         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.85' }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
@@ -183,7 +196,8 @@ export default function EditorTopBar({
             padding: 4,
           }}>
             {[
-              { icon: <Copy size={13} />,     label: 'Duplicate' },
+              { icon: <Eye size={13} />,       label: 'Preview Article', onClick: () => { onPreview(); setMoreOpen(false) } },
+              { icon: <Copy size={13} />,      label: 'Duplicate' },
               { icon: <FileInput size={13} />, label: 'Import Markdown' },
               { icon: <Download size={13} />,  label: 'Export Markdown' },
               { icon: <History size={13} />,   label: 'Version History', onClick: () => { onHistory(); setMoreOpen(false) } },
@@ -217,7 +231,16 @@ export default function EditorTopBar({
         )}
       </div>
 
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @media (max-width: 768px) {
+          .editor-desktop-actions { display: none !important; }
+          .editor-autosave-text { display: none !important; }
+        }
+        @media (max-width: 440px) {
+          .editor-back-text { display: none !important; }
+        }
+      `}</style>
     </header>
   )
 }

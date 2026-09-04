@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, User, Tag, Image, Globe, Calendar, Search } from 'lucide-react'
+import { ChevronDown, User, Tag, Image, Globe, Calendar, Search, X } from 'lucide-react'
 
 type ArticleStatus = 'draft' | 'published' | 'scheduled'
 type SettingsTab = 'general' | 'publishing' | 'seo'
@@ -22,6 +22,7 @@ interface SettingsPanelProps {
   meta: ArticleMeta
   onChange: (patch: Partial<ArticleMeta>) => void
   visible: boolean
+  onClose?: () => void
   onOpenImageUpload?: () => void
 }
 
@@ -79,7 +80,7 @@ function STextarea({ value, onChange, placeholder, rows = 3 }: { value: string; 
   )
 }
 
-export default function SettingsPanel({ meta, onChange, visible, onOpenImageUpload }: SettingsPanelProps) {
+export default function SettingsPanel({ meta, onChange, visible, onClose, onOpenImageUpload }: SettingsPanelProps) {
   const [tab, setTab] = useState<SettingsTab>('general')
   const [tagInput, setTagInput] = useState('')
 
@@ -101,11 +102,37 @@ export default function SettingsPanel({ meta, onChange, visible, onOpenImageUplo
   if (!visible) return null
 
   return (
-    <aside style={{
-      width: 268, flexShrink: 0, background: '#FFFFFF',
-      borderLeft: '1px solid #E2E8F0', display: 'flex',
-      flexDirection: 'column', overflowY: 'auto',
-    }}>
+    <>
+      {/* Mobile backdrop */}
+      <div
+        className="settings-mobile-backdrop"
+        onClick={onClose}
+        style={{
+          position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.45)',
+          backdropFilter: 'blur(3px)', zIndex: 990,
+        }}
+      />
+
+      <aside className="article-settings-panel" style={{
+        width: 275, flexShrink: 0, background: '#FFFFFF',
+        borderLeft: '1px solid #E2E8F0', display: 'flex',
+        flexDirection: 'column', overflowY: 'auto',
+      }}>
+        {/* Mobile Title Bar */}
+        <div className="settings-mobile-header" style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '12px 16px', borderBottom: '1px solid #F1F5F9',
+        }}>
+          <span style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 600, fontSize: 13, color: '#0F172A' }}>
+            Article Settings
+          </span>
+          <button
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#64748B', display: 'flex' }}
+          >
+            <X size={16} />
+          </button>
+        </div>
       {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid #E2E8F0', flexShrink: 0 }}>
         {(['general', 'publishing', 'seo'] as SettingsTab[]).map(t => (
@@ -339,5 +366,24 @@ export default function SettingsPanel({ meta, onChange, visible, onOpenImageUplo
         )}
       </div>
     </aside>
+
+    <style>{`
+      .settings-mobile-backdrop { display: none; }
+      .settings-mobile-header { display: none; }
+
+      @media (max-width: 768px) {
+        .settings-mobile-backdrop { display: block !important; }
+        .settings-mobile-header { display: flex !important; }
+        .article-settings-panel {
+          position: fixed !important;
+          top: 0; right: 0; bottom: 0;
+          width: min(320px, 86vw) !important;
+          z-index: 995 !important;
+          box-shadow: -4px 0 24px rgba(0,0,0,0.15) !important;
+          border-left: 1px solid #E2E8F0 !important;
+        }
+      }
+    `}</style>
+    </>
   )
 }
