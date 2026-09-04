@@ -1,9 +1,9 @@
 -- ====================================================================
 -- MASTER SUPABASE DATABASE SETUP & CLEANUP SCRIPT
--- Project: sahinalom.com (https://rtihttzsmkkmzpnlmnlx.supabase.co)
+-- Project: sahinalom.com (https://yrxyvivvbkmfmsmuwlaz.supabase.co)
 --
 -- How to run:
--- 1. Go to your Supabase Dashboard: https://supabase.com/dashboard/project/rtihttzsmkkmzpnlmnlx/sql
+-- 1. Go to your Supabase Dashboard: https://supabase.com/dashboard/project/yrxyvivvbkmfmsmuwlaz/sql
 -- 2. Paste this entire script and click "Run" (or press Ctrl+Enter).
 -- ====================================================================
 
