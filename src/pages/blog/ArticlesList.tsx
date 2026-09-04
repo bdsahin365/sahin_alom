@@ -173,7 +173,7 @@ export default function ArticlesList() {
                 {/* Main content */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
-                    <span style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 600, fontSize: 13, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>
+                    <span style={{ fontFamily: "'Hind Siliguri', 'Outfit', sans-serif", fontWeight: 600, fontSize: 13, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>
                       {article.title || <em style={{ color: '#94A3B8' }}>Untitled</em>}
                     </span>
                     <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 8, letterSpacing: '0.15em', padding: '2px 6px', borderRadius: 3, background: s.bg, color: s.color, flexShrink: 0 }}>

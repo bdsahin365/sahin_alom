@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { Clock, Tag, ArrowRight, Search, BookOpen } from 'lucide-react'
 import { fetchPublishedArticles, Article } from '../lib/articlesService'
 import EngineerNav from '../components/EngineerNav'
+import { getBlogTitleStyles, getBlogBodyStyles } from '../lib/langUtils'
 
 export default function BlogIndex() {
   const navigate = useNavigate()
@@ -170,17 +171,27 @@ export default function BlogIndex() {
 
                   {/* Title */}
                   <h2 style={{
-                    fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800,
-                    fontSize: i === 0 && filtered.length > 1 ? 28 : 20,
-                    lineHeight: 0.95, letterSpacing: '-0.01em', textTransform: 'uppercase',
-                    color: '#0F172A', margin: '0 0 10px',
+                    ...getBlogTitleStyles(article.title),
+                    fontSize: i === 0 && filtered.length > 1 ? 26 : 20,
+                    color: '#0F172A',
+                    margin: '0 0 10px',
                   }}>
                     {article.title}
                   </h2>
 
                   {/* Excerpt */}
                   {article.excerpt && (
-                    <p style={{ fontFamily: 'Outfit,sans-serif', fontSize: 14, color: '#64748B', lineHeight: 1.6, margin: '0 0 16px', flex: 1, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties}>
+                    <p style={{
+                      ...getBlogBodyStyles(article.excerpt),
+                      fontSize: 14,
+                      color: '#64748B',
+                      margin: '0 0 16px',
+                      flex: 1,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                    } as React.CSSProperties}>
                       {article.excerpt}
                     </p>
                   )}

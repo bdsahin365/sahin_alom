@@ -23,6 +23,7 @@ import typescript from 'highlight.js/lib/languages/typescript'
 import bash from 'highlight.js/lib/languages/bash'
 import { supabase } from '../../lib/supabase'
 import { fetchArticleById, saveArticle as persistArticle } from '../../lib/articlesService'
+import { isBengali } from '../../lib/langUtils'
 import { CalcBlock } from './extensions/CalcBlock'
 import { MermaidBlock } from './extensions/MermaidBlock'
 import { FileAttachment } from './extensions/FileAttachment'
@@ -405,12 +406,15 @@ export default function ArticleEditor() {
                 }}
                 data-placeholder="Add a title…"
                 style={{
-                  fontFamily: "'Barlow Condensed', sans-serif",
-                  fontWeight: 800, fontSize: 'clamp(28px,4vw,46px)',
-                  lineHeight: 0.95, letterSpacing: '-0.01em',
-                  textTransform: 'uppercase', color: '#0F172A',
+                  fontFamily: isBengali(title) ? "'Hind Siliguri', sans-serif" : "'Barlow Condensed', 'Hind Siliguri', sans-serif",
+                  fontWeight: isBengali(title) ? 700 : 800,
+                  fontSize: 'clamp(28px,4vw,46px)',
+                  lineHeight: isBengali(title) ? 1.35 : 0.95,
+                  letterSpacing: isBengali(title) ? '0' : '-0.01em',
+                  textTransform: isBengali(title) ? 'none' : 'uppercase',
+                  color: '#0F172A',
                   outline: 'none', marginBottom: 16,
-                  minHeight: '1.1em',
+                  minHeight: '1.2em',
                   wordBreak: 'break-word',
                 }}
                 onKeyDown={e => {
@@ -425,8 +429,10 @@ export default function ArticleEditor() {
                 onInput={e => { setExcerpt((e.currentTarget as HTMLElement).innerText); setSaved(false) }}
                 data-placeholder="Add a brief excerpt…"
                 style={{
-                  fontFamily: 'Outfit,sans-serif', fontSize: 17, color: '#0F172A',
-                  lineHeight: 1.5, outline: 'none', marginBottom: 16,
+                  fontFamily: isBengali(excerpt) ? "'Hind Siliguri', 'Outfit', sans-serif" : "'Outfit', 'Hind Siliguri', sans-serif",
+                  fontSize: 17, color: '#0F172A',
+                  lineHeight: isBengali(excerpt) ? 1.75 : 1.5,
+                  outline: 'none', marginBottom: 16,
                   fontStyle: excerpt ? 'normal' : 'italic',
                   opacity: excerpt ? 1 : 0.5,
                   minHeight: '1.5em',
@@ -560,14 +566,14 @@ export default function ArticleEditor() {
         }
 
         /* Prose styles */
-        .tiptap { outline: none; min-height: 240px; }
-        .tiptap p { margin: 0 0 1em; font-size: 17px; line-height: 1.65; color: #0F172A; }
-        .tiptap h1 { font-family: 'Barlow Condensed',sans-serif; font-weight: 800; font-size: 38px; line-height: 0.95; letter-spacing: -0.01em; text-transform: uppercase; color: #0F172A; margin: 1.5em 0 0.5em; }
-        .tiptap h2 { font-family: 'Barlow Condensed',sans-serif; font-weight: 700; font-size: 28px; line-height: 1; text-transform: uppercase; color: #0F172A; margin: 1.4em 0 0.5em; }
-        .tiptap h3 { font-family: 'Outfit',sans-serif; font-weight: 700; font-size: 20px; color: #0F172A; margin: 1.2em 0 0.4em; }
-        .tiptap h4 { font-family: 'Outfit',sans-serif; font-weight: 600; font-size: 16px; color: #0F172A; margin: 1em 0 0.3em; }
+        .tiptap { outline: none; min-height: 240px; font-family: 'Hind Siliguri', 'Outfit', sans-serif; }
+        .tiptap p { margin: 0 0 1em; font-size: 17.5px; line-height: 1.8; color: #0F172A; }
+        .tiptap h1 { font-family: 'Hind Siliguri', 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 34px; line-height: 1.35; letter-spacing: -0.01em; color: #0F172A; margin: 1.5em 0 0.5em; }
+        .tiptap h2 { font-family: 'Hind Siliguri', 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 26px; line-height: 1.35; color: #0F172A; margin: 1.4em 0 0.5em; }
+        .tiptap h3 { font-family: 'Hind Siliguri', 'Outfit', sans-serif; font-weight: 600; font-size: 20px; line-height: 1.4; color: #0F172A; margin: 1.2em 0 0.4em; }
+        .tiptap h4 { font-family: 'Hind Siliguri', 'Outfit', sans-serif; font-weight: 600; font-size: 16px; line-height: 1.4; color: #0F172A; margin: 1em 0 0.3em; }
         .tiptap ul, .tiptap ol { margin: 0 0 1em; padding-left: 1.5em; }
-        .tiptap li { margin-bottom: 0.25em; font-size: 17px; line-height: 1.65; color: #0F172A; }
+        .tiptap li { margin-bottom: 0.3em; font-size: 17px; line-height: 1.8; color: #0F172A; }
         .tiptap blockquote { border-left: 3px solid #C47D0E; margin: 1.5em 0; padding: 12px 20px; background: #FEF9EC; border-radius: 0 6px 6px 0; font-style: italic; color: #374151; }
         .tiptap hr { border: none; border-top: 1px solid #DDD9D0; margin: 2em 0; }
         .tiptap a { color: #C47D0E; text-decoration: underline; }

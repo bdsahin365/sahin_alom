@@ -23,6 +23,7 @@ import bash from 'highlight.js/lib/languages/bash'
 import { Clock, Tag, ArrowLeft, List } from 'lucide-react'
 import { fetchArticleBySlug, Article } from '../lib/articlesService'
 import { CalcBlock } from './blog/extensions/CalcBlock'
+import { getBlogTitleStyles, getBlogBodyStyles } from '../lib/langUtils'
 import { MermaidBlock } from './blog/extensions/MermaidBlock'
 import { FileAttachment } from './blog/extensions/FileAttachment'
 import EngineerNav from '../components/EngineerNav'
@@ -267,12 +268,22 @@ export default function BlogPost() {
               </div>
             )}
             {/* Title */}
-            <h1 style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: 'clamp(32px,5vw,56px)', lineHeight: 0.92, letterSpacing: '-0.01em', textTransform: 'uppercase', color: '#0F172A', margin: '0 0 16px' }}>
+            <h1 style={{
+              ...getBlogTitleStyles(article.title),
+              fontSize: 'clamp(30px,5vw,56px)',
+              color: '#0F172A',
+              margin: '0 0 16px',
+            }}>
               {article.title}
             </h1>
             {/* Excerpt */}
             {article.excerpt && (
-              <p style={{ fontFamily: 'Outfit,sans-serif', fontSize: 18, color: '#64748B', lineHeight: 1.6, marginBottom: 20 }}>
+              <p style={{
+                ...getBlogBodyStyles(article.excerpt),
+                fontSize: 18,
+                color: '#64748B',
+                marginBottom: 20,
+              }}>
                 {article.excerpt}
               </p>
             )}
@@ -368,14 +379,14 @@ export default function BlogPost() {
 
       <style>{`
         /* Article body prose */
-        .article-body { font-family: 'Outfit',sans-serif; color: #0F172A; }
-        .article-body p { font-size: 17px; line-height: 1.75; margin: 0 0 1.2em; }
-        .article-body h1 { font-family: 'Barlow Condensed',sans-serif; font-weight: 800; font-size: 38px; line-height: 0.95; text-transform: uppercase; letter-spacing: -0.01em; margin: 2em 0 0.6em; color: #0F172A; }
-        .article-body h2 { font-family: 'Barlow Condensed',sans-serif; font-weight: 700; font-size: 28px; line-height: 1; text-transform: uppercase; margin: 1.8em 0 0.6em; color: #0F172A; }
-        .article-body h3 { font-family: 'Outfit',sans-serif; font-weight: 700; font-size: 20px; margin: 1.5em 0 0.5em; color: #0F172A; }
-        .article-body h4 { font-family: 'Outfit',sans-serif; font-weight: 600; font-size: 16px; margin: 1.2em 0 0.4em; color: #0F172A; }
+        .article-body { font-family: 'Hind Siliguri', 'Outfit', sans-serif; color: #0F172A; }
+        .article-body p { font-size: 17.5px; line-height: 1.8; margin: 0 0 1.25em; }
+        .article-body h1 { font-family: 'Hind Siliguri', 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 34px; line-height: 1.35; letter-spacing: -0.01em; margin: 2em 0 0.6em; color: #0F172A; }
+        .article-body h2 { font-family: 'Hind Siliguri', 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 26px; line-height: 1.35; margin: 1.8em 0 0.6em; color: #0F172A; }
+        .article-body h3 { font-family: 'Hind Siliguri', 'Outfit', sans-serif; font-weight: 600; font-size: 20px; line-height: 1.4; margin: 1.5em 0 0.5em; color: #0F172A; }
+        .article-body h4 { font-family: 'Hind Siliguri', 'Outfit', sans-serif; font-weight: 600; font-size: 16px; line-height: 1.4; margin: 1.2em 0 0.4em; color: #0F172A; }
         .article-body ul, .article-body ol { margin: 0 0 1.2em; padding-left: 1.8em; }
-        .article-body li { font-size: 17px; line-height: 1.7; margin-bottom: 0.3em; }
+        .article-body li { font-size: 17px; line-height: 1.8; margin-bottom: 0.35em; }
         .article-body blockquote { border-left: 3px solid #C47D0E; margin: 1.5em 0; padding: 14px 20px; background: #FEF9EC; border-radius: 0 8px 8px 0; font-style: italic; color: #374151; font-size: 17px; }
         .article-body hr { border: none; border-top: 1px solid #DDD9D0; margin: 2.5em 0; }
         .article-body a { color: #C47D0E; text-decoration: underline; }
