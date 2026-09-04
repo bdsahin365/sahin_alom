@@ -9,8 +9,9 @@ import {
   Search, ImageIcon, X, Tag,
   ToggleLeft, ToggleRight,
   AlertTriangle, Globe, Pencil,
-  Inbox, LogOut, Mail, Clock,
+  Inbox, LogOut, Mail, Clock, BookOpen,
 } from 'lucide-react'
+import ArticlesList from './blog/ArticlesList'
 import { supabase } from '../lib/supabase'
 import { cn } from '../lib/utils'
 import {
@@ -396,10 +397,11 @@ function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
 }
 
 // ── Nav items ────────────────────────────────────────────────────────────────
-type SectionId = 'overview' | 'profile' | 'credentials' | 'expertise' | 'projects' | 'services' | 'education' | 'settings' | 'messages'
+type SectionId = 'overview' | 'profile' | 'credentials' | 'expertise' | 'projects' | 'services' | 'education' | 'settings' | 'messages' | 'articles'
 
 const NAV_ITEMS: { id: SectionId; label: string; icon: ReactNode }[] = [
   { id: 'overview',    label: 'Overview',    icon: <LayoutDashboard size={15} /> },
+  { id: 'articles',    label: 'Articles',    icon: <BookOpen size={15} /> },
   { id: 'profile',     label: 'Profile',     icon: <User size={15} /> },
   { id: 'credentials', label: 'Credentials', icon: <Award size={15} /> },
   { id: 'expertise',   label: 'Expertise',   icon: <Zap size={15} /> },
@@ -848,6 +850,7 @@ function MessagesPanel() {
 
 const PANELS: Record<SectionId, (props: { onNavigate: (s: SectionId) => void }) => ReactNode> = {
   overview:    ({ onNavigate }) => <OverviewPanel onNavigate={onNavigate} />,
+  articles:    () => <ArticlesList />,
   profile:     () => <ProfilePanel />,
   credentials: () => <CredentialsPanel />,
   expertise:   () => <ExpertisePanel />,

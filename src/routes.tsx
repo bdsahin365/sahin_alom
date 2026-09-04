@@ -8,6 +8,9 @@ import AdminLogin from './pages/AdminLogin'
 import AuthGuard from './components/AuthGuard'
 import ToolsPage from './pages/tools/ToolsPage'
 import ToolPage from './pages/tools/ToolPage'
+import ArticleEditor from './pages/blog/ArticleEditor'
+import BlogIndex from './pages/BlogIndex'
+import BlogPost from './pages/BlogPost'
 
 export const router = createBrowserRouter(
   [
@@ -20,6 +23,8 @@ export const router = createBrowserRouter(
         { path: 'biodata', Component: Biodata },
         { path: 'tools', Component: ToolsPage },
         { path: 'tools/:slug', Component: ToolPage },
+        { path: 'blog', Component: BlogIndex },
+        { path: 'blog/:slug', Component: BlogPost },
         {
           path: 'admin',
           children: [
@@ -28,6 +33,8 @@ export const router = createBrowserRouter(
               Component: AuthGuard,
               children: [
                 { index: true, Component: Dashboard },
+                { path: 'articles/new', Component: ArticleEditor },
+                { path: 'articles/:id', Component: ArticleEditor },
               ],
             },
           ],
@@ -37,3 +44,4 @@ export const router = createBrowserRouter(
   ],
   { basename: import.meta.env.BASE_URL.replace(/\/$/, '') || '/' }
 )
+
