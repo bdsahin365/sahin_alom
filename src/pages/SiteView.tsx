@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router'
 import EngineerNav from '../components/EngineerNav'
 import EngineerPortfolio from './EngineerPortfolio'
 import StoryModal, { STORIES } from '../components/StoryModal'
+import { useSite } from '../context/SiteContext'
 import sahinAvatar from '../img/sahin.png'
 
 export default function SiteView() {
+  const { data } = useSite()
   const [menuOpen, setMenuOpen] = useState(false)
   const [storyOpen, setStoryOpen] = useState(false)
   const [storyIndex, setStoryIndex] = useState(0)
@@ -85,7 +87,7 @@ export default function SiteView() {
           justifyContent: 'center',
         }}>
           <img
-            src={sahinAvatar}
+            src={data.engineer.photo || sahinAvatar}
             alt="Shorts"
             style={{
               width: '100%',

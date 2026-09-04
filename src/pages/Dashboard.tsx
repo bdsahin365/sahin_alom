@@ -9,11 +9,12 @@ import {
   Search, ImageIcon, X, Tag,
   ToggleLeft, ToggleRight,
   AlertTriangle, Globe, Pencil,
-  Inbox, LogOut, Mail, Clock, BookOpen, Menu,
+  Inbox, LogOut, Mail, Clock, BookOpen, Menu, Upload,
 } from 'lucide-react'
 import ArticlesList from './blog/ArticlesList'
 import { supabase } from '../lib/supabase'
 import { cn } from '../lib/utils'
+import { compressAndConvertToBase64, formatBytes } from '../lib/imageUtils'
 import {
   useSite,
   type Credential, type ExpertiseItem, type ServiceItem,
@@ -260,12 +261,35 @@ function TagChips({ label, tags, onChange }: { label: string; tags: string[]; on
   )
 }
 
-// Unsplash image picker
+// Unsplash & Direct Upload image picker
 function ImagePicker({ value, onChange }: { value: string; onChange: (url: string) => void }) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Array<{ id: string; thumb: string; full: string }>>([])
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [uploadMsg, setUploadMsg] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileUpload = async (file: File) => {
+    try {
+      setUploading(true)
+      setUploadMsg('Compressing...')
+      const { base64, originalSize, compressedSize } = await compressAndConvertToBase64(file, {
+        maxWidth: 1200,
+        maxHeight: 900,
+        quality: 0.82,
+        mimeType: 'image/jpeg',
+      })
+      onChange(base64)
+      setUploadMsg(`Saved (${formatBytes(originalSize)} → ${formatBytes(compressedSize)})`)
+      setTimeout(() => setUploadMsg(null), 3500)
+    } catch (err: any) {
+      alert('Upload failed: ' + (err?.message || 'Unknown error'))
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const FALLBACK = [
     { id: '1', thumb: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=200&h=130&fit=crop', full: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=1400&h=900&fit=crop&auto=format&q=85' },
@@ -297,23 +321,76 @@ function ImagePicker({ value, onChange }: { value: string; onChange: (url: strin
   return (
     <div style={{ marginBottom: 16 }}>
       <label style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12, fontWeight: 500, color: '#374151', display: 'block', marginBottom: 6 }}>Project Image</label>
-      <div style={{ display: 'flex', gap: 10, marginBottom: 8 }}>
+      <div style={{ display: 'flex', gap: 10, marginBottom: 8, alignItems: 'center' }}>
         {value && (
-          <div style={{ width: 80, height: 52, borderRadius: 6, overflow: 'hidden', border: '1px solid #E2E8F0', flexShrink: 0 }}>
+          <div style={{ width: 80, height: 52, borderRadius: 6, overflow: 'hidden', border: '1px solid #E2E8F0', flexShrink: 0, position: 'relative' }}>
             <img src={value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
         )}
         <div style={{ flex: 1 }}>
-          <input value={value} onChange={e => onChange(e.target.value)} placeholder="Paste image URL or search below…"
-            style={{ width: '100%', height: 36, padding: '0 12px', border: '1px solid #E2E8F0', borderRadius: 6, fontFamily: 'Outfit,sans-serif', fontSize: 12, outline: 'none', color: '#374151' }} />
-          <button onClick={() => setOpen(o => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C47D0E', fontSize: 11, fontFamily: 'Outfit,sans-serif', fontWeight: 600, marginTop: 4, padding: 0 }}>
-            {open ? '↑ Close search' : '🔍 Search Unsplash'}
-          </button>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={e => {
+                const f = e.target.files?.[0]
+                if (f) handleFileUpload(f)
+                e.target.value = ''
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                padding: '6px 11px', borderRadius: 5, background: '#C47D0E', color: '#fff',
+                fontFamily: 'Outfit,sans-serif', fontSize: 11, fontWeight: 600, border: 'none',
+                cursor: uploading ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {uploading ? <Loader2 size={11} style={{ animation: 'spin 1s linear infinite' }} /> : <Upload size={11} />}
+              {uploading ? 'Processing…' : 'Upload from device'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setOpen(o => !o)}
+              style={{ background: '#F1F5F9', border: '1px solid #E2E8F0', borderRadius: 5, cursor: 'pointer', color: '#374151', fontSize: 11, fontFamily: 'Outfit,sans-serif', fontWeight: 500, padding: '6px 10px' }}
+            >
+              {open ? '↑ Close Unsplash' : '🔍 Search Unsplash'}
+            </button>
+
+            {value && (
+              <button
+                type="button"
+                onClick={() => onChange('')}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', fontSize: 11, fontFamily: 'Outfit,sans-serif', fontWeight: 500, padding: '0 4px' }}
+              >
+                × Clear
+              </button>
+            )}
+
+            {uploadMsg && (
+              <span style={{ fontSize: 11, fontFamily: 'Outfit,sans-serif', color: '#16A34A', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                <Check size={11} /> {uploadMsg}
+              </span>
+            )}
+          </div>
+
+          <input
+            value={value}
+            onChange={e => onChange(e.target.value)}
+            placeholder="Paste image URL or Base64 data URL…"
+            style={{ width: '100%', height: 32, padding: '0 10px', border: '1px solid #E2E8F0', borderRadius: 6, fontFamily: 'Outfit,sans-serif', fontSize: 11, outline: 'none', color: '#374151' }}
+          />
         </div>
       </div>
 
       {open && (
-        <div style={{ border: '1px solid #E2E8F0', borderRadius: 6, overflow: 'hidden' }}>
+        <div style={{ border: '1px solid #E2E8F0', borderRadius: 6, overflow: 'hidden', marginTop: 8 }}>
           <div style={{ display: 'flex', borderBottom: '1px solid #E2E8F0' }}>
             <input value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && search()} placeholder="solar farm, substation, wind turbine…"
               style={{ flex: 1, padding: '8px 12px', border: 'none', outline: 'none', fontFamily: 'Outfit,sans-serif', fontSize: 12, color: '#374151' }} />
@@ -490,29 +567,103 @@ function OverviewPanel({ onNavigate }: { onNavigate: (s: SectionId) => void }) {
 
 function ProfilePanel() {
   const { data: { engineer: E }, updateEngineer } = useSite()
+  const [compressing, setCompressing] = useState(false)
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null)
+  const photoInputRef = useRef<HTMLInputElement>(null)
   const u = (k: keyof typeof E) => (v: string | boolean) => updateEngineer({ [k]: v } as any)
   const updateBio = (i: number, v: string) => { const b = [...E.bio]; b[i] = v; updateEngineer({ bio: b }) }
 
+  const handlePhotoUpload = async (file: File) => {
+    try {
+      setCompressing(true)
+      setUploadStatus('Compressing & saving…')
+      const { base64, originalSize, compressedSize } = await compressAndConvertToBase64(file, {
+        maxWidth: 700,
+        maxHeight: 700,
+        quality: 0.85,
+        mimeType: 'image/jpeg',
+      })
+      updateEngineer({ photo: base64 })
+      setUploadStatus(`Saved to database (${formatBytes(originalSize)} → ${formatBytes(compressedSize)})`)
+      setTimeout(() => setUploadStatus(null), 4000)
+    } catch (err: any) {
+      setUploadStatus('Failed: ' + (err?.message || 'Error processing photo'))
+    } finally {
+      setCompressing(false)
+    }
+  }
+
   return (
     <div>
-      <Section title="Profile Photo" description="Your photo shown in the about section, CV, and biodata">
-        <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 8 }}>
-          <div style={{ width: 80, height: 100, borderRadius: 6, overflow: 'hidden', border: '1px solid #E2E8F0', background: '#F8FAFC', flexShrink: 0 }}>
+      <Section title="Profile Photo" description="Upload your photo directly from your device to save to database as Base64 (used in About, CV, Biodata, & Hero)">
+        <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', marginBottom: 8, flexWrap: 'wrap' }}>
+          <div style={{ width: 90, height: 110, borderRadius: 8, overflow: 'hidden', border: '1px solid #E2E8F0', background: '#F8FAFC', flexShrink: 0, position: 'relative', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
             {E.photo ? (
               <img src={E.photo} alt={E.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
               <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontSize: 11 }}>No photo</div>
             )}
+            {compressing && (
+              <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Loader2 size={20} style={{ color: '#C47D0E', animation: 'spin 1s linear infinite' }} />
+              </div>
+            )}
           </div>
-          <div style={{ flex: 1 }}>
-            <Input label="Photo URL" value={E.photo || ''} onChange={u('photo') as (v: string) => void} placeholder="Photo image URL or path" />
-            <button
-              type="button"
-              onClick={() => updateEngineer({ photo: sahinPhoto })}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C47D0E', fontSize: 12, fontFamily: 'Outfit,sans-serif', fontWeight: 600, marginTop: 4, padding: 0 }}
-            >
-              ↺ Reset to default photo (sahin.png)
-            </button>
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={e => {
+                  const f = e.target.files?.[0]
+                  if (f) handlePhotoUpload(f)
+                  e.target.value = ''
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                disabled={compressing}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '7px 14px', borderRadius: 6,
+                  background: '#C47D0E', color: '#FFFFFF',
+                  fontFamily: 'Outfit,sans-serif', fontWeight: 600, fontSize: 12,
+                  cursor: compressing ? 'not-allowed' : 'pointer',
+                  border: 'none', transition: 'all 0.15s',
+                  boxShadow: '0 1px 2px rgba(196,125,14,0.2)',
+                }}
+              >
+                {compressing ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> : <Upload size={13} />}
+                {compressing ? 'Processing…' : 'Upload Photo from Device'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => updateEngineer({ photo: sahinPhoto })}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  padding: '7px 12px', borderRadius: 6,
+                  background: '#F8FAFC', border: '1px solid #E2E8F0',
+                  color: '#475569', fontSize: 12, fontFamily: 'Outfit,sans-serif',
+                  fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s',
+                }}
+              >
+                ↺ Reset to default (sahin.png)
+              </button>
+            </div>
+
+            {uploadStatus && (
+              <div style={{ fontSize: 11, fontFamily: 'Outfit,sans-serif', color: uploadStatus.includes('Failed') ? '#EF4444' : '#16A34A', fontWeight: 500, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Check size={12} /> {uploadStatus}
+              </div>
+            )}
+
+            <div style={{ marginTop: 6 }}>
+              <Input label="Or Photo URL / Base64" value={E.photo || ''} onChange={u('photo') as (v: string) => void} placeholder="data:image/... or https://..." />
+            </div>
           </div>
         </div>
       </Section>

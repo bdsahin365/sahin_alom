@@ -155,7 +155,7 @@ export default function EngineerNav({
                 flexShrink: 0,
               }}>
                 <img
-                  src={sahinAvatar}
+                  src={E.photo || sahinAvatar}
                   alt="Story"
                   style={{
                     width: '100%',
@@ -290,7 +290,7 @@ export default function EngineerNav({
                 alignItems: 'center',
                 justifyContent: 'center',
               }}>
-                <img src={sahinAvatar} alt="Sahin" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                <img src={E.photo || sahinAvatar} alt="Sahin" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
               </div>
               <div style={{ textAlign: 'left' }}>
                 <div style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 700, fontSize: 13, color: '#0D1218' }}>
