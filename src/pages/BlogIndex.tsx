@@ -1,19 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { Clock, Tag, ArrowRight, Search, BookOpen } from 'lucide-react'
-import { supabase } from '../lib/supabase'
-
-type Article = {
-  id: string
-  title: string
-  excerpt: string
-  slug: string
-  category: string
-  tags: string[]
-  read_time: number
-  featured_image: string
-  updated_at: string
-}
+import { fetchPublishedArticles, Article } from '../lib/articlesService'
 
 export default function BlogIndex() {
   const navigate = useNavigate()
@@ -23,12 +11,10 @@ export default function BlogIndex() {
   const [activeCategory, setActiveCategory] = useState('All')
 
   useEffect(() => {
-    supabase
-      .from('articles')
-      .select('id,title,excerpt,slug,category,tags,read_time,featured_image,updated_at')
-      .eq('status', 'published')
-      .order('updated_at', { ascending: false })
-      .then(({ data }) => { setArticles(data || []); setLoading(false) })
+    fetchPublishedArticles().then(data => {
+      setArticles(data)
+      setLoading(false)
+    })
   }, [])
 
   // Unique categories

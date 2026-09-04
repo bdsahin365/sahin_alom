@@ -22,6 +22,7 @@ import javascript from 'highlight.js/lib/languages/javascript'
 import typescript from 'highlight.js/lib/languages/typescript'
 import bash from 'highlight.js/lib/languages/bash'
 import { supabase } from '../../lib/supabase'
+import { fetchArticleById, saveArticle as persistArticle } from '../../lib/articlesService'
 import { CalcBlock } from './extensions/CalcBlock'
 import { MermaidBlock } from './extensions/MermaidBlock'
 import { FileAttachment } from './extensions/FileAttachment'
@@ -225,12 +226,12 @@ export default function ArticleEditor() {
   // Load existing article
   useEffect(() => {
     if (isNew || !id) { setLoading(false); return }
-    supabase.from('articles').select('*').eq('id', id).single().then(({ data }) => {
+    fetchArticleById(id).then(data => {
       if (data) {
         setTitle(data.title || '')
         setExcerpt(data.excerpt || '')
         setMeta({
-          status: data.status || 'draft',
+          status: (data.status as any) || 'draft',
           author: data.author || 'Md Sahin Alom',
           category: data.category || '',
           tags: data.tags || [],
@@ -254,19 +255,24 @@ export default function ArticleEditor() {
     const content = editor.getJSON()
     const text = editor.getText()
     const readTime = Math.max(1, Math.ceil(text.split(/\s+/).length / 200))
-    const row = {
-      title, excerpt, content,
-      status: meta.status, category: meta.category, tags: meta.tags,
-      featured_image: meta.featuredImage, author: meta.author,
-      meta_title: meta.metaTitle, meta_desc: meta.metaDesc,
+    const savedArt = await persistArticle({
+      id: articleId || undefined,
+      title,
+      excerpt,
+      content,
+      status: meta.status,
+      category: meta.category,
+      tags: meta.tags,
+      featured_image: meta.featuredImage,
+      author: meta.author,
+      meta_title: meta.metaTitle,
+      meta_desc: meta.metaDesc,
       slug: meta.slug || slugify(title),
-      read_time: readTime, updated_at: new Date().toISOString(),
-    }
-    if (articleId) {
-      await supabase.from('articles').update(row).eq('id', articleId)
-    } else {
-      const { data } = await supabase.from('articles').insert(row).select('id').single()
-      if (data?.id) { setArticleId(data.id); navigate(`/admin/articles/${data.id}`, { replace: true }) }
+      read_time: readTime,
+    })
+    if (!articleId && savedArt?.id) {
+      setArticleId(savedArt.id)
+      navigate(`/admin/articles/${savedArt.id}`, { replace: true })
     }
     setSaved(true)
     setLastSaved('Saved just now')

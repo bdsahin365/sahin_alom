@@ -1,20 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { Plus, BookOpen, Clock, Tag, Eye, Pencil, Trash2, Search, Filter } from 'lucide-react'
-import { supabase } from '../../lib/supabase'
-
-type Article = {
-  id: string
-  title: string
-  excerpt: string
-  slug: string
-  status: 'draft' | 'published' | 'scheduled'
-  category: string
-  tags: string[]
-  read_time: number
-  updated_at: string
-  featured_image: string
-}
+import { fetchAllArticles, deleteArticle, Article } from '../../lib/articlesService'
 
 const STATUS_STYLE: Record<string, { label: string; bg: string; color: string }> = {
   draft:     { label: 'DRAFT',     bg: '#FEF3C7', color: '#92400E' },
@@ -32,11 +19,8 @@ export default function ArticlesList() {
 
   const load = async () => {
     setLoading(true)
-    const { data } = await supabase
-      .from('articles')
-      .select('id,title,excerpt,slug,status,category,tags,read_time,updated_at,featured_image')
-      .order('updated_at', { ascending: false })
-    setArticles(data || [])
+    const data = await fetchAllArticles()
+    setArticles(data)
     setLoading(false)
   }
 
@@ -52,7 +36,7 @@ export default function ArticlesList() {
   const handleDelete = async (id: string) => {
     if (!window.confirm('Delete this article? This cannot be undone.')) return
     setDeleting(id)
-    await supabase.from('articles').delete().eq('id', id)
+    await deleteArticle(id)
     setArticles(a => a.filter(x => x.id !== id))
     setDeleting(null)
   }

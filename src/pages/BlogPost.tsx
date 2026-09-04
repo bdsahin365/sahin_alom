@@ -21,9 +21,10 @@ import javascript from 'highlight.js/lib/languages/javascript'
 import typescript from 'highlight.js/lib/languages/typescript'
 import bash from 'highlight.js/lib/languages/bash'
 import { Clock, Tag, ArrowLeft, List } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { fetchArticleBySlug, Article } from '../lib/articlesService'
 import { CalcBlock } from './blog/extensions/CalcBlock'
 import { MermaidBlock } from './blog/extensions/MermaidBlock'
+import { FileAttachment } from './blog/extensions/FileAttachment'
 
 const lowlight = createLowlight()
 lowlight.register('python', python)
@@ -39,15 +40,8 @@ const EXTENSIONS = [
   Table, TableRow, TableHeader, TableCell,
   Youtube,
   CodeBlockLowlight.configure({ lowlight }),
-  CalcBlock, MermaidBlock,
+  CalcBlock, MermaidBlock, FileAttachment,
 ]
-
-type Article = {
-  id: string; title: string; excerpt: string; slug: string
-  status: string; category: string; tags: string[]; read_time: number
-  featured_image: string; content: any; author: string; updated_at: string
-  meta_title: string; meta_desc: string
-}
 
 type TocItem = { id: string; text: string; level: number }
 
@@ -64,21 +58,37 @@ export default function BlogPost() {
 
   useEffect(() => {
     if (!slug) return
-    supabase.from('articles').select('*').eq('slug', slug).eq('status', 'published').single()
-      .then(({ data }) => {
-        if (!data) { setNotFound(true); setLoading(false); return }
-        setArticle(data)
-        // Generate HTML from TipTap JSON
-        if (data.content && typeof data.content === 'object') {
+    fetchArticleBySlug(slug).then(data => {
+      if (!data) { setNotFound(true); setLoading(false); return }
+      setArticle(data)
+      // Generate HTML from TipTap JSON or render HTML string
+      if (data.content) {
+        if (typeof data.content === 'object') {
           try {
             const generatedHtml = generateHTML(data.content, EXTENSIONS)
             setHtml(generatedHtml)
           } catch {
             setHtml('<p>Content could not be rendered.</p>')
           }
+        } else if (typeof data.content === 'string') {
+          const trimmed = data.content.trim()
+          if (trimmed.startsWith('{') || trimmed.startsWith('{"')) {
+            try {
+              const parsed = JSON.parse(trimmed)
+              setHtml(generateHTML(parsed, EXTENSIONS))
+            } catch {
+              setHtml(data.content)
+            }
+          } else {
+            setHtml(data.content)
+          }
         }
-        setLoading(false)
-      })
+      }
+      setLoading(false)
+    }).catch(() => {
+      setNotFound(true)
+      setLoading(false)
+    })
   }, [slug])
 
   // Build ToC from headings
@@ -134,6 +144,43 @@ export default function BlogPost() {
       }
     }
     setTimeout(tryRender, 400)
+  }, [html])
+
+  // Mermaid diagrams render
+  useEffect(() => {
+    if (!contentRef.current) return
+    const mermaidNodes = contentRef.current.querySelectorAll('.language-mermaid, pre code.language-mermaid, div.mermaid')
+    if (mermaidNodes.length === 0) return
+
+    const renderMermaid = () => {
+      const w = window as any
+      if (w.mermaid) {
+        w.mermaid.initialize({ startOnLoad: false, theme: 'neutral', securityLevel: 'loose' })
+        mermaidNodes.forEach(async (node, idx) => {
+          const code = node.textContent || ''
+          const container = document.createElement('div')
+          container.style.cssText = 'background:#FFFFFF;border:1px solid #E2E8F0;border-radius:8px;padding:16px;margin:20px 0;display:flex;justify-content:center;overflow-x:auto;'
+          const id = `mermaid-render-${Date.now()}-${idx}`
+          try {
+            const { svg } = await w.mermaid.render(id, code)
+            container.innerHTML = svg
+            node.closest('pre')?.replaceWith(container) || node.replaceWith(container)
+          } catch (err) {
+            console.warn('Mermaid render error:', err)
+          }
+        })
+      }
+    }
+
+    const w = window as any
+    if (!w.mermaid) {
+      const s = document.createElement('script')
+      s.src = 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js'
+      s.onload = renderMermaid
+      document.head.appendChild(s)
+    } else {
+      setTimeout(renderMermaid, 300)
+    }
   }, [html])
 
   // SEO
