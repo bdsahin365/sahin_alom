@@ -6,6 +6,8 @@ import CV from './pages/CV'
 import Biodata from './pages/Biodata'
 import AdminLogin from './pages/AdminLogin'
 import AuthGuard from './components/AuthGuard'
+import ToolsPage from './pages/tools/ToolsPage'
+import ToolPage from './pages/tools/ToolPage'
 
 export const router = createBrowserRouter(
   [
@@ -16,6 +18,8 @@ export const router = createBrowserRouter(
         { index: true, Component: SiteView },
         { path: 'cv', Component: CV },
         { path: 'biodata', Component: Biodata },
+        { path: 'tools', Component: ToolsPage },
+        { path: 'tools/:slug', Component: ToolPage },
         {
           path: 'admin',
           children: [

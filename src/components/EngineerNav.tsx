@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { ArrowUpRight, Menu, X, Zap, Play } from 'lucide-react'
+import { ArrowUpRight, Menu, X, Zap, Play, Wrench } from 'lucide-react'
+import { useNavigate } from 'react-router'
 import { useSite } from '../context/SiteContext'
 import sahinAvatar from '../img/sahin.png'
 
@@ -12,6 +13,7 @@ type Props = {
 }
 
 export default function EngineerNav({ menuOpen, setMenuOpen, onBiodata, onCV, onOpenStory }: Props) {
+  const navigate = useNavigate()
   const { data: { engineer: E } } = useSite()
   const [scrolled, setScrolled] = useState(false)
 
@@ -160,6 +162,13 @@ export default function EngineerNav({ menuOpen, setMenuOpen, onBiodata, onCV, on
             <button onClick={onBiodata} className="btn-outline-sm desktop-only" style={{ display: 'flex' }}>
               Biodata
             </button>
+            <button
+              onClick={() => navigate('/tools')}
+              className="btn-outline-sm desktop-only"
+              style={{ display: 'flex', alignItems: 'center', gap: 5 }}
+            >
+              <Wrench size={10} strokeWidth={2} /> Tools
+            </button>
             <a href="#contact" className="btn-primary desktop-only" style={{ padding: '9px 18px', fontSize: 11, letterSpacing: '0.1em', gap: 6 }}>
               Hire me <ArrowUpRight size={12} strokeWidth={2} />
             </a>
@@ -252,6 +261,7 @@ export default function EngineerNav({ menuOpen, setMenuOpen, onBiodata, onCV, on
           <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
             <button onClick={() => { onCV(); setMenuOpen(false) }} style={{ flex: 1, padding: '12px', background: 'var(--bg-2)', border: '1px solid var(--border-strong)', fontFamily: 'JetBrains Mono,monospace', fontSize: 10, letterSpacing: '0.15em', color: 'var(--fg-dim)', textTransform: 'uppercase', cursor: 'pointer' }}>CV</button>
             <button onClick={() => { onBiodata(); setMenuOpen(false) }} style={{ flex: 1, padding: '12px', background: 'var(--bg-2)', border: '1px solid var(--border-strong)', fontFamily: 'JetBrains Mono,monospace', fontSize: 10, letterSpacing: '0.15em', color: 'var(--fg-dim)', textTransform: 'uppercase', cursor: 'pointer' }}>Biodata</button>
+            <button onClick={() => { navigate('/tools'); setMenuOpen(false) }} style={{ flex: 1, padding: '12px', background: 'var(--bg-2)', border: '1px solid var(--border-strong)', fontFamily: 'JetBrains Mono,monospace', fontSize: 10, letterSpacing: '0.15em', color: 'var(--fg-dim)', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}><Wrench size={10} strokeWidth={2} />Tools</button>
           </div>
           <a href="#contact" onClick={() => setMenuOpen(false)} className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
             Get in Touch <ArrowUpRight size={14} strokeWidth={2} />
