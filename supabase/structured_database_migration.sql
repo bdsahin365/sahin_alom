@@ -180,6 +180,13 @@ CREATE TABLE IF NOT EXISTS public.site_settings (
   favicon_url TEXT,
   og_image_url TEXT,
   resume_url TEXT,
+  brand_title TEXT,
+  show_brand_title BOOLEAN DEFAULT true,
+  credential_badge TEXT,
+  show_credential_badge BOOLEAN DEFAULT true,
+  brand_subtitle TEXT,
+  show_brand_subtitle BOOLEAN DEFAULT true,
+  show_logo_emblem BOOLEAN DEFAULT true,
   tools TEXT[] DEFAULT '{}',
   social_linkedin TEXT,
   social_twitter TEXT,
@@ -194,6 +201,31 @@ CREATE TABLE IF NOT EXISTS public.site_settings (
   pinterest_verification TEXT,
   updated_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- Ensure all columns exist if table was created previously
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS logo_url TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS logo_type TEXT DEFAULT 'default_emblem';
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS favicon_url TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS og_image_url TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS resume_url TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS brand_title TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS show_brand_title BOOLEAN DEFAULT true;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS credential_badge TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS show_credential_badge BOOLEAN DEFAULT true;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS brand_subtitle TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS show_brand_subtitle BOOLEAN DEFAULT true;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS show_logo_emblem BOOLEAN DEFAULT true;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS social_facebook TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS social_youtube TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS ga_id TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS clarity_id TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS google_verification TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS bing_verification TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS yandex_verification TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS pinterest_verification TEXT;
+
+ALTER TABLE public.engineer_profile ADD COLUMN IF NOT EXISTS whatsapp TEXT;
+ALTER TABLE public.engineer_profile ADD COLUMN IF NOT EXISTS credentials_tag TEXT DEFAULT 'PE';
 
 ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public read site_settings" ON public.site_settings;

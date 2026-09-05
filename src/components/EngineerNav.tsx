@@ -464,24 +464,6 @@ export default function EngineerNav({
             <button onClick={handleCV} className="btn-outline-sm desktop-only" style={{ display: 'flex' }}>
               CV
             </button>
-            <button onClick={handleBiodata} className="btn-outline-sm desktop-only" style={{ display: 'flex' }}>
-              Biodata
-            </button>
-
-            <a
-              href="#contact"
-              onClick={e => handleAnchorClick(e, '#contact')}
-              className="btn-primary desktop-only"
-              style={{
-                padding: '9px 18px',
-                fontSize: 11,
-                letterSpacing: '0.1em',
-                gap: 6,
-                boxShadow: '0 2px 10px rgba(196, 125, 14, 0.25)',
-              }}
-            >
-              Hire me <ArrowUpRight size={12} strokeWidth={2.2} />
-            </a>
 
             {/* Mobile Menu Toggle Button */}
             <button

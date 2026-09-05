@@ -212,97 +212,122 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false
 
-    Promise.all([
-      supabase.from('engineer_profile').select('*').single(),
-      supabase.from('credentials').select('*').order('display_order', { ascending: true }),
-      supabase.from('expertise').select('*').order('display_order', { ascending: true }),
-      supabase.from('projects').select('*').order('display_order', { ascending: true }),
-      supabase.from('services').select('*').order('display_order', { ascending: true }),
-      supabase.from('education').select('*').order('display_order', { ascending: true }),
-      supabase.from('experience').select('*').order('display_order', { ascending: true }),
-      supabase.from('site_settings').select('*').single(),
-    ]).then(([engRes, credRes, expRes, projRes, svcRes, eduRes, exp2Res, setRes]) => {
-      if (cancelled) return
-      if (engRes.data || (projRes.data && projRes.data.length > 0)) {
-        const structured: Partial<SiteData> = {}
-        if (engRes.data) {
+    async function loadSiteData() {
+      try {
+        // 1. Fetch site_config first (holds comprehensive JSON state including branding, settings, analytics)
+        const { data: configRow } = await supabase
+          .from('site_config')
+          .select('data')
+          .eq('id', DB_ROW_ID)
+          .single()
+
+        const baseData: Partial<SiteData> = configRow?.data ? (configRow.data as Partial<SiteData>) : {}
+
+        // 2. Fetch structured tables in parallel to merge any direct edits
+        const [engRes, credRes, expRes, projRes, svcRes, eduRes, exp2Res, setRes] = await Promise.allSettled([
+          supabase.from('engineer_profile').select('*').single(),
+          supabase.from('credentials').select('*').order('display_order', { ascending: true }),
+          supabase.from('expertise').select('*').order('display_order', { ascending: true }),
+          supabase.from('projects').select('*').order('display_order', { ascending: true }),
+          supabase.from('services').select('*').order('display_order', { ascending: true }),
+          supabase.from('education').select('*').order('display_order', { ascending: true }),
+          supabase.from('experience').select('*').order('display_order', { ascending: true }),
+          supabase.from('site_settings').select('*').single(),
+        ])
+
+        if (cancelled) return
+
+        const structured: Partial<SiteData> = { ...baseData }
+
+        const engData = engRes.status === 'fulfilled' ? engRes.value.data : null
+        const credData = credRes.status === 'fulfilled' ? credRes.value.data : null
+        const expData = expRes.status === 'fulfilled' ? expRes.value.data : null
+        const projData = projRes.status === 'fulfilled' ? projRes.value.data : null
+        const svcData = svcRes.status === 'fulfilled' ? svcRes.value.data : null
+        const eduData = eduRes.status === 'fulfilled' ? eduRes.value.data : null
+        const exp2Data = exp2Res.status === 'fulfilled' ? exp2Res.value.data : null
+        const setDataRes = setRes.status === 'fulfilled' ? setRes.value.data : null
+
+        if (engData) {
           structured.engineer = {
             ...DEFAULT.engineer,
-            ...engRes.data,
-            yearsExp: engRes.data.years_exp ?? DEFAULT.engineer.yearsExp,
-            projectsMW: engRes.data.projects_mw ?? DEFAULT.engineer.projectsMW,
-            projectsCount: engRes.data.projects_count ?? DEFAULT.engineer.projectsCount,
-            credentialsTag: engRes.data.credentials_tag ?? DEFAULT.engineer.credentialsTag,
-            whatsapp: engRes.data.whatsapp ?? DEFAULT.engineer.whatsapp,
+            ...(baseData.engineer ?? {}),
+            ...engData,
+            yearsExp: engData.years_exp ?? baseData.engineer?.yearsExp ?? DEFAULT.engineer.yearsExp,
+            projectsMW: engData.projects_mw ?? baseData.engineer?.projectsMW ?? DEFAULT.engineer.projectsMW,
+            projectsCount: engData.projects_count ?? baseData.engineer?.projectsCount ?? DEFAULT.engineer.projectsCount,
+            credentialsTag: engData.credentials_tag ?? baseData.engineer?.credentialsTag ?? DEFAULT.engineer.credentialsTag,
+            whatsapp: engData.whatsapp ?? baseData.engineer?.whatsapp ?? DEFAULT.engineer.whatsapp,
           }
         }
-        if (credRes.data?.length) structured.credentials = credRes.data
-        if (expRes.data?.length) structured.expertise = expRes.data.map((x: any) => ({ ...x, desc: x.description || x.desc }))
-        if (projRes.data?.length) structured.projects = projRes.data.map((x: any) => ({ ...x, imgColor: x.img_color || x.imgColor }))
-        if (svcRes.data?.length) structured.services = svcRes.data
-        if (eduRes.data?.length) structured.education = eduRes.data
-        if (exp2Res.data?.length) structured.experience = exp2Res.data
-        if (setRes.data) {
+        if (credData?.length) structured.credentials = credData
+        if (expData?.length) structured.expertise = expData.map((x: any) => ({ ...x, desc: x.description || x.desc }))
+        if (projData?.length) structured.projects = projData.map((x: any) => ({ ...x, imgColor: x.img_color || x.imgColor }))
+        if (svcData?.length) structured.services = svcData
+        if (eduData?.length) structured.education = eduData
+        if (exp2Data?.length) structured.experience = exp2Data
+
+        if (setDataRes) {
           structured.settings = {
-            siteTitle: setRes.data.site_title || DEFAULT.settings.siteTitle,
-            pageDescription: setRes.data.page_description || DEFAULT.settings.pageDescription,
-            siteUrl: setRes.data.site_url || DEFAULT.settings.siteUrl,
-            tools: setRes.data.tools || DEFAULT.settings.tools,
+            ...DEFAULT.settings,
+            ...(baseData.settings ?? {}),
+            siteTitle: setDataRes.site_title || baseData.settings?.siteTitle || DEFAULT.settings.siteTitle,
+            pageDescription: setDataRes.page_description || baseData.settings?.pageDescription || DEFAULT.settings.pageDescription,
+            siteUrl: setDataRes.site_url || baseData.settings?.siteUrl || DEFAULT.settings.siteUrl,
+            tools: setDataRes.tools || baseData.settings?.tools || DEFAULT.settings.tools,
             branding: {
-              logo: setRes.data.logo_url || DEFAULT.settings.branding.logo,
-              logoType: setRes.data.logo_type || DEFAULT.settings.branding.logoType,
-              favicon: setRes.data.favicon_url || DEFAULT.settings.branding.favicon,
-              ogImage: setRes.data.og_image_url || DEFAULT.settings.branding.ogImage,
-              resumeUrl: setRes.data.resume_url || DEFAULT.settings.branding.resumeUrl,
+              ...DEFAULT.settings.branding,
+              ...(baseData.settings?.branding ?? {}),
+              logo: setDataRes.logo_url || baseData.settings?.branding?.logo || DEFAULT.settings.branding.logo,
+              logoType: setDataRes.logo_type || baseData.settings?.branding?.logoType || DEFAULT.settings.branding.logoType,
+              favicon: setDataRes.favicon_url || baseData.settings?.branding?.favicon || DEFAULT.settings.branding.favicon,
+              ogImage: setDataRes.og_image_url || baseData.settings?.branding?.ogImage || DEFAULT.settings.branding.ogImage,
+              resumeUrl: setDataRes.resume_url || baseData.settings?.branding?.resumeUrl || DEFAULT.settings.branding.resumeUrl,
+              brandTitle: setDataRes.brand_title ?? baseData.settings?.branding?.brandTitle ?? DEFAULT.settings.branding.brandTitle,
+              showBrandTitle: setDataRes.show_brand_title ?? baseData.settings?.branding?.showBrandTitle ?? DEFAULT.settings.branding.showBrandTitle,
+              credentialBadge: setDataRes.credential_badge ?? baseData.settings?.branding?.credentialBadge ?? DEFAULT.settings.branding.credentialBadge,
+              showCredentialBadge: setDataRes.show_credential_badge ?? baseData.settings?.branding?.showCredentialBadge ?? DEFAULT.settings.branding.showCredentialBadge,
+              brandSubtitle: setDataRes.brand_subtitle ?? baseData.settings?.branding?.brandSubtitle ?? DEFAULT.settings.branding.brandSubtitle,
+              showBrandSubtitle: setDataRes.show_brand_subtitle ?? baseData.settings?.branding?.showBrandSubtitle ?? DEFAULT.settings.branding.showBrandSubtitle,
+              showLogoEmblem: setDataRes.show_logo_emblem ?? baseData.settings?.branding?.showLogoEmblem ?? DEFAULT.settings.branding.showLogoEmblem,
             },
             social: {
-              linkedin: setRes.data.social_linkedin || DEFAULT.settings.social.linkedin,
-              twitter: setRes.data.social_twitter || DEFAULT.settings.social.twitter,
-              github: setRes.data.social_github || DEFAULT.settings.social.github,
-              facebook: setRes.data.social_facebook || DEFAULT.settings.social.facebook,
-              youtube: setRes.data.social_youtube || '',
+              ...DEFAULT.settings.social,
+              ...(baseData.settings?.social ?? {}),
+              linkedin: setDataRes.social_linkedin || baseData.settings?.social?.linkedin || DEFAULT.settings.social.linkedin,
+              twitter: setDataRes.social_twitter || baseData.settings?.social?.twitter || DEFAULT.settings.social.twitter,
+              github: setDataRes.social_github || baseData.settings?.social?.github || DEFAULT.settings.social.github,
+              facebook: setDataRes.social_facebook || baseData.settings?.social?.facebook || DEFAULT.settings.social.facebook,
+              youtube: setDataRes.social_youtube || baseData.settings?.social?.youtube || '',
             },
             analytics: {
-              googleAnalyticsId: setRes.data.ga_id || DEFAULT.settings.analytics.googleAnalyticsId,
-              clarityId: setRes.data.clarity_id || DEFAULT.settings.analytics.clarityId,
+              ...DEFAULT.settings.analytics,
+              ...(baseData.settings?.analytics ?? {}),
+              googleAnalyticsId: setDataRes.ga_id || baseData.settings?.analytics?.googleAnalyticsId || DEFAULT.settings.analytics.googleAnalyticsId,
+              clarityId: setDataRes.clarity_id || baseData.settings?.analytics?.clarityId || DEFAULT.settings.analytics.clarityId,
             },
             verification: {
-              googleSiteVerification: setRes.data.google_verification || DEFAULT.settings.verification.googleSiteVerification,
-              bingSiteVerification: setRes.data.bing_verification || DEFAULT.settings.verification.bingSiteVerification,
-              yandexVerification: setRes.data.yandex_verification || '',
-              pinterestVerification: setRes.data.pinterest_verification || '',
+              ...DEFAULT.settings.verification,
+              ...(baseData.settings?.verification ?? {}),
+              googleSiteVerification: setDataRes.google_verification || baseData.settings?.verification?.googleSiteVerification || DEFAULT.settings.verification.googleSiteVerification,
+              bingSiteVerification: setDataRes.bing_verification || baseData.settings?.verification?.bingSiteVerification || DEFAULT.settings.verification.bingSiteVerification,
+              yandexVerification: setDataRes.yandex_verification || baseData.settings?.verification?.yandexVerification || '',
+              pinterestVerification: setDataRes.pinterest_verification || baseData.settings?.verification?.pinterestVerification || '',
             },
           }
         }
+
         const merged = deepMerge(structured)
         setData(merged)
         writeCache(merged)
-        setLoading(false)
-        return
+      } catch (err) {
+        console.warn('Error loading site data from Supabase:', err)
+      } finally {
+        if (!cancelled) setLoading(false)
       }
+    }
 
-      // Fallback to site_config
-      supabase.from('site_config').select('data').eq('id', DB_ROW_ID).single().then(({ data: row }) => {
-        if (cancelled) return
-        if (row?.data) {
-          const merged = deepMerge(row.data as Partial<SiteData>)
-          setData(merged)
-          writeCache(merged)
-        }
-        setLoading(false)
-      }).catch(() => { if (!cancelled) setLoading(false) })
-    }).catch(() => {
-      supabase.from('site_config').select('data').eq('id', DB_ROW_ID).single().then(({ data: row }) => {
-        if (cancelled) return
-        if (row?.data) {
-          const merged = deepMerge(row.data as Partial<SiteData>)
-          setData(merged)
-          writeCache(merged)
-        }
-        setLoading(false)
-      }).catch(() => { if (!cancelled) setLoading(false) })
-    })
-
+    loadSiteData()
     return () => { cancelled = true }
   }, [])
 
@@ -315,146 +340,139 @@ export function SiteProvider({ children }: { children: ReactNode }) {
     let cancelled = false
     const now = new Date().toISOString()
 
-    // 1. Sync to site_config
+    // 1. Primary Sync: site_config (guaranteed full JSON state)
     supabase
       .from('site_config')
       .upsert({ id: DB_ROW_ID, data: next, updated_at: now })
-      .then(() => {
-        if (!cancelled) setTimer(setTimeout(() => setSaved(true), 800))
+      .then(({ error }) => {
+        if (error) console.error('Error saving site_config:', error)
+        if (!cancelled) setTimer(setTimeout(() => setSaved(true), 600))
       })
-      .catch(() => {
-        if (!cancelled) setTimer(setTimeout(() => setSaved(true), 800))
+      .catch((err) => {
+        console.error('Failed to upsert site_config:', err)
+        if (!cancelled) setTimer(setTimeout(() => setSaved(true), 600))
       })
 
-    // 2. Sync to structured tables in background
-    if (next.engineer) {
-      supabase.from('engineer_profile').upsert({
-        id: 'sahin',
-        name: next.engineer.name,
-        initials: next.engineer.initials,
-        photo: next.engineer.photo,
-        title: next.engineer.title,
-        subtitle: next.engineer.subtitle,
-        location: next.engineer.location,
-        email: next.engineer.email,
-        phone: next.engineer.phone,
-        linkedin: next.engineer.linkedin,
-        tagline: next.engineer.tagline,
-        bio: next.engineer.bio,
-        years_exp: next.engineer.yearsExp,
-        projects_mw: next.engineer.projectsMW,
-        projects_count: next.engineer.projectsCount,
-        clients: next.engineer.clients,
-        available: next.engineer.available,
-        credentials_tag: next.engineer.credentialsTag,
-        whatsapp: next.engineer.whatsapp,
-        updated_at: now
-      }).then(() => {}).catch(() => {})
-    }
+    // 2. Safe background sync to structured tables
+    try {
+      if (next.engineer) {
+        supabase.from('engineer_profile').upsert({
+          id: 'sahin',
+          name: next.engineer.name,
+          initials: next.engineer.initials,
+          photo: next.engineer.photo,
+          title: next.engineer.title,
+          subtitle: next.engineer.subtitle,
+          location: next.engineer.location,
+          email: next.engineer.email,
+          phone: next.engineer.phone,
+          linkedin: next.engineer.linkedin,
+          tagline: next.engineer.tagline,
+          bio: next.engineer.bio,
+          years_exp: next.engineer.yearsExp,
+          projects_mw: next.engineer.projectsMW,
+          projects_count: next.engineer.projectsCount,
+          clients: next.engineer.clients,
+          available: next.engineer.available,
+          updated_at: now
+        }).then(() => {}).catch(() => {})
+      }
 
-    if (next.projects?.length) {
-      supabase.from('projects').upsert(next.projects.map((p, i) => ({
-        id: p.id,
-        num: p.num || String(i + 1).padStart(2, '0'),
-        title: p.title,
-        client: p.client,
-        location: p.location,
-        capacity: p.capacity,
-        year: p.year,
-        category: p.category,
-        img: p.img,
-        img_color: p.imgColor,
-        summary: p.summary,
-        scope: p.scope,
-        deliverables: p.deliverables,
-        outcome: p.outcome,
-        tools: p.tools,
-        featured: p.featured ?? true,
-        display_order: i + 1,
-        updated_at: now
-      }))).then(() => {}).catch(() => {})
-    }
+      if (next.projects?.length) {
+        supabase.from('projects').upsert(next.projects.map((p, i) => ({
+          id: p.id,
+          num: p.num || String(i + 1).padStart(2, '0'),
+          title: p.title,
+          client: p.client,
+          location: p.location,
+          capacity: p.capacity,
+          year: p.year,
+          category: p.category,
+          img: p.img,
+          img_color: p.imgColor,
+          summary: p.summary,
+          scope: p.scope,
+          deliverables: p.deliverables,
+          outcome: p.outcome,
+          tools: p.tools,
+          featured: p.featured ?? true,
+          display_order: i + 1,
+          updated_at: now
+        }))).then(() => {}).catch(() => {})
+      }
 
-    if (next.services?.length) {
-      supabase.from('services').upsert(next.services.map((s, i) => ({
-        id: s.id,
-        num: s.num || String(i + 1).padStart(2, '0'),
-        name: s.name,
-        detail: s.detail,
-        display_order: i + 1,
-      }))).then(() => {}).catch(() => {})
-    }
+      if (next.services?.length) {
+        supabase.from('services').upsert(next.services.map((s, i) => ({
+          id: s.id,
+          num: s.num || String(i + 1).padStart(2, '0'),
+          name: s.name,
+          detail: s.detail,
+          display_order: i + 1,
+        }))).then(() => {}).catch(() => {})
+      }
 
-    if (next.expertise?.length) {
-      supabase.from('expertise').upsert(next.expertise.map((e, i) => ({
-        id: e.id,
-        num: e.num || String(i + 1).padStart(2, '0'),
-        title: e.title,
-        tags: e.tags,
-        description: e.desc,
-        display_order: i + 1,
-      }))).then(() => {}).catch(() => {})
-    }
+      if (next.expertise?.length) {
+        supabase.from('expertise').upsert(next.expertise.map((e, i) => ({
+          id: e.id,
+          num: e.num || String(i + 1).padStart(2, '0'),
+          title: e.title,
+          tags: e.tags,
+          description: e.desc,
+          display_order: i + 1,
+        }))).then(() => {}).catch(() => {})
+      }
 
-    if (next.credentials?.length) {
-      supabase.from('credentials').upsert(next.credentials.map((c, i) => ({
-        id: `cred-${i + 1}`,
-        label: c.label,
-        value: c.value,
-        detail: c.detail,
-        url: c.url,
-        display_order: i + 1,
-      }))).then(() => {}).catch(() => {})
-    }
+      if (next.credentials?.length) {
+        supabase.from('credentials').upsert(next.credentials.map((c, i) => ({
+          id: `cred-${i + 1}`,
+          label: c.label,
+          value: c.value,
+          detail: c.detail,
+          url: c.url,
+          display_order: i + 1,
+        }))).then(() => {}).catch(() => {})
+      }
 
-    if (next.experience?.length) {
-      supabase.from('experience').upsert(next.experience.map((e, i) => ({
-        id: e.id,
-        role: e.role,
-        company: e.company,
-        location: e.location,
-        period: e.period,
-        current: e.current,
-        description: e.description,
-        highlights: e.highlights,
-        display_order: i + 1,
-      }))).then(() => {}).catch(() => {})
-    }
+      if (next.experience?.length) {
+        supabase.from('experience').upsert(next.experience.map((e, i) => ({
+          id: e.id,
+          role: e.role,
+          company: e.company,
+          location: e.location,
+          period: e.period,
+          current: e.current,
+          description: e.description,
+          highlights: e.highlights,
+          display_order: i + 1,
+        }))).then(() => {}).catch(() => {})
+      }
 
-    if (next.education?.length) {
-      supabase.from('education').upsert(next.education.map((e, i) => ({
-        id: `edu-${i + 1}`,
-        period: e.period,
-        degree: e.degree,
-        institution: e.institution,
-        note: e.note,
-        display_order: i + 1,
-      }))).then(() => {}).catch(() => {})
-    }
+      if (next.education?.length) {
+        supabase.from('education').upsert(next.education.map((e, i) => ({
+          id: `edu-${i + 1}`,
+          period: e.period,
+          degree: e.degree,
+          institution: e.institution,
+          note: e.note,
+          display_order: i + 1,
+        }))).then(() => {}).catch(() => {})
+      }
 
-    if (next.settings) {
-      supabase.from('site_settings').upsert({
-        id: 'general',
-        site_title: next.settings.siteTitle,
-        page_description: next.settings.pageDescription,
-        site_url: next.settings.siteUrl,
-        tools: next.settings.tools,
-        logo_url: next.settings.branding?.logo || '',
-        logo_type: next.settings.branding?.logoType || 'default_emblem',
-        favicon_url: next.settings.branding?.favicon || '',
-        og_image_url: next.settings.branding?.ogImage || '',
-        resume_url: next.settings.branding?.resumeUrl || '',
-        social_linkedin: next.settings.social?.linkedin || '',
-        social_twitter: next.settings.social?.twitter || '',
-        social_github: next.settings.social?.github || '',
-        social_facebook: next.settings.social?.facebook || '',
-        social_youtube: next.settings.social?.youtube || '',
-        ga_id: next.settings.analytics?.googleAnalyticsId || '',
-        clarity_id: next.settings.analytics?.clarityId || '',
-        google_verification: next.settings.verification?.googleSiteVerification || '',
-        bing_verification: next.settings.verification?.bingSiteVerification || '',
-        updated_at: now
-      }).then(() => {}).catch(() => {})
+      if (next.settings) {
+        supabase.from('site_settings').upsert({
+          id: 'general',
+          site_title: next.settings.siteTitle,
+          page_description: next.settings.pageDescription,
+          site_url: next.settings.siteUrl,
+          tools: next.settings.tools,
+          social_linkedin: next.settings.social?.linkedin || '',
+          social_twitter: next.settings.social?.twitter || '',
+          social_github: next.settings.social?.github || '',
+          updated_at: now
+        }).then(() => {}).catch(() => {})
+      }
+    } catch (err) {
+      console.warn('Background structured sync notice:', err)
     }
 
     return () => { cancelled = true }
