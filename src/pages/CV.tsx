@@ -154,9 +154,6 @@ export default function CV() {
               </span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 10, letterSpacing: '0.12em', color: '#16A34A', background: 'rgba(22,163,74,0.08)', padding: '2px 8px', borderRadius: 2, fontWeight: 600 }}>
-                ✓ ELB LICENSED ENGINEER
-              </span>
               <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 10, color: '#9CA3AF' }}>
                 SAVAR, DHAKA, BANGLADESH
               </span>
@@ -220,7 +217,7 @@ export default function CV() {
                   borderRadius: 2,
                   whiteSpace: 'nowrap'
                 }}>
-                  ABC Licensed (ELB)
+                  Class ABC Licensed
                 </span>
                 <span style={{
                   padding: '3px 9px',
