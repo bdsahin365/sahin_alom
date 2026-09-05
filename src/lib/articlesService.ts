@@ -355,20 +355,21 @@ export async function fetchArticleBySlug(slug: string): Promise<Article | null> 
 }
 
 /**
- * Fetch a single article by ID
+ * Fetch a single article by ID or Slug
  */
-export async function fetchArticleById(id: string): Promise<Article | null> {
-  const local = getStoredArticles().find(a => a.id === id)
+export async function fetchArticleById(idOrSlug: string): Promise<Article | null> {
+  const local = getStoredArticles().find(a => a.id === idOrSlug || a.slug === idOrSlug)
   try {
     const { data, error } = await supabase
       .from('articles')
       .select('*')
-      .eq('id', id)
-      .single()
+      .or(`id.eq.${idOrSlug},slug.eq.${idOrSlug}`)
+      .limit(1)
+      .maybeSingle()
 
     if (!error && data) return data
   } catch (err) {
-    console.warn('Supabase fetch by ID fallback:', err)
+    console.warn('Supabase fetch by ID/slug fallback:', err)
   }
   return local || null
 }
