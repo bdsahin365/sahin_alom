@@ -10,6 +10,7 @@ import {
 } from '../data/engineer'
 import type { Project, Experience } from '../data/engineer'
 import { supabase } from '../lib/supabase'
+import { siteConfig } from '../config/siteConfig'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 export type EngineerInfo  = typeof D_ENG & { available: boolean }
@@ -17,12 +18,35 @@ export type Credential    = { label: string; value: string; detail: string; url?
 export type ExpertiseItem = { id: string; num: string; title: string; tags: string[]; desc: string }
 export type ServiceItem   = { id: string; num: string; name: string; detail: string }
 export type EducationItem = { period: string; degree: string; institution: string; note: string }
-export type Settings      = {
+
+export type AnalyticsSettings = {
+  googleAnalyticsId: string
+  clarityId: string
+}
+
+export type VerificationSettings = {
+  googleSiteVerification: string
+  bingSiteVerification: string
+  yandexVerification?: string
+  pinterestVerification?: string
+}
+
+export type Settings = {
   siteTitle: string
   pageDescription: string
+  siteUrl: string
   tools: string[]
-  social: { linkedin: string; twitter: string; github: string }
+  social: {
+    linkedin: string
+    twitter: string
+    github: string
+    facebook?: string
+    youtube?: string
+  }
+  analytics: AnalyticsSettings
+  verification: VerificationSettings
 }
+
 export { type Project, type Experience }
 
 export type SiteData = {
@@ -51,7 +75,7 @@ type Ctx = {
   resetToDefaults:   () => void
 }
 
-const CACHE_KEY = 'msa_site_v9'
+const CACHE_KEY = 'msa_site_v10'
 const DB_ROW_ID = 1
 
 const DEFAULT: SiteData = {
@@ -63,10 +87,27 @@ const DEFAULT: SiteData = {
   education:   D_EDU,
   experience:  D_EXP2,
   settings: {
-    siteTitle:       'Md Sahin Alom — Electrical Engineer',
-    pageDescription: 'Power systems engineer based in Zirabo, Ashulia, Savar, Dhaka.',
+    siteTitle:       siteConfig.siteName || 'Md Sahin Alom — Senior Electrical Engineer',
+    pageDescription: siteConfig.defaultDescription || 'Power systems engineer specialized in substation design, BNBC 2020, and industrial power distribution.',
+    siteUrl:         siteConfig.siteUrl || 'https://sahinalom.com',
     tools: ['PSS/E', 'PSCAD', 'ETAP', 'DIgSILENT', 'AutoCAD Electrical', 'CYMGRD', 'SKM Power Tools', 'MATLAB/Simulink', 'Python', 'Microstation'],
-    social: { linkedin: 'https://linkedin.com/in/sahinalom', twitter: '', github: '' },
+    social: {
+      linkedin: siteConfig.social.linkedin || 'https://linkedin.com/in/sahinalom',
+      twitter: siteConfig.social.twitter || 'https://twitter.com/sahinalom',
+      github: siteConfig.social.github || 'https://github.com/bdsahin365',
+      facebook: siteConfig.social.facebook || 'https://facebook.com/sahinalom',
+      youtube: '',
+    },
+    analytics: {
+      googleAnalyticsId: siteConfig.analytics.googleAnalyticsId || 'G-D2L3P6E88X',
+      clarityId: siteConfig.analytics.clarityId || '',
+    },
+    verification: {
+      googleSiteVerification: siteConfig.verification.googleSiteVerification || 'google-site-verification-sahinalom-official',
+      bingSiteVerification: siteConfig.verification.bingSiteVerification || 'bing-site-verification-sahinalom',
+      yandexVerification: siteConfig.verification.yandexVerification || '',
+      pinterestVerification: siteConfig.verification.pinterestVerification || '',
+    },
   },
 }
 
@@ -74,12 +115,14 @@ function deepMerge(parsed: Partial<SiteData>): SiteData {
   return {
     ...DEFAULT,
     ...parsed,
-    engineer:   { ...DEFAULT.engineer,  ...parsed.engineer, photo: parsed.engineer?.photo || DEFAULT.engineer.photo },
+    engineer: { ...DEFAULT.engineer, ...parsed.engineer, photo: parsed.engineer?.photo || DEFAULT.engineer.photo },
     experience: parsed.experience ?? DEFAULT.experience,
-    settings:   {
+    settings: {
       ...DEFAULT.settings,
       ...parsed.settings,
       social: { ...DEFAULT.settings.social, ...(parsed.settings?.social ?? {}) },
+      analytics: { ...DEFAULT.settings.analytics, ...(parsed.settings?.analytics ?? {}) },
+      verification: { ...DEFAULT.settings.verification, ...(parsed.settings?.verification ?? {}) },
     },
   }
 }
@@ -104,7 +147,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   const [saved, setSaved]     = useState(true)
   const [timer, setTimer]     = useState<ReturnType<typeof setTimeout> | null>(null)
 
-  // Fetch from Supabase on mount (tries structured relational tables first, falls back to site_config)
+  // Fetch from Supabase on mount
   useEffect(() => {
     let cancelled = false
 
@@ -140,12 +183,25 @@ export function SiteProvider({ children }: { children: ReactNode }) {
           structured.settings = {
             siteTitle: setRes.data.site_title || DEFAULT.settings.siteTitle,
             pageDescription: setRes.data.page_description || DEFAULT.settings.pageDescription,
+            siteUrl: setRes.data.site_url || DEFAULT.settings.siteUrl,
             tools: setRes.data.tools || DEFAULT.settings.tools,
             social: {
               linkedin: setRes.data.social_linkedin || DEFAULT.settings.social.linkedin,
-              twitter: setRes.data.social_twitter || '',
-              github: setRes.data.social_github || '',
-            }
+              twitter: setRes.data.social_twitter || DEFAULT.settings.social.twitter,
+              github: setRes.data.social_github || DEFAULT.settings.social.github,
+              facebook: setRes.data.social_facebook || DEFAULT.settings.social.facebook,
+              youtube: setRes.data.social_youtube || '',
+            },
+            analytics: {
+              googleAnalyticsId: setRes.data.ga_id || DEFAULT.settings.analytics.googleAnalyticsId,
+              clarityId: setRes.data.clarity_id || DEFAULT.settings.analytics.clarityId,
+            },
+            verification: {
+              googleSiteVerification: setRes.data.google_verification || DEFAULT.settings.verification.googleSiteVerification,
+              bingSiteVerification: setRes.data.bing_verification || DEFAULT.settings.verification.bingSiteVerification,
+              yandexVerification: setRes.data.yandex_verification || '',
+              pinterestVerification: setRes.data.pinterest_verification || '',
+            },
           }
         }
         const merged = deepMerge(structured)
@@ -309,10 +365,17 @@ export function SiteProvider({ children }: { children: ReactNode }) {
         id: 'general',
         site_title: next.settings.siteTitle,
         page_description: next.settings.pageDescription,
+        site_url: next.settings.siteUrl,
         tools: next.settings.tools,
         social_linkedin: next.settings.social?.linkedin || '',
         social_twitter: next.settings.social?.twitter || '',
         social_github: next.settings.social?.github || '',
+        social_facebook: next.settings.social?.facebook || '',
+        social_youtube: next.settings.social?.youtube || '',
+        ga_id: next.settings.analytics?.googleAnalyticsId || '',
+        clarity_id: next.settings.analytics?.clarityId || '',
+        google_verification: next.settings.verification?.googleSiteVerification || '',
+        bing_verification: next.settings.verification?.bingSiteVerification || '',
         updated_at: now
       }).then(() => {}).catch(() => {})
     }
@@ -339,17 +402,17 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   return (
     <SiteCtx.Provider value={{
       data, loading, saved,
-      updateEngineer, updateCredentials, updateExpertise, updateProjects,
-      updateServices, updateEducation, updateExperience, updateSettings,
-      resetToDefaults,
+      updateEngineer, updateCredentials, updateExpertise,
+      updateProjects, updateServices, updateEducation,
+      updateExperience, updateSettings, resetToDefaults,
     }}>
       {children}
     </SiteCtx.Provider>
   )
 }
 
-export function useSite() {
-  const c = useContext(SiteCtx)
-  if (!c) throw new Error('useSite outside SiteProvider')
-  return c
+export const useSite = () => {
+  const ctx = useContext(SiteCtx)
+  if (!ctx) throw new Error('useSite must be used within SiteProvider')
+  return ctx
 }

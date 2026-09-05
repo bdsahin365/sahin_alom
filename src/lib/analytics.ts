@@ -8,8 +8,8 @@ declare global {
   }
 }
 
-let isGAInitialized = false
-let isClarityInitialized = false
+let activeGAId: string | null = null
+let activeClarityId: string | null = null
 
 /**
  * Check if the user's browser has requested Do Not Track (DNT)
@@ -21,21 +21,22 @@ function isDoNotTrackEnabled(): boolean {
 }
 
 /**
- * Initialize Google Analytics 4 (gtag.js)
+ * Initialize Google Analytics 4 (gtag.js) with dynamic Measurement ID
  */
-export function initGoogleAnalytics(): void {
+export function initGoogleAnalytics(customId?: string): void {
   if (typeof window === 'undefined') return
-  if (isGAInitialized) return
 
-  const gaId = siteConfig.analytics.googleAnalyticsId
+  const gaId = customId || siteConfig.analytics.googleAnalyticsId
   if (!gaId || gaId === 'G-XXXXXXXXXX') {
-    // Analytics ID not configured yet; skip silently
     return
   }
 
-  // If user has DNT enabled, respect privacy
+  // Prevent duplicate script injection for the same ID
+  if (activeGAId === gaId) return
+
+  // Respect user DNT header
   if (isDoNotTrackEnabled()) {
-    console.info('[Analytics] Do Not Track is enabled; analytics disabled.')
+    console.info('[Analytics] Do Not Track enabled; Google Analytics disabled.')
     return
   }
 
@@ -52,15 +53,19 @@ export function initGoogleAnalytics(): void {
       cookie_flags: 'SameSite=None;Secure',
     })
 
-    // 2. Dynamically inject Google Tag Manager script
+    // 2. Remove old script if ID changed
+    const existingScript = document.getElementById('google-analytics-gtag')
+    if (existingScript) existingScript.remove()
+
+    // 3. Dynamically inject Google Tag Manager script
     const script = document.createElement('script')
     script.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`
     script.async = true
     script.id = 'google-analytics-gtag'
     document.head.appendChild(script)
 
-    isGAInitialized = true
-    console.info(`[Analytics] Google Analytics 4 (${gaId}) initialized successfully.`)
+    activeGAId = gaId
+    console.info(`[Analytics] Google Analytics 4 (${gaId}) active.`)
   } catch (err) {
     console.warn('[Analytics] Failed to initialize Google Analytics:', err)
   }
@@ -69,12 +74,13 @@ export function initGoogleAnalytics(): void {
 /**
  * Initialize Microsoft Clarity (Heatmaps & Session Recording)
  */
-export function initMicrosoftClarity(): void {
+export function initMicrosoftClarity(customId?: string): void {
   if (typeof window === 'undefined') return
-  if (isClarityInitialized) return
 
-  const clarityId = siteConfig.analytics.clarityId
+  const clarityId = customId || siteConfig.analytics.clarityId
   if (!clarityId || clarityId === 'xxxxxxxxxx') return
+
+  if (activeClarityId === clarityId) return
 
   if (isDoNotTrackEnabled()) return
 
@@ -86,13 +92,17 @@ export function initMicrosoftClarity(): void {
         ;(w.clarity.q = w.clarity.q || []).push(arguments)
       }
 
+    const existingScript = document.getElementById('microsoft-clarity')
+    if (existingScript) existingScript.remove()
+
     const script = document.createElement('script')
     script.src = `https://www.clarity.ms/tag/${clarityId}`
     script.async = true
     script.id = 'microsoft-clarity'
     document.head.appendChild(script)
 
-    isClarityInitialized = true
+    activeClarityId = clarityId
+    console.info(`[Analytics] Microsoft Clarity (${clarityId}) active.`)
   } catch (err) {
     console.warn('[Analytics] Failed to initialize Microsoft Clarity:', err)
   }
@@ -101,10 +111,10 @@ export function initMicrosoftClarity(): void {
 /**
  * Send SPA virtual pageview on React Router navigation
  */
-export function sendPageView(pagePath: string, pageTitle?: string): void {
+export function sendPageView(pagePath: string, pageTitle?: string, customId?: string): void {
   if (typeof window === 'undefined') return
 
-  const gaId = siteConfig.analytics.googleAnalyticsId
+  const gaId = customId || activeGAId || siteConfig.analytics.googleAnalyticsId
   const title = pageTitle || document.title
 
   if (typeof window.gtag === 'function' && gaId && gaId !== 'G-XXXXXXXXXX') {
