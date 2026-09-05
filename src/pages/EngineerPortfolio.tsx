@@ -68,76 +68,105 @@ function Hero() {
     transition: `opacity 0.9s ${delay}s cubic-bezier(0.16,1,0.3,1), transform 0.9s ${delay}s cubic-bezier(0.16,1,0.3,1)`,
   })
 
-  // Split name words for staggered reveal
-  const nameParts = (E.name || 'Md Sahin Alom').split(' ')
-
   return (
     <section id="hero" style={{
       minHeight: '100svh',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'flex-end',
-      padding: `calc(var(--nav-h) + 40px) var(--px) clamp(40px,6vh,72px)`,
+      padding: `calc(var(--nav-h) + clamp(20px,4vh,40px)) var(--px) clamp(32px,5vh,64px)`,
       position: 'relative',
       overflow: 'hidden',
     }}>
-      {/* Structural grid lines */}
-      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
+      {/* ── Desktop-only Structural CAD Grid Lines ── */}
+      <div className="hero-grid-desktop" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
         {[20, 40, 60, 80].map(pct => (
           <div key={pct} style={{
             position: 'absolute', top: 0, bottom: 0,
             left: `${pct}%`, width: 1,
             background: 'var(--border)',
-            opacity: 0.5,
+            opacity: 0.45,
           }} />
         ))}
         {/* Amber vertical accent line */}
         <div style={{
           position: 'absolute', top: 0, bottom: 0, left: '20%',
-          width: 1, background: 'var(--accent)', opacity: 0.25,
+          width: 1, background: 'var(--accent)', opacity: 0.22,
         }} />
-        {/* Horizontal rule at 60% height */}
+        {/* Horizontal rule at 62% height */}
         <div style={{
           position: 'absolute', top: '62%', left: 0, right: 0,
-          height: 1, background: 'var(--border)',
+          height: 1, background: 'var(--border)', opacity: 0.7,
         }} />
       </div>
 
-      {/* Amber glow orb */}
+      {/* ── Mobile-Optimized Clean Ambient Gradient Background (No Harsh Lines) ── */}
+      <div className="hero-ambient-mobile" style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
+        background: 'radial-gradient(ellipse 90% 60% at 50% 12%, rgba(196,125,14,0.12) 0%, rgba(247,245,240,0) 70%)',
+      }}>
+        {/* Soft engineering micro-dot pattern on mobile */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: 'radial-gradient(rgba(196,125,14,0.15) 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+          opacity: 0.6,
+        }} />
+      </div>
+
+      {/* Ambient center warm glow orb */}
       <div style={{
         position: 'absolute', top: '30%', left: '50%',
         width: 700, height: 700,
         transform: 'translate(-50%,-50%)',
-        background: 'radial-gradient(circle, rgba(232,160,32,0.06) 0%, transparent 65%)',
+        background: 'radial-gradient(circle, rgba(232,160,32,0.08) 0%, transparent 65%)',
         pointerEvents: 'none', zIndex: 0,
       }} />
 
-      {/* Top bar */}
-      <div style={{ ...fade(0.1), position: 'absolute', top: 'calc(var(--nav-h) + 24px)', left: 'var(--px)', right: 'var(--px)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 1 }}>
+      {/* Top bar / Intro section badge */}
+      <div style={{
+        ...fade(0.1),
+        position: 'absolute',
+        top: 'calc(var(--nav-h) + clamp(14px, 2.5vh, 24px))',
+        left: 'var(--px)',
+        right: 'var(--px)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        zIndex: 1,
+      }}>
         <SIdx n="01" label="Introduction" />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: E.available ? 'var(--green)' : 'var(--fg-dim)', boxShadow: E.available ? '0 0 10px var(--green)' : 'none' }} />
-          <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: E.available ? 'var(--green)' : 'var(--fg-dim)' }}>
-            {E.available ? 'Available' : 'Unavailable'}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 7,
+          padding: '4px 10px',
+          background: 'rgba(255, 255, 255, 0.7)',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid var(--border)',
+          borderRadius: 20,
+        }}>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: E.available ? 'var(--green)' : 'var(--fg-dim)', boxShadow: E.available ? '0 0 8px var(--green)' : 'none' }} />
+          <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, letterSpacing: '0.15em', textTransform: 'uppercase' as const, color: E.available ? 'var(--green)' : 'var(--fg-dim)', fontWeight: 600 }}>
+            {E.available ? 'Available for Work' : 'Unavailable'}
           </span>
         </div>
       </div>
 
-      {/* Main headline — massive condensed */}
+      {/* Main headline & hero content container */}
       <div style={{ position: 'relative', zIndex: 1 }}>
-        {/* Name line */}
-        <div style={{ ...fade(0.15), marginBottom: 'clamp(8px,1.5vh,20px)', display: 'flex', alignItems: 'center', gap: 20 }}>
-          <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 11, color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase' as const }}>{E.initials}</span>
+        {/* Name & location sub-ribbon */}
+        <div style={{ ...fade(0.15), marginBottom: 'clamp(8px,1.5vh,20px)', display: 'flex', alignItems: 'center', gap: 16 }}>
+          <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 11, color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase' as const, fontWeight: 700 }}>{E.initials}</span>
           <div style={{ flex: 1, height: 1, background: 'var(--border-strong)' }} />
           <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 10, color: 'var(--fg-dim)', letterSpacing: '0.15em', textTransform: 'uppercase' as const }}>{E.location}</span>
         </div>
 
-        {/* Giant type */}
+        {/* Giant headline — responsive scaling for both mobile and desktop */}
         <h1 className="display" style={{
-          fontSize: 'clamp(72px,13.5vw,210px)',
-          lineHeight: 0.91,
+          fontSize: 'clamp(44px, 12vw, 200px)',
+          lineHeight: 0.92,
           color: 'var(--fg)',
-          marginBottom: 'clamp(6px,1vh,12px)',
+          marginBottom: 'clamp(8px, 1.5vh, 16px)',
+          letterSpacing: '-0.02em',
         }}>
           {['Power', 'Systems'].map((word, i) => (
             <div key={word} style={{
@@ -157,13 +186,13 @@ function Hero() {
           </div>
         </h1>
 
-        {/* Rule + tagline */}
-        <div style={{ ...fade(0.48), display: 'flex', alignItems: 'flex-start', gap: 'clamp(24px,4vw,64px)', marginTop: 'clamp(20px,3vh,36px)', paddingTop: 'clamp(20px,3vh,36px)', borderTop: '1px solid var(--border-strong)', flexWrap: 'wrap' }}>
-          <p style={{ fontFamily: 'Outfit,sans-serif', fontSize: 'clamp(15px,1.5vw,18px)', color: 'var(--fg-dim)', lineHeight: 1.65, maxWidth: 480, fontWeight: 300 }}>
+        {/* Rule + Tagline & CTA Group */}
+        <div style={{ ...fade(0.48), display: 'flex', alignItems: 'flex-start', gap: 'clamp(20px, 3vw, 48px)', marginTop: 'clamp(16px, 2.5vh, 32px)', paddingTop: 'clamp(16px, 2.5vh, 32px)', borderTop: '1px solid var(--border-strong)', flexWrap: 'wrap' }}>
+          <p style={{ fontFamily: 'Outfit,sans-serif', fontSize: 'clamp(14px, 1.4vw, 17px)', color: 'var(--fg-dim)', lineHeight: 1.65, maxWidth: 480, fontWeight: 400 }}>
             {E.tagline}
           </p>
-          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginLeft: 'auto' }}>
-            <a href="#contact" className="btn-primary" style={{ gap: 10, fontSize: 12 }}>
+          <div className="hero-cta-wrap" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginLeft: 'auto' }}>
+            <a href="#contact" className="btn-primary" style={{ gap: 8, fontSize: 12 }}>
               Hire me <ArrowUpRight size={14} strokeWidth={2} />
             </a>
             <a href="#projects" className="btn-outline" style={{ fontSize: 12 }}>
@@ -172,26 +201,26 @@ function Hero() {
           </div>
         </div>
 
-        {/* Stats strip */}
-        <div style={{ ...fade(0.58), display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 0, marginTop: 'clamp(28px,4vh,56px)', borderTop: '1px solid var(--border)' }}>
+        {/* Stats strip (4-column on desktop, 2x2 cards on mobile) */}
+        <div className="hero-stats-grid" style={fade(0.58)}>
           {[
             { v: E.yearsExp,      l: 'Years exp.' },
             { v: E.projectsMW,   l: 'Total Capacity' },
             { v: E.projectsCount, l: 'Projects' },
             { v: E.clients,       l: 'Clients' },
-          ].map((s, i) => (
-            <div key={s.l} style={{ padding: 'clamp(16px,2.5vh,24px) 0', borderRight: i < 3 ? '1px solid var(--border)' : 'none', paddingRight: i < 3 ? 24 : 0, paddingLeft: i > 0 ? 24 : 0 }}>
-              <div className="display" style={{ fontSize: 'clamp(28px,4.5vw,56px)', color: 'var(--accent)', lineHeight: 1, marginBottom: 6 }}>{s.v}</div>
-              <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9, letterSpacing: '0.18em', color: 'var(--muted)', textTransform: 'uppercase' as const }}>{s.l}</div>
+          ].map(s => (
+            <div key={s.l} className="hero-stat-cell">
+              <div className="display" style={{ fontSize: 'clamp(26px, 4vw, 54px)', color: 'var(--accent)', lineHeight: 1, marginBottom: 4 }}>{s.v}</div>
+              <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, letterSpacing: '0.15em', color: 'var(--muted)', textTransform: 'uppercase' as const, fontWeight: 600 }}>{s.l}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Scroll cue */}
-      <div style={{ ...fade(0.7), position: 'absolute', bottom: 32, right: 'var(--px)', display: 'flex', alignItems: 'center', gap: 10 }}>
+      {/* Scroll cue (desktop only) */}
+      <div className="desktop-only" style={{ ...fade(0.7), position: 'absolute', bottom: 28, right: 'var(--px)', alignItems: 'center', gap: 8 }}>
         <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9, letterSpacing: '0.2em', color: 'var(--muted)', textTransform: 'uppercase' as const }}>Scroll</span>
-        <ArrowDown size={12} strokeWidth={2} style={{ color: 'var(--muted)', animation: `${tick % 2 === 0 ? 'none' : 'none'}`, opacity: 0.7 }} />
+        <ArrowDown size={12} strokeWidth={2} style={{ color: 'var(--muted)', opacity: 0.7 }} />
       </div>
     </section>
   )
