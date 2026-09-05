@@ -365,23 +365,33 @@ export function saveStoredArticles(articles: Article[]) {
   }
 }
 
+const withTimeout = <T>(promise: PromiseLike<T>, ms = 3500): Promise<T> => {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error('Request timeout')), ms)),
+  ])
+}
+
 /**
  * Fetch all published articles for public view
  */
 export async function fetchPublishedArticles(): Promise<Article[]> {
   const local = getStoredArticles().filter(a => a.status === 'published')
   try {
-    const { data, error } = await supabase
-      .from('articles')
-      .select('*')
-      .eq('status', 'published')
-      .order('updated_at', { ascending: false })
+    const res = await withTimeout(
+      supabase
+        .from('articles')
+        .select('*')
+        .eq('status', 'published')
+        .order('updated_at', { ascending: false }),
+      3500
+    ) as any
 
-    if (!error && data && data.length > 0) {
+    if (!res?.error && res?.data && res.data.length > 0) {
       // Merge supabase articles with local articles
       const map = new Map<string, Article>()
       local.forEach(a => map.set(a.id, a))
-      data.forEach(a => map.set(a.id, a))
+      res.data.forEach((a: Article) => map.set(a.id, a))
       const merged = Array.from(map.values())
       saveStoredArticles(merged)
       return merged.filter(a => a.status === 'published')
@@ -398,15 +408,18 @@ export async function fetchPublishedArticles(): Promise<Article[]> {
 export async function fetchAllArticles(): Promise<Article[]> {
   const local = getStoredArticles()
   try {
-    const { data, error } = await supabase
-      .from('articles')
-      .select('*')
-      .order('updated_at', { ascending: false })
+    const res = await withTimeout(
+      supabase
+        .from('articles')
+        .select('*')
+        .order('updated_at', { ascending: false }),
+      3500
+    ) as any
 
-    if (!error && data && data.length > 0) {
+    if (!res?.error && res?.data && res.data.length > 0) {
       const map = new Map<string, Article>()
       local.forEach(a => map.set(a.id, a))
-      data.forEach(a => map.set(a.id, a))
+      res.data.forEach((a: Article) => map.set(a.id, a))
       const merged = Array.from(map.values())
       saveStoredArticles(merged)
       return merged
@@ -423,14 +436,17 @@ export async function fetchAllArticles(): Promise<Article[]> {
 export async function fetchArticleBySlug(slug: string): Promise<Article | null> {
   const local = getStoredArticles().find(a => a.slug === slug)
   try {
-    const { data, error } = await supabase
-      .from('articles')
-      .select('*')
-      .eq('slug', slug)
-      .eq('status', 'published')
-      .single()
+    const res = await withTimeout(
+      supabase
+        .from('articles')
+        .select('*')
+        .eq('slug', slug)
+        .eq('status', 'published')
+        .single(),
+      3500
+    ) as any
 
-    if (!error && data) return data
+    if (!res?.error && res?.data) return res.data
   } catch (err) {
     console.warn('Supabase fetch by slug fallback:', err)
   }
@@ -443,14 +459,17 @@ export async function fetchArticleBySlug(slug: string): Promise<Article | null> 
 export async function fetchArticleById(idOrSlug: string): Promise<Article | null> {
   const local = getStoredArticles().find(a => a.id === idOrSlug || a.slug === idOrSlug)
   try {
-    const { data, error } = await supabase
-      .from('articles')
-      .select('*')
-      .or(`id.eq.${idOrSlug},slug.eq.${idOrSlug}`)
-      .limit(1)
-      .maybeSingle()
+    const res = await withTimeout(
+      supabase
+        .from('articles')
+        .select('*')
+        .or(`id.eq.${idOrSlug},slug.eq.${idOrSlug}`)
+        .limit(1)
+        .maybeSingle(),
+      3500
+    ) as any
 
-    if (!error && data) return data
+    if (!res?.error && res?.data) return res.data
   } catch (err) {
     console.warn('Supabase fetch by ID/slug fallback:', err)
   }

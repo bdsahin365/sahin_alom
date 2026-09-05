@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
-import { Plus, BookOpen, Clock, Tag, Eye, Pencil, Trash2, Search, Filter } from 'lucide-react'
-import { fetchAllArticles, deleteArticle, Article } from '../../lib/articlesService'
+import { Plus, BookOpen, Clock, Tag, Eye, Pencil, Trash2, Search, Filter, RotateCcw, Loader2 } from 'lucide-react'
+import { fetchAllArticles, deleteArticle, getStoredArticles, Article } from '../../lib/articlesService'
 
 const STATUS_STYLE: Record<string, { label: string; bg: string; color: string }> = {
   draft:     { label: 'DRAFT',     bg: '#FEF3C7', color: '#92400E' },
@@ -11,17 +11,26 @@ const STATUS_STYLE: Record<string, { label: string; bg: string; color: string }>
 
 export default function ArticlesList() {
   const navigate = useNavigate()
-  const [articles, setArticles] = useState<Article[]>([])
-  const [loading, setLoading] = useState(true)
+  const [articles, setArticles] = useState<Article[]>(() => getStoredArticles())
+  const [loading, setLoading] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [deleting, setDeleting] = useState<string | null>(null)
 
   const load = async () => {
-    setLoading(true)
-    const data = await fetchAllArticles()
-    setArticles(data)
-    setLoading(false)
+    setRefreshing(true)
+    try {
+      const data = await fetchAllArticles()
+      if (data && data.length > 0) {
+        setArticles(data)
+      }
+    } catch (err) {
+      console.warn('Background articles refresh notice:', err)
+    } finally {
+      setRefreshing(false)
+      setLoading(false)
+    }
   }
 
   useEffect(() => { void load() }, [])
@@ -52,25 +61,47 @@ export default function ArticlesList() {
       {/* Page header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h2 style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 700, fontSize: 20, color: '#0F172A', margin: 0 }}>Articles</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <h2 style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 700, fontSize: 20, color: '#0F172A', margin: 0 }}>Articles</h2>
+            {refreshing && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#C47D0E', fontFamily: 'Outfit,sans-serif', fontWeight: 500 }}>
+                <Loader2 size={11} style={{ animation: 'spin 1s linear infinite' }} /> Syncing…
+              </span>
+            )}
+          </div>
           <p style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12, color: '#64748B', marginTop: 3 }}>
             {articles.length} article{articles.length !== 1 ? 's' : ''} · {articles.filter(a => a.status === 'published').length} published
           </p>
         </div>
-        <button
-          onClick={() => navigate('/admin/articles/new')}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px',
-            background: '#C47D0E', border: 'none', borderRadius: 6, cursor: 'pointer',
-            fontFamily: 'Outfit,sans-serif', fontSize: 12, fontWeight: 600,
-            letterSpacing: '0.06em', textTransform: 'uppercase', color: '#FFFFFF',
-            transition: 'opacity 0.15s',
-          }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.85' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
-        >
-          <Plus size={14} /> New Article
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button
+            onClick={() => void load()}
+            disabled={refreshing}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5, height: 36, padding: '0 12px',
+              background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 6, cursor: refreshing ? 'not-allowed' : 'pointer',
+              fontFamily: 'Outfit,sans-serif', fontSize: 12, fontWeight: 500, color: '#475569',
+              transition: 'all 0.15s',
+            }}
+            title="Refresh articles from database"
+          >
+            <RotateCcw size={13} style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }} /> Refresh
+          </button>
+          <button
+            onClick={() => navigate('/admin/articles/new')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px',
+              background: '#C47D0E', border: 'none', borderRadius: 6, cursor: 'pointer',
+              fontFamily: 'Outfit,sans-serif', fontSize: 12, fontWeight: 600,
+              letterSpacing: '0.06em', textTransform: 'uppercase', color: '#FFFFFF',
+              transition: 'opacity 0.15s',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.85' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+          >
+            <Plus size={14} /> New Article
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -109,9 +140,10 @@ export default function ArticlesList() {
         ))}
       </div>
 
-      {/* Loading */}
-      {loading && (
+      {/* Loading (Only when there are literally no articles and actively initial loading) */}
+      {loading && articles.length === 0 && (
         <div style={{ textAlign: 'center', padding: '40px 0', color: '#94A3B8', fontFamily: 'Outfit,sans-serif', fontSize: 13 }}>
+          <Loader2 size={20} style={{ animation: 'spin 1s linear infinite', margin: '0 auto 8px', color: '#C47D0E' }} />
           Loading articles…
         </div>
       )}
