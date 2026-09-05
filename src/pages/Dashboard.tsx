@@ -572,6 +572,8 @@ function OverviewPanel({ onNavigate }: { onNavigate: (s: SectionId) => void }) {
 
 function BrandingPanel() {
   const { data: { settings, engineer: E }, updateSettings } = useSite()
+  const B = settings.branding || {}
+
   const [compressingLogo, setCompressingLogo] = useState(false)
   const [compressingFavicon, setCompressingFavicon] = useState(false)
   const [logoStatus, setLogoStatus] = useState<string | null>(null)
@@ -579,6 +581,15 @@ function BrandingPanel() {
 
   const logoInputRef = useRef<HTMLInputElement>(null)
   const favInputRef = useRef<HTMLInputElement>(null)
+
+  const updateB = (patch: Partial<typeof B>) => {
+    updateSettings({
+      branding: {
+        ...B,
+        ...patch,
+      }
+    })
+  }
 
   const handleLogoUpload = async (file: File) => {
     try {
@@ -590,12 +601,9 @@ function BrandingPanel() {
         quality: 0.9,
         mimeType: file.type === 'image/png' ? 'image/png' : 'image/jpeg',
       })
-      updateSettings({
-        branding: {
-          ...settings.branding,
-          logo: base64,
-          logoType: 'custom_image',
-        }
+      updateB({
+        logo: base64,
+        logoType: 'custom_image',
       })
       setLogoStatus(`Logo saved (${formatBytes(originalSize)} → ${formatBytes(compressedSize)})`)
       setTimeout(() => setLogoStatus(null), 3500)
@@ -616,11 +624,8 @@ function BrandingPanel() {
         quality: 0.95,
         mimeType: 'image/png',
       })
-      updateSettings({
-        branding: {
-          ...settings.branding,
-          favicon: base64,
-        }
+      updateB({
+        favicon: base64,
       })
       setFavStatus('Favicon saved & applied!')
       setTimeout(() => setFavStatus(null), 3500)
@@ -633,82 +638,168 @@ function BrandingPanel() {
 
   return (
     <div>
-      {/* 1. Header Logo Configuration */}
-      <Section title="Header Logo & Brand Emblem" description="Configure the website navigation logo or upload a custom company/personal logo image.">
-        <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 16 }}>
-          {/* Live Logo Preview Box */}
-          <div style={{ padding: '16px 20px', background: '#F7F5F0', border: '1px solid #DDD9D0', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+      {/* Live Header Preview */}
+      <Section title="Live Header Brand Preview" description="Real-time preview of how your brand title, badge, subtitle, and logo appear on the header.">
+        <div style={{ padding: '18px 24px', background: '#FAF8F5', border: '1px solid #EAE6DD', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <HeaderLogo />
           </div>
-
-          <div style={{ flex: 1, minWidth: 260 }}>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
-              <input
-                ref={logoInputRef}
-                type="file"
-                accept="image/*,.svg"
-                style={{ display: 'none' }}
-                onChange={e => {
-                  const f = e.target.files?.[0]
-                  if (f) handleLogoUpload(f)
-                  e.target.value = ''
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => logoInputRef.current?.click()}
-                disabled={compressingLogo}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  padding: '7px 14px', borderRadius: 6,
-                  background: '#C47D0E', color: '#FFFFFF',
-                  fontFamily: 'Outfit,sans-serif', fontWeight: 600, fontSize: 12,
-                  cursor: compressingLogo ? 'not-allowed' : 'pointer',
-                  border: 'none',
-                }}
-              >
-                {compressingLogo ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> : <Upload size={13} />}
-                Upload Custom Logo Image
-              </button>
-
-              {settings.branding?.logo && (
-                <button
-                  type="button"
-                  onClick={() => updateSettings({
-                    branding: { ...settings.branding, logo: '', logoType: 'default_emblem' }
-                  })}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 5,
-                    padding: '7px 12px', borderRadius: 6,
-                    background: '#F8FAFC', border: '1px solid #E2E8F0',
-                    color: '#475569', fontSize: 12, fontFamily: 'Outfit,sans-serif',
-                    fontWeight: 500, cursor: 'pointer',
-                  }}
-                >
-                  ↺ Reset to Vector CAD Emblem
-                </button>
-              )}
-            </div>
-
-            {logoStatus && (
-              <div style={{ fontSize: 11, color: logoStatus.includes('Error') ? '#EF4444' : '#16A34A', fontWeight: 500, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
-                <Check size={12} /> {logoStatus}
-              </div>
-            )}
-
-            <Input
-              label="Or Custom Logo URL / SVG Data"
-              value={settings.branding?.logo || ''}
-              onChange={v => updateSettings({
-                branding: { ...settings.branding, logo: v, logoType: v ? 'custom_image' : 'default_emblem' }
-              })}
-              placeholder="https://... or data:image/..."
-            />
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#C47D0E', background: 'rgba(196, 125, 14, 0.1)', padding: '4px 10px', borderRadius: 4, fontWeight: 700 }}>
+            LIVE PREVIEW
           </div>
         </div>
       </Section>
 
-      {/* 2. Browser Tab Favicon */}
+      {/* 1. Header Typography & Element Visibility (Changeable & Hideable) */}
+      <Section title="Header Brand Typography & Visibility Controls" description="Change text or hide/show individual header elements (Brand Title, Credential Badge, Subtitle, and Logo Emblem).">
+        {/* Brand Title (e.g. SAHIN ALOM) */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, padding: '12px 0', borderBottom: '1px solid #F1F5F9', flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: 240 }}>
+            <Input
+              label="Brand Title Text"
+              value={B.brandTitle ?? (E.initials || 'SAHIN ALOM')}
+              onChange={v => updateB({ brandTitle: v })}
+              placeholder="e.g. SAHIN ALOM or MD SAHIN ALOM"
+            />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 24 }}>
+            <Switch
+              checked={B.showBrandTitle !== false}
+              onChange={v => updateB({ showBrandTitle: v })}
+            />
+            <span style={{ fontFamily: 'Outfit, sans-serif', fontSize: 12, fontWeight: 500, color: B.showBrandTitle !== false ? '#16A34A' : '#64748B' }}>
+              {B.showBrandTitle !== false ? 'Visible' : 'Hidden'}
+            </span>
+          </div>
+        </div>
+
+        {/* Credential Badge (e.g. PE / ABC Licensed) */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, padding: '12px 0', borderBottom: '1px solid #F1F5F9', flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: 240 }}>
+            <Input
+              label="Credential Badge Text"
+              value={B.credentialBadge ?? (E.credentialsTag || 'PE')}
+              onChange={v => updateB({ credentialBadge: v })}
+              placeholder="e.g. PE, ABC Licensed, Engr."
+            />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 24 }}>
+            <Switch
+              checked={B.showCredentialBadge !== false}
+              onChange={v => updateB({ showCredentialBadge: v })}
+            />
+            <span style={{ fontFamily: 'Outfit, sans-serif', fontSize: 12, fontWeight: 500, color: B.showCredentialBadge !== false ? '#16A34A' : '#64748B' }}>
+              {B.showCredentialBadge !== false ? 'Visible' : 'Hidden'}
+            </span>
+          </div>
+        </div>
+
+        {/* Header Subtitle (e.g. ELECTRICAL ENGINEER • ABC LICENSED) */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, padding: '12px 0', borderBottom: '1px solid #F1F5F9', flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: 240 }}>
+            <Input
+              label="Header Subtitle Text"
+              value={B.brandSubtitle ?? (E.title ? `${E.title.toUpperCase()} • ABC LICENSED` : 'ELECTRICAL ENGINEER • ABC LICENSED')}
+              onChange={v => updateB({ brandSubtitle: v })}
+              placeholder="e.g. ELECTRICAL ENGINEER • ABC LICENSED"
+            />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 24 }}>
+            <Switch
+              checked={B.showBrandSubtitle !== false}
+              onChange={v => updateB({ showBrandSubtitle: v })}
+            />
+            <span style={{ fontFamily: 'Outfit, sans-serif', fontSize: 12, fontWeight: 500, color: B.showBrandSubtitle !== false ? '#16A34A' : '#64748B' }}>
+              {B.showBrandSubtitle !== false ? 'Visible' : 'Hidden'}
+            </span>
+          </div>
+        </div>
+
+        {/* Logo Emblem / Icon Visibility */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '12px 0' }}>
+          <div>
+            <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: 13, color: '#0F172A' }}>
+              Show Logo Emblem / Icon
+            </div>
+            <div style={{ fontFamily: 'Outfit, sans-serif', fontSize: 11.5, color: '#64748B' }}>
+              Controls visibility of the vector CAD lightning emblem or custom logo image in the header.
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Switch
+              checked={B.showLogoEmblem !== false}
+              onChange={v => updateB({ showLogoEmblem: v })}
+            />
+            <span style={{ fontFamily: 'Outfit, sans-serif', fontSize: 12, fontWeight: 500, color: B.showLogoEmblem !== false ? '#16A34A' : '#64748B' }}>
+              {B.showLogoEmblem !== false ? 'Visible' : 'Hidden'}
+            </span>
+          </div>
+        </div>
+      </Section>
+
+      {/* 2. Custom Logo Upload / Vector Emblem Switcher */}
+      <Section title="Header Logo Image / Vector Emblem" description="Upload a custom logo image (PNG/SVG/JPEG) or use the precision CAD vector emblem.">
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
+          <input
+            ref={logoInputRef}
+            type="file"
+            accept="image/*,.svg"
+            style={{ display: 'none' }}
+            onChange={e => {
+              const f = e.target.files?.[0]
+              if (f) handleLogoUpload(f)
+              e.target.value = ''
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => logoInputRef.current?.click()}
+            disabled={compressingLogo}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '8px 16px', borderRadius: 6,
+              background: '#C47D0E', color: '#FFFFFF',
+              fontFamily: 'Outfit,sans-serif', fontWeight: 600, fontSize: 12,
+              cursor: compressingLogo ? 'not-allowed' : 'pointer',
+              border: 'none',
+            }}
+          >
+            {compressingLogo ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
+            Upload Custom Logo Image
+          </button>
+
+          {B.logo && (
+            <button
+              type="button"
+              onClick={() => updateB({ logo: '', logoType: 'default_emblem' })}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                padding: '8px 14px', borderRadius: 6,
+                background: '#F8FAFC', border: '1px solid #E2E8F0',
+                color: '#475569', fontSize: 12, fontFamily: 'Outfit,sans-serif',
+                fontWeight: 500, cursor: 'pointer',
+              }}
+            >
+              ↺ Reset to Vector CAD Emblem
+            </button>
+          )}
+        </div>
+
+        {logoStatus && (
+          <div style={{ fontSize: 11, color: logoStatus.includes('Error') ? '#EF4444' : '#16A34A', fontWeight: 500, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Check size={12} /> {logoStatus}
+          </div>
+        )}
+
+        <Input
+          label="Or Custom Logo URL / SVG Data"
+          value={B.logo || ''}
+          onChange={v => updateB({ logo: v, logoType: v ? 'custom_image' : 'default_emblem' })}
+          placeholder="https://... or data:image/..."
+        />
+      </Section>
+
+      {/* 3. Browser Tab Favicon */}
       <Section title="Browser Tab Favicon" description="Upload a favicon icon (.png, .ico, .svg) to display in the browser tab and bookmarks.">
         <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
           {/* Favicon Browser Tab Mockup */}
@@ -718,8 +809,8 @@ function BrandingPanel() {
             border: '1px solid #CBD5E1', borderBottom: 'none', minWidth: 200,
           }}>
             <div style={{ width: 18, height: 18, borderRadius: 3, overflow: 'hidden', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {settings.branding?.favicon ? (
-                <img src={settings.branding.favicon} alt="Favicon" style={{ width: 16, height: 16, objectFit: 'contain' }} />
+              {B.favicon ? (
+                <img src={B.favicon} alt="Favicon" style={{ width: 16, height: 16, objectFit: 'contain' }} />
               ) : (
                 <Zap size={14} style={{ color: '#C47D0E' }} />
               )}
@@ -759,12 +850,10 @@ function BrandingPanel() {
                 Upload Favicon Image (.png / .ico)
               </button>
 
-              {settings.branding?.favicon && (
+              {B.favicon && (
                 <button
                   type="button"
-                  onClick={() => updateSettings({
-                    branding: { ...settings.branding, favicon: '' }
-                  })}
+                  onClick={() => updateB({ favicon: '' })}
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: 5,
                     padding: '7px 12px', borderRadius: 6,
@@ -786,34 +875,28 @@ function BrandingPanel() {
 
             <Input
               label="Or Favicon URL / Base64 Data"
-              value={settings.branding?.favicon || ''}
-              onChange={v => updateSettings({
-                branding: { ...settings.branding, favicon: v }
-              })}
+              value={B.favicon || ''}
+              onChange={v => updateB({ favicon: v })}
               placeholder="data:image/svg+xml,... or https://..."
             />
           </div>
         </div>
       </Section>
 
-      {/* 3. Social Share Cover (OpenGraph Image) */}
+      {/* 4. Social Share Cover (OpenGraph Image) */}
       <Section title="Social Share Cover (OpenGraph Image)" description="Image shown when your website is shared on LinkedIn, WhatsApp, Facebook, or Twitter.">
         <ImagePicker
-          value={settings.branding?.ogImage || ''}
-          onChange={url => updateSettings({
-            branding: { ...settings.branding, ogImage: url }
-          })}
+          value={B.ogImage || ''}
+          onChange={url => updateB({ ogImage: url })}
         />
       </Section>
 
-      {/* 4. Curriculum Vitae (PDF Resume) */}
+      {/* 5. Curriculum Vitae (PDF Resume) */}
       <Section title="Curriculum Vitae (PDF Document)" description="File path or URL for the downloadable CV button in the header and hero.">
         <Input
           label="CV Document URL or Local Path"
-          value={settings.branding?.resumeUrl || '/CV.pdf'}
-          onChange={v => updateSettings({
-            branding: { ...settings.branding, resumeUrl: v }
-          })}
+          value={B.resumeUrl || '/CV.pdf'}
+          onChange={v => updateB({ resumeUrl: v })}
           placeholder="/CV.pdf or https://..."
         />
       </Section>

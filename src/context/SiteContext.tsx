@@ -42,6 +42,13 @@ export type BrandingSettings = {
   favicon?: string
   ogImage?: string
   resumeUrl?: string
+  brandTitle?: string
+  showBrandTitle?: boolean
+  credentialBadge?: string
+  showCredentialBadge?: boolean
+  brandSubtitle?: string
+  showBrandSubtitle?: boolean
+  showLogoEmblem?: boolean
 }
 
 export type Settings = {
@@ -89,7 +96,7 @@ type Ctx = {
   resetToDefaults:   () => void
 }
 
-const CACHE_KEY = 'msa_site_v11'
+const CACHE_KEY = 'msa_site_v12'
 const DB_ROW_ID = 1
 
 const DEFAULT: SiteData = {
@@ -116,6 +123,13 @@ const DEFAULT: SiteData = {
       favicon: '',
       ogImage: '/img/lighting-design-cover.jpg',
       resumeUrl: '/CV.pdf',
+      brandTitle: 'SAHIN ALOM',
+      showBrandTitle: true,
+      credentialBadge: 'PE',
+      showCredentialBadge: true,
+      brandSubtitle: 'ELECTRICAL ENGINEER • ABC LICENSED',
+      showBrandSubtitle: true,
+      showLogoEmblem: true,
     },
     social: {
       linkedin: siteConfig.social.linkedin || 'https://linkedin.com/in/sahinalom',
