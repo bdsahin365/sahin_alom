@@ -2663,18 +2663,100 @@ export default function Dashboard() {
 
       {/* Reset confirmation dialog */}
       {showReset && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: 16 }}>
-          <div style={{ background: '#FFFFFF', borderRadius: 10, padding: 24, maxWidth: 400, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
-            <div style={{ display: 'flex', gap: 14, marginBottom: 18 }}>
-              <AlertTriangle size={20} style={{ color: '#EF4444', flexShrink: 0, marginTop: 2 }} />
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(11, 17, 24, 0.72)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1100,
+            padding: 'max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left))',
+          }}
+          onClick={() => setShowReset(false)}
+        >
+          <div
+            style={{
+              background: '#FFFFFF',
+              borderRadius: 14,
+              padding: '24px',
+              maxWidth: 420,
+              width: '100%',
+              boxShadow: '0 24px 64px rgba(0,0,0,0.35), 0 0 0 1px rgba(239,68,68,0.2)',
+              animation: 'resetDialogPop 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', gap: 14, marginBottom: 20 }}>
+              <div
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 10,
+                  background: '#FEF2F2',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#EF4444',
+                  border: '1px solid rgba(239,68,68,0.2)',
+                  flexShrink: 0,
+                }}
+              >
+                <AlertTriangle size={20} />
+              </div>
               <div>
-                <h3 style={{ fontWeight: 700, fontSize: 15, color: '#0F172A', margin: '0 0 8px' }}>Reset to defaults?</h3>
-                <p style={{ fontSize: 13, color: '#64748B', lineHeight: 1.6, margin: 0 }}>All edits will be permanently discarded and replaced with the original sample content.</p>
+                <h3 style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 700, fontSize: 16, color: '#0F172A', margin: '0 0 6px' }}>
+                  Reset all data to factory defaults?
+                </h3>
+                <p style={{ fontFamily: 'Outfit,sans-serif', fontSize: 13, color: '#64748B', lineHeight: 1.55, margin: 0 }}>
+                  All portfolio customizations, engineer metadata, and drafted articles will be permanently discarded and restored to the initial seed state.
+                </p>
               </div>
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <Button variant="outline" onClick={() => setShowReset(false)}>Cancel</Button>
-              <Button variant="destructive" onClick={() => { resetToDefaults(); setShowReset(false) }}>Reset everything</Button>
+              <button
+                onClick={() => setShowReset(false)}
+                style={{
+                  padding: '9px 18px',
+                  borderRadius: 8,
+                  border: '1px solid #E2E8F0',
+                  background: '#FFFFFF',
+                  fontFamily: 'Outfit,sans-serif',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: '#64748B',
+                  cursor: 'pointer',
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#F8FAFC' }}
+                onMouseLeave={e => { e.currentTarget.style.background = '#FFFFFF' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { resetToDefaults(); setShowReset(false) }}
+                style={{
+                  padding: '9px 20px',
+                  borderRadius: 8,
+                  border: 'none',
+                  background: '#DC2626',
+                  color: '#FFFFFF',
+                  fontFamily: 'Outfit,sans-serif',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  letterSpacing: '0.02em',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(220,38,38,0.25)',
+                  transition: 'opacity 0.15s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.opacity = '0.9' }}
+                onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
+              >
+                Reset Everything
+              </button>
             </div>
           </div>
         </div>
@@ -2684,6 +2766,7 @@ export default function Dashboard() {
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes resetDialogPop { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 
         /* Desktop defaults */
         .admin-mobile-menu-btn { display: none !important; }

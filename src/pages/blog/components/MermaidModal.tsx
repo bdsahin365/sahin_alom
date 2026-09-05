@@ -328,20 +328,31 @@ export default function MermaidModal({ initial, onInsert, onClose }: MermaidModa
     onClose()
   }
 
+  // Escape key handler
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
   return (
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(15, 23, 42, 0.65)',
-        backdropFilter: 'blur(6px)',
+        background: 'rgba(11, 17, 24, 0.72)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 750,
-        padding: 20,
+        zIndex: 1000,
+        padding: 'clamp(8px, 3vh, 20px) 10px',
+        animation: 'fadeIn 0.2s ease',
       }}
-      onClick={onClose}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
         style={{
@@ -349,10 +360,10 @@ export default function MermaidModal({ initial, onInsert, onClose }: MermaidModa
           borderRadius: 14,
           width: '100%',
           maxWidth: 920,
-          maxHeight: '92vh',
+          maxHeight: 'min(94dvh, 880px)',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '0 24px 64px rgba(0,0,0,0.25)',
+          boxShadow: '0 24px 64px rgba(0,0,0,0.35), 0 0 0 1px rgba(5,150,105,0.2)',
           border: '1px solid #E2E8F0',
           overflow: 'hidden',
         }}
@@ -364,18 +375,20 @@ export default function MermaidModal({ initial, onInsert, onClose }: MermaidModa
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '16px 24px',
-            borderBottom: '1px solid #F1F5F9',
+            padding: '14px 20px',
+            borderBottom: '1px solid #1E293B',
             flexShrink: 0,
             background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
             color: '#FFFFFF',
+            flexWrap: 'wrap',
+            gap: 8,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
             <div
               style={{
-                width: 36,
-                height: 36,
+                width: 34,
+                height: 34,
                 borderRadius: 8,
                 background: '#059669',
                 display: 'flex',
@@ -383,22 +396,23 @@ export default function MermaidModal({ initial, onInsert, onClose }: MermaidModa
                 justifyContent: 'center',
                 color: '#FFFFFF',
                 boxShadow: '0 2px 8px rgba(5,150,105,0.4)',
+                flexShrink: 0,
               }}
             >
-              <GitGraph size={20} />
+              <GitGraph size={18} />
             </div>
-            <div>
-              <h2 style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 700, fontSize: 16, color: '#FFFFFF', margin: 0 }}>
+            <div style={{ minWidth: 0 }}>
+              <h2 style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 700, fontSize: 15, color: '#FFFFFF', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 Electrical Diagram & Schematic Builder
               </h2>
-              <div style={{ fontFamily: 'Outfit,sans-serif', fontSize: 11.5, color: '#94A3B8' }}>
+              <div style={{ fontFamily: 'Outfit,sans-serif', fontSize: 11, color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 Single Line Diagrams (SLD), ATS generator control, solar PV & power distribution schematics
               </div>
             </div>
           </div>
           <button
             onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', padding: 4 }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', padding: 6, display: 'flex', borderRadius: 4 }}
           >
             <X size={18} />
           </button>
@@ -683,16 +697,18 @@ export default function MermaidModal({ initial, onInsert, onClose }: MermaidModa
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '14px 24px',
+            padding: '12px 20px',
             borderTop: '1px solid #E2E8F0',
             background: '#FAF8F5',
             flexShrink: 0,
+            flexWrap: 'wrap',
+            gap: 10,
           }}
         >
-          <div style={{ fontSize: 12, color: '#64748B', fontFamily: 'Outfit,sans-serif' }}>
+          <div style={{ fontSize: 12, color: '#64748B', fontFamily: 'JetBrains Mono, monospace' }}>
             {category} • {voltageTier}
           </div>
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <button
               onClick={onClose}
               style={{
@@ -705,6 +721,7 @@ export default function MermaidModal({ initial, onInsert, onClose }: MermaidModa
                 fontSize: 13,
                 fontWeight: 600,
                 color: '#475569',
+                minHeight: 38,
               }}
             >
               Cancel
@@ -725,9 +742,10 @@ export default function MermaidModal({ initial, onInsert, onClose }: MermaidModa
                 alignItems: 'center',
                 gap: 6,
                 boxShadow: '0 2px 8px rgba(5,150,105,0.35)',
+                minHeight: 38,
               }}
             >
-              <Check size={15} /> Insert Electrical Diagram
+              <Check size={16} /> Insert Electrical Diagram
             </button>
           </div>
         </div>

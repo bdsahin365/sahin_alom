@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router'
+import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  Search, X, Zap, Calculator, BookOpen, FileText, User, ArrowUpRight, 
-  Phone, MessageSquare, Mail, Sparkles, ChevronRight, Layers, ShieldCheck,
-  Play, Video, FolderOpen, Briefcase
+  Search, X, Zap, Calculator, BookOpen, Layers,
+  Phone, MessageSquare, Mail, ArrowUpRight, Play, FolderOpen
 } from 'lucide-react'
 import { TOOLS } from '../data/tools'
 import { getStoredArticles } from '../lib/articlesService'
@@ -40,7 +40,11 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
       setQuery('')
       setSelectedIndex(0)
       setTimeout(() => inputRef.current?.focus(), 50)
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
     }
+    return () => { document.body.style.overflow = '' }
   }, [isOpen])
 
   // Build searchable items catalogue from dynamic context and articles
@@ -261,297 +265,325 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
     }
   }, [selectedIndex])
 
-  if (!isOpen) return null
-
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        background: 'rgba(13, 18, 24, 0.72)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        padding: 'clamp(16px, 10vh, 80px) 16px',
-        animation: 'fadeIn 0.15s ease-out',
-      }}
-      onClick={e => {
-        if (e.target === e.currentTarget) onClose()
-      }}
-    >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: 640,
-          background: '#FFFFFF',
-          borderRadius: 12,
-          boxShadow: '0 24px 64px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(196, 125, 14, 0.15)',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          maxHeight: '80vh',
-          animation: 'slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-        }}
-      >
-        {/* Header Search Bar */}
+    <AnimatePresence>
+      {isOpen && (
         <div
           style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
             display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            padding: '16px 20px',
-            borderBottom: '1px solid #ECE7DE',
-            background: '#FAF8F5',
+            alignItems: 'flex-start',
+            justifyContent: 'center',
+            padding: 'clamp(12px, 5vh, 64px) 12px',
+            overflow: 'hidden',
           }}
         >
-          <Search size={18} style={{ color: '#C47D0E', flexShrink: 0 }} strokeWidth={2.2} />
-          <input
-            ref={inputRef}
-            type="text"
-            placeholder="Search 20+ calculators, articles, standards, pages..."
-            value={query}
-            onChange={e => {
-              setQuery(e.target.value)
-              setSelectedIndex(0)
-            }}
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={onClose}
             style={{
-              flex: 1,
-              border: 'none',
-              background: 'transparent',
-              fontFamily: 'Outfit, sans-serif',
-              fontSize: 15,
-              fontWeight: 500,
-              color: '#0D1218',
-              outline: 'none',
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(13, 18, 24, 0.72)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
             }}
           />
-          {query && (
-            <button
-              onClick={() => setQuery('')}
+
+          {/* Dialog Container */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: -16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: -10 }}
+            transition={{ type: 'spring', stiffness: 360, damping: 28 }}
+            style={{
+              position: 'relative',
+              zIndex: 10,
+              width: '100%',
+              maxWidth: 640,
+              background: '#FFFFFF',
+              borderRadius: 14,
+              boxShadow: '0 24px 64px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(196, 125, 14, 0.2)',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              maxHeight: 'min(86dvh, 580px)',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header Search Bar */}
+            <div
               style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: '#8A94A6',
-                padding: 4,
                 display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: '14px 18px',
+                borderBottom: '1px solid #ECE7DE',
+                background: '#FAF8F5',
               }}
             >
-              <X size={14} />
-            </button>
-          )}
-          <span
-            style={{
-              fontFamily: 'JetBrains Mono, monospace',
-              fontSize: 10,
-              fontWeight: 700,
-              color: '#8A94A6',
-              background: '#EAE6DD',
-              padding: '2px 7px',
-              borderRadius: 4,
-              letterSpacing: '0.05em',
-            }}
-          >
-            ESC
-          </span>
-        </div>
-
-        {/* Filter Pills */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '8px 16px',
-            borderBottom: '1px solid #F0ECE4',
-            background: '#FFFFFF',
-            overflowX: 'auto',
-          }}
-        >
-          {(['All', 'Tools', 'Articles', 'Projects', 'Shorts', 'Actions'] as const).map(filter => {
-            const active = activeFilter === filter
-            return (
-              <button
-                key={filter}
-                onClick={() => {
-                  setActiveFilter(filter)
+              <Search size={19} style={{ color: '#C47D0E', flexShrink: 0 }} strokeWidth={2.2} />
+              <input
+                ref={inputRef}
+                type="text"
+                placeholder="Search calculators, articles, standards, projects..."
+                value={query}
+                onChange={e => {
+                  setQuery(e.target.value)
                   setSelectedIndex(0)
                 }}
                 style={{
-                  padding: '4px 10px',
-                  borderRadius: 6,
-                  border: '1px solid',
-                  borderColor: active ? '#C47D0E' : 'transparent',
-                  background: active ? 'rgba(196, 125, 14, 0.1)' : 'transparent',
-                  color: active ? '#C47D0E' : '#64748B',
-                  fontFamily: 'JetBrains Mono, monospace',
-                  fontSize: 10.5,
-                  fontWeight: active ? 700 : 500,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s',
-                  whiteSpace: 'nowrap',
+                  flex: 1,
+                  border: 'none',
+                  background: 'transparent',
+                  fontFamily: 'Outfit, sans-serif',
+                  fontSize: 15,
+                  fontWeight: 500,
+                  color: '#0D1218',
+                  outline: 'none',
+                  height: 38,
                 }}
-              >
-                {filter === 'All' ? '✦ All' : filter}
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Results List */}
-        <div
-          ref={listRef}
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '8px 0',
-            maxHeight: 420,
-          }}
-        >
-          {filteredItems.length === 0 ? (
-            <div style={{ padding: '40px 20px', textAlign: 'center', color: '#8A94A6' }}>
-              <Zap size={28} style={{ margin: '0 auto 10px', color: '#C47D0E', opacity: 0.5 }} />
-              <p style={{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 600, color: '#0D1218' }}>
-                No matches found for "{query}"
-              </p>
-              <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, marginTop: 4 }}>
-                Try searching for 'voltage drop', 'lighting', 'transformer', 'substation', or 'contact'
-              </p>
-            </div>
-          ) : (
-            filteredItems.map((item, index) => {
-              const isSelected = index === selectedIndex
-              return (
-                <div
-                  key={item.id}
-                  data-index={index}
-                  onClick={item.onSelect}
-                  onMouseEnter={() => setSelectedIndex(index)}
+              />
+              {query && (
+                <button
+                  onClick={() => setQuery('')}
                   style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#8A94A6',
+                    padding: 6,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '10px 18px',
-                    cursor: 'pointer',
-                    background: isSelected ? 'rgba(196, 125, 14, 0.08)' : 'transparent',
-                    borderLeft: `3px solid ${isSelected ? '#C47D0E' : 'transparent'}`,
-                    transition: 'background 0.1s',
+                    justifyContent: 'center',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                  <X size={15} />
+                </button>
+              )}
+              <span
+                style={{
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color: '#8A94A6',
+                  background: '#EAE6DD',
+                  padding: '3px 8px',
+                  borderRadius: 4,
+                  letterSpacing: '0.05em',
+                }}
+              >
+                ESC
+              </span>
+            </div>
+
+            {/* Filter Pills */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '8px 14px',
+                borderBottom: '1px solid #F0ECE4',
+                background: '#FFFFFF',
+                overflowX: 'auto',
+                scrollbarWidth: 'none',
+              }}
+            >
+              {(['All', 'Tools', 'Articles', 'Projects', 'Shorts', 'Actions'] as const).map(filter => {
+                const active = activeFilter === filter
+                return (
+                  <button
+                    key={filter}
+                    onClick={() => {
+                      setActiveFilter(filter)
+                      setSelectedIndex(0)
+                    }}
+                    style={{
+                      padding: '5px 12px',
+                      borderRadius: 6,
+                      border: '1px solid',
+                      borderColor: active ? '#C47D0E' : 'transparent',
+                      background: active ? 'rgba(196, 125, 14, 0.12)' : 'transparent',
+                      color: active ? '#C47D0E' : '#64748B',
+                      fontFamily: 'JetBrains Mono, monospace',
+                      fontSize: 11,
+                      fontWeight: active ? 700 : 500,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s',
+                      whiteSpace: 'nowrap',
+                      minHeight: 28,
+                    }}
+                  >
+                    {filter === 'All' ? '✦ All' : filter}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Results List */}
+            <div
+              ref={listRef}
+              style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '6px 0',
+              }}
+            >
+              {filteredItems.length === 0 ? (
+                <div style={{ padding: '40px 20px', textAlign: 'center', color: '#8A94A6' }}>
+                  <Zap size={28} style={{ margin: '0 auto 10px', color: '#C47D0E', opacity: 0.5 }} />
+                  <p style={{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 600, color: '#0D1218' }}>
+                    No matches found for "{query}"
+                  </p>
+                  <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, marginTop: 4 }}>
+                    Try searching for 'voltage drop', 'lighting', 'transformer', 'substation', or 'contact'
+                  </p>
+                </div>
+              ) : (
+                filteredItems.map((item, index) => {
+                  const isSelected = index === selectedIndex
+                  return (
                     <div
+                      key={item.id}
+                      data-index={index}
+                      onClick={item.onSelect}
+                      onMouseEnter={() => setSelectedIndex(index)}
                       style={{
-                        width: 30,
-                        height: 30,
-                        borderRadius: 6,
-                        background: isSelected ? '#FFFFFF' : '#FAF8F5',
-                        border: '1px solid #ECE7DE',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        boxShadow: isSelected ? '0 2px 6px rgba(196, 125, 14, 0.15)' : 'none',
+                        justifyContent: 'space-between',
+                        padding: '10px 16px',
+                        minHeight: 48,
+                        cursor: 'pointer',
+                        background: isSelected ? 'rgba(196, 125, 14, 0.08)' : 'transparent',
+                        borderLeft: `3px solid ${isSelected ? '#C47D0E' : 'transparent'}`,
+                        transition: 'background 0.1s',
                       }}
                     >
-                      {item.icon}
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                        <div
                           style={{
-                            fontFamily: 'Outfit, sans-serif',
-                            fontWeight: 600,
-                            fontSize: 13.5,
-                            color: '#0D1218',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
+                            width: 32,
+                            height: 32,
+                            borderRadius: 6,
+                            background: isSelected ? '#FFFFFF' : '#FAF8F5',
+                            border: '1px solid #ECE7DE',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            boxShadow: isSelected ? '0 2px 6px rgba(196, 125, 14, 0.15)' : 'none',
                           }}
                         >
-                          {item.title}
-                        </span>
-                        {item.badge && (
+                          {item.icon}
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                            <span
+                              style={{
+                                fontFamily: 'Outfit, sans-serif',
+                                fontWeight: 600,
+                                fontSize: 13.5,
+                                color: '#0D1218',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {item.title}
+                            </span>
+                            {item.badge && (
+                              <span
+                                style={{
+                                  fontFamily: 'JetBrains Mono, monospace',
+                                  fontSize: 9,
+                                  fontWeight: 700,
+                                  color: '#C47D0E',
+                                  background: 'rgba(196, 125, 14, 0.1)',
+                                  padding: '1px 6px',
+                                  borderRadius: 4,
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {item.badge}
+                              </span>
+                            )}
+                          </div>
+                          <p
+                            style={{
+                              fontFamily: 'Outfit, sans-serif',
+                              fontSize: 11.5,
+                              color: '#64748B',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              marginTop: 2,
+                            }}
+                          >
+                            {item.subtitle}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                        {isSelected && (
                           <span
                             style={{
                               fontFamily: 'JetBrains Mono, monospace',
-                              fontSize: 9,
-                              fontWeight: 700,
+                              fontSize: 9.5,
                               color: '#C47D0E',
-                              background: 'rgba(196, 125, 14, 0.1)',
-                              padding: '1px 6px',
-                              borderRadius: 4,
-                              flexShrink: 0,
+                              fontWeight: 600,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 2,
                             }}
                           >
-                            {item.badge}
+                            Select <ArrowUpRight size={11} />
                           </span>
                         )}
                       </div>
-                      <p
-                        style={{
-                          fontFamily: 'Outfit, sans-serif',
-                          fontSize: 11.5,
-                          color: '#64748B',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          marginTop: 2,
-                        }}
-                      >
-                        {item.subtitle}
-                      </p>
                     </div>
-                  </div>
+                  )
+                })
+              )}
+            </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                    {isSelected && (
-                      <span
-                        style={{
-                          fontFamily: 'JetBrains Mono, monospace',
-                          fontSize: 9,
-                          color: '#C47D0E',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 2,
-                        }}
-                      >
-                        Select <ArrowUpRight size={10} />
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )
-            })
-          )}
+            {/* Footer Shortcut Hints */}
+            <div
+              style={{
+                padding: '10px 16px',
+                borderTop: '1px solid #ECE7DE',
+                background: '#FAF8F5',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 8,
+                fontFamily: 'JetBrains Mono, monospace',
+                fontSize: 10,
+                color: '#8A94A6',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <span><strong style={{ color: '#0D1218' }}>↑↓</strong> Navigate</span>
+                <span><strong style={{ color: '#0D1218' }}>↵</strong> Select</span>
+                <span><strong style={{ color: '#0D1218' }}>ESC</strong> Close</span>
+              </div>
+              <span style={{ color: '#C47D0E', fontWeight: 600 }}>
+                Md Sahin Alom • Engineering Hub
+              </span>
+            </div>
+          </motion.div>
         </div>
-
-        {/* Footer Shortcut Hints */}
-        <div
-          style={{
-            padding: '10px 18px',
-            borderTop: '1px solid #ECE7DE',
-            background: '#FAF8F5',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            fontFamily: 'JetBrains Mono, monospace',
-            fontSize: 10,
-            color: '#8A94A6',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <span><strong style={{ color: '#0D1218' }}>↑↓</strong> Navigate</span>
-            <span><strong style={{ color: '#0D1218' }}>↵</strong> Select</span>
-            <span><strong style={{ color: '#0D1218' }}>ESC</strong> Close</span>
-          </div>
-          <span style={{ color: '#C47D0E', fontWeight: 600 }}>
-            Md Sahin Alom • Engineering Hub
-          </span>
-        </div>
-      </div>
-    </div>
+      )}
+    </AnimatePresence>
   )
 }
+

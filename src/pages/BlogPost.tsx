@@ -872,12 +872,14 @@ export default function BlogPost() {
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(15, 23, 42, 0.85)',
-            backdropFilter: 'blur(8px)',
+            background: 'rgba(11, 17, 24, 0.88)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
             zIndex: 1000,
             display: 'flex',
             flexDirection: 'column',
-            padding: '16px',
+            padding: 'clamp(8px, 2vw, 18px)',
+            animation: 'fadeIn 0.2s ease',
           }}
           onClick={() => setFullscreenDiagram(null)}
         >
@@ -889,7 +891,7 @@ export default function BlogPost() {
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden',
-              boxShadow: '0 24px 64px rgba(0,0,0,0.4)',
+              boxShadow: '0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1)',
             }}
             onClick={e => e.stopPropagation()}
           >
@@ -897,66 +899,124 @@ export default function BlogPost() {
             <div
               style={{
                 background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
-                padding: '14px 20px',
+                padding: '12px 18px',
                 color: '#FFFFFF',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 flexWrap: 'wrap',
                 gap: 10,
-                borderBottom: '3px solid #059669',
+                borderBottom: '3px solid #C47D0E',
               }}
             >
-              <div>
-                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, background: '#059669', color: '#FFF', padding: '2px 7px', borderRadius: 3, fontWeight: 700 }}>
+              <div style={{ minWidth: 0, flex: '1 1 200px' }}>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9.5, background: '#C47D0E', color: '#FFF', padding: '2px 8px', borderRadius: 4, fontWeight: 700, letterSpacing: '0.08em' }}>
                   {fullscreenDiagram.category || 'ELECTRICAL SCHEMATIC'}
                 </span>
-                <h3 style={{ margin: '4px 0 0 0', fontSize: 16, color: '#FFFFFF', fontWeight: 700 }}>
+                <h3 style={{ margin: '4px 0 0 0', fontSize: 15, color: '#FFFFFF', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {fullscreenDiagram.figNum ? `${fullscreenDiagram.figNum}: ` : ''}
                   {fullscreenDiagram.caption}
                 </h3>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+
+              {/* Zoom & Close Toolbar */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                 <button
-                  onClick={() => setModalZoom(z => Math.max(50, z - 20))}
-                  style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#FFF', width: 28, height: 28, borderRadius: 4, cursor: 'pointer', fontWeight: 'bold' }}
+                  onClick={() => setModalZoom(z => Math.max(40, z - 20))}
+                  title="Zoom Out"
+                  style={{
+                    background: 'rgba(255,255,255,0.12)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    color: '#FFF',
+                    width: 32,
+                    height: 32,
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 16,
+                    fontWeight: 'bold',
+                  }}
                 >
                   −
                 </button>
-                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#F8FAFC', minWidth: 42, textAlign: 'center' }}>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#F8FAFC', minWidth: 44, textAlign: 'center', fontWeight: 600 }}>
                   {modalZoom}%
                 </span>
                 <button
                   onClick={() => setModalZoom(z => Math.min(300, z + 20))}
-                  style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#FFF', width: 28, height: 28, borderRadius: 4, cursor: 'pointer', fontWeight: 'bold' }}
+                  title="Zoom In"
+                  style={{
+                    background: 'rgba(255,255,255,0.12)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    color: '#FFF',
+                    width: 32,
+                    height: 32,
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 16,
+                    fontWeight: 'bold',
+                  }}
                 >
                   +
                 </button>
                 <button
                   onClick={() => setModalZoom(100)}
-                  style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#FFF', padding: '0 8px', height: 28, borderRadius: 4, cursor: 'pointer', fontSize: 11 }}
+                  title="Reset Zoom"
+                  style={{
+                    background: 'rgba(255,255,255,0.12)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    color: '#FFF',
+                    padding: '0 10px',
+                    height: 32,
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    fontSize: 11,
+                    fontFamily: 'JetBrains Mono, monospace',
+                    fontWeight: 600,
+                  }}
                 >
-                  Reset
+                  100%
                 </button>
                 <button
                   onClick={() => setFullscreenDiagram(null)}
-                  style={{ background: 'rgba(239,68,68,0.2)', border: '1px solid rgba(239,68,68,0.4)', color: '#F87171', width: 28, height: 28, borderRadius: 4, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  title="Close (Esc)"
+                  style={{
+                    background: 'rgba(239,68,68,0.2)',
+                    border: '1px solid rgba(239,68,68,0.4)',
+                    color: '#F87171',
+                    width: 32,
+                    height: 32,
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginLeft: 4,
+                  }}
                 >
-                  <X size={16} />
+                  <X size={17} />
                 </button>
               </div>
             </div>
 
-            {/* Modal SVG Viewport */}
+            {/* Modal SVG Viewport with CAD Grid */}
             <div
               style={{
                 flex: 1,
-                padding: '30px',
+                padding: '24px',
                 overflow: 'auto',
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-                background: '#FFFFFF',
+                background: '#FAFAF8',
+                backgroundImage: 'radial-gradient(#CBD5E1 1px, transparent 1px)',
+                backgroundSize: '20px 20px',
+                touchAction: 'pan-x pan-y pinch-zoom',
               }}
             >
               <div
@@ -1699,34 +1759,50 @@ export default function BlogPost() {
               style={{
                 position: 'fixed',
                 inset: 0,
-                background: 'rgba(0,0,0,0.5)',
+                background: 'rgba(15, 23, 42, 0.65)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
                 zIndex: 950,
                 display: 'flex',
                 justifyContent: 'flex-end',
                 flexDirection: 'column',
+                animation: 'fadeIn 0.2s ease',
               }}
               onClick={() => setMobileTocOpen(false)}
             >
               <div
                 style={{
                   background: '#FFFFFF',
-                  borderTopLeftRadius: 16,
-                  borderTopRightRadius: 16,
-                  maxHeight: '75vh',
-                  padding: '24px 20px',
+                  borderTopLeftRadius: 20,
+                  borderTopRightRadius: 20,
+                  maxHeight: 'min(78vh, 600px)',
+                  paddingTop: 14,
+                  paddingLeft: 20,
+                  paddingRight: 20,
+                  paddingBottom: 'max(24px, env(safe-area-inset-bottom, 24px))',
                   overflowY: 'auto',
+                  boxShadow: '0 -10px 40px rgba(0,0,0,0.25)',
                 }}
                 onClick={e => e.stopPropagation()}
               >
+                {/* Grab Handle */}
+                <div style={{ width: 36, height: 4, borderRadius: 2, background: '#CBD5E1', margin: '0 auto 14px' }} />
+
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <h3 style={{ margin: 0, fontSize: 16, fontFamily: 'Outfit,sans-serif', fontWeight: 700, color: '#0F172A' }}>
-                    Table of Contents
-                  </h3>
-                  <button onClick={() => setMobileTocOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(196,125,14,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#C47D0E' }}>
+                      <ListOrdered size={16} />
+                    </div>
+                    <h3 style={{ margin: 0, fontSize: 16, fontFamily: 'Outfit,sans-serif', fontWeight: 700, color: '#0F172A' }}>
+                      Table of Contents
+                    </h3>
+                  </div>
+                  <button onClick={() => setMobileTocOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: '#64748B', display: 'flex' }}>
                     <X size={18} />
                   </button>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   {toc.map(item => (
                     <a
                       key={item.id}
@@ -1740,12 +1816,18 @@ export default function BlogPost() {
                         }
                       }}
                       style={{
-                        fontSize: 14,
-                        paddingLeft: (item.level - 2) * 12,
+                        display: 'block',
+                        fontSize: 13.5,
+                        padding: '10px 12px',
+                        paddingLeft: Math.max(12, (item.level - 2) * 16 + 12),
+                        borderRadius: 8,
+                        background: activeHeadingId === item.id ? 'rgba(196,125,14,0.08)' : 'transparent',
                         color: activeHeadingId === item.id ? '#C47D0E' : '#334155',
                         fontWeight: activeHeadingId === item.id ? 700 : 500,
                         textDecoration: 'none',
                         lineHeight: 1.4,
+                        transition: 'background 0.15s, color 0.15s',
+                        borderLeft: `3px solid ${activeHeadingId === item.id ? '#C47D0E' : 'transparent'}`,
                       }}
                     >
                       {item.text}
