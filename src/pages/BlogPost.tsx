@@ -35,6 +35,15 @@ import {
   Mail,
   ListOrdered,
   X,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  Maximize2,
+  Download,
+  Share2,
+  Type,
+  ExternalLink,
+  ChevronDown,
 } from 'lucide-react'
 import { fetchArticleBySlug, fetchPublishedArticles, Article } from '../lib/articlesService'
 import { CalcBlock } from './blog/extensions/CalcBlock'
@@ -107,6 +116,15 @@ export default function BlogPost() {
   const [mobileTocOpen, setMobileTocOpen] = useState(false)
   const [fontSizeScale, setFontSizeScale] = useState<'normal' | 'large' | 'larger'>('normal')
   const [copiedToast, setCopiedToast] = useState(false)
+
+  // Fullscreen Diagram Modal State
+  const [fullscreenDiagram, setFullscreenDiagram] = useState<{
+    svg: string
+    caption: string
+    figNum: string
+    category?: string
+  } | null>(null)
+  const [modalZoom, setModalZoom] = useState(100)
 
   const contentRef = useRef<HTMLDivElement>(null)
 
@@ -187,14 +205,15 @@ export default function BlogPost() {
     // 2. Add 1-Click "Copy Code" button and Language Badges to pre blocks
     const preBlocks = Array.from(contentRef.current.querySelectorAll('pre'))
     preBlocks.forEach(pre => {
-      if (pre.querySelector('.copy-code-btn')) return
+      if (pre.querySelector('.code-top-bar') || pre.classList.contains('mermaid') || pre.parentElement?.classList.contains('mermaid-render-zone')) return
 
       pre.style.position = 'relative'
       const code = pre.querySelector('code')
       const langClass = Array.from(code?.classList || []).find(c => c.startsWith('language-'))
       const langName = langClass ? langClass.replace('language-', '').toUpperCase() : 'CODE'
 
-      // Top bar inside pre
+      if (langName === 'MERMAID') return
+
       const topBar = document.createElement('div')
       topBar.className = 'code-top-bar'
       topBar.style.cssText = `
@@ -292,7 +311,7 @@ export default function BlogPost() {
     return () => window.removeEventListener('scroll', handleScrollSpy)
   }, [toc])
 
-  // KaTeX math render
+  // KaTeX Math Rendering
   useEffect(() => {
     const w = window as any
     if (!w.katex) {
@@ -315,6 +334,7 @@ export default function BlogPost() {
             { left: '\\[', right: '\\]', display: true },
             { left: '\\(', right: '\\)', display: false },
           ],
+          throwOnError: false,
         })
       } else {
         const s = document.createElement('script')
@@ -326,38 +346,277 @@ export default function BlogPost() {
               delimiters: [
                 { left: '$$', right: '$$', display: true },
                 { left: '$', right: '$', display: false },
+                { left: '\\[', right: '\\]', display: true },
+                { left: '\\(', right: '\\)', display: false },
               ],
+              throwOnError: false,
             })
           }
         }
         document.head.appendChild(s)
       }
     }
-    setTimeout(tryRender, 300)
+    setTimeout(tryRender, 350)
   }, [html])
 
-  // Mermaid diagrams render
+  // Mermaid Diagrams Render & Interactive Controls Enhancer
   useEffect(() => {
     if (!contentRef.current) return
-    const mermaidNodes = contentRef.current.querySelectorAll('.language-mermaid, pre code.language-mermaid, div.mermaid')
+    const mermaidNodes = contentRef.current.querySelectorAll('.language-mermaid, pre code.language-mermaid, div.mermaid, [data-type="mermaid-block"]')
     if (mermaidNodes.length === 0) return
 
     const renderMermaid = () => {
       const w = window as any
       if (w.mermaid) {
-        w.mermaid.initialize({ startOnLoad: false, theme: 'neutral', securityLevel: 'loose' })
+        w.mermaid.initialize({
+          startOnLoad: false,
+          theme: 'neutral',
+          securityLevel: 'loose',
+          fontFamily: 'Outfit, sans-serif',
+        })
+
         mermaidNodes.forEach(async (node, idx) => {
-          const code = node.textContent || ''
-          const container = document.createElement('div')
-          container.style.cssText =
-            'background:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;padding:20px;margin:24px 0;display:flex;justify-content:center;overflow-x:auto;box-shadow:0 2px 10px rgba(0,0,0,0.03);'
+          // Prevent double processing
+          if (node.classList.contains('mermaid-enhanced')) return
+          node.classList.add('mermaid-enhanced')
+
+          const isCustomBlock = node.getAttribute('data-type') === 'mermaid-block'
+          let code = ''
+          let caption = ''
+          let figNum = ''
+          let category = 'ELECTRICAL & SYSTEM SCHEMATIC'
+          let voltageTier = ''
+          let standardRef = ''
+          let legend: any[] = []
+          let steps: any[] = []
+
+          if (isCustomBlock) {
+            const rawAttrs = node.getAttribute('data-attrs')
+            if (rawAttrs) {
+              try {
+                const parsed = JSON.parse(decodeURIComponent(rawAttrs))
+                code = parsed.code || ''
+                caption = parsed.caption || ''
+                figNum = parsed.figNum || ''
+                category = parsed.category || 'ELECTRICAL & SYSTEM SCHEMATIC'
+                voltageTier = parsed.voltageTier || ''
+                standardRef = parsed.standardRef || ''
+                legend = parsed.legend || []
+                steps = parsed.steps || []
+              } catch {}
+            }
+            if (!code) {
+              code = node.getAttribute('data-code') || node.querySelector('pre')?.textContent || ''
+            }
+          } else {
+            code = node.textContent || ''
+          }
+
+          if (!code.trim()) return
+
+          const card = document.createElement('div')
+          card.className = 'mermaid-interactive-card'
+          card.style.cssText = `
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 28px 0;
+            background: #FFFFFF;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+            font-family: Outfit, sans-serif;
+          `
+
+          // 1. Header Toolbar
+          const header = document.createElement('div')
+          header.className = 'mermaid-card-header'
+          header.style.cssText = `
+            background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+            padding: 12px 18px;
+            color: #FFFFFF;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            border-bottom: 3px solid #059669;
+          `
+
+          const titleBox = document.createElement('div')
+          titleBox.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px; flex-wrap: wrap;">
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 8.5px; letter-spacing: 0.18em; background: #059669; color: #FFFFFF; padding: 2px 7px; border-radius: 3px; font-weight: 700;">📊 ${category}</span>
+              ${voltageTier ? `<span style="font-family: 'JetBrains Mono', monospace; font-size: 8.5px; background: rgba(255,255,255,0.15); color: #F8FAFC; padding: 2px 7px; border-radius: 3px;">⚡ ${voltageTier}</span>` : ''}
+              ${standardRef ? `<span style="font-family: 'JetBrains Mono', monospace; font-size: 8.5px; background: rgba(255,255,255,0.1); color: #E2E8F0; padding: 2px 7px; border-radius: 3px;">📜 ${standardRef}</span>` : ''}
+            </div>
+            <div style="font-size: 14.5px; font-weight: 700; color: #FFFFFF;">
+              ${figNum ? `<span style="color: #FBBF24; font-family: 'JetBrains Mono', monospace; margin-right: 6px;">${figNum}:</span>` : ''}
+              ${caption || 'Electrical Single Line Diagram & Control Schematic'}
+            </div>
+          `
+
+          // Control Toolbar (Zoom, Fullscreen, Copy)
+          const toolGroup = document.createElement('div')
+          toolGroup.style.cssText = 'display: flex; align-items: center; gap: 6px;'
+
+          let currentZoom = 100
+
+          const zoomOutBtn = document.createElement('button')
+          zoomOutBtn.innerHTML = '−'
+          zoomOutBtn.title = 'Zoom Out'
+          zoomOutBtn.style.cssText = 'background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: #FFF; border-radius: 4px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; font-weight: bold;'
+
+          const zoomBadge = document.createElement('span')
+          zoomBadge.innerText = '100%'
+          zoomBadge.style.cssText = 'font-family: "JetBrains Mono", monospace; font-size: 10px; color: #94A3B8; min-width: 38px; text-align: center;'
+
+          const zoomInBtn = document.createElement('button')
+          zoomInBtn.innerHTML = '+'
+          zoomInBtn.title = 'Zoom In'
+          zoomInBtn.style.cssText = 'background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: #FFF; border-radius: 4px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; font-weight: bold;'
+
+          const resetBtn = document.createElement('button')
+          resetBtn.innerText = '1:1'
+          resetBtn.title = 'Reset Zoom'
+          resetBtn.style.cssText = 'background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: #FFF; border-radius: 4px; height: 26px; padding: 0 6px; font-family: "JetBrains Mono", monospace; font-size: 10px; cursor: pointer;'
+
+          const fullBtn = document.createElement('button')
+          fullBtn.innerHTML = '⛶ Fullscreen'
+          fullBtn.title = 'Expand Fullscreen'
+          fullBtn.style.cssText = 'background: #059669; border: none; color: #FFF; border-radius: 4px; height: 26px; padding: 0 9px; font-family: Outfit, sans-serif; font-size: 11px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;'
+
+          toolGroup.appendChild(zoomOutBtn)
+          toolGroup.appendChild(zoomBadge)
+          toolGroup.appendChild(zoomInBtn)
+          toolGroup.appendChild(resetBtn)
+          toolGroup.appendChild(fullBtn)
+
+          header.appendChild(titleBox)
+          header.appendChild(toolGroup)
+          card.appendChild(header)
+
+          // 2. SVG Container
+          const svgViewport = document.createElement('div')
+          svgViewport.className = 'mermaid-svg-viewport'
+          svgViewport.style.cssText = `
+            padding: 24px;
+            background: #FFFFFF;
+            display: flex;
+            justify-content: center;
+            overflow-x: auto;
+            position: relative;
+            min-height: 140px;
+          `
+
+          const svgContainer = document.createElement('div')
+          svgContainer.style.cssText = 'transition: transform 0.2s ease; transform-origin: center center; width: 100%; display: flex; justify-content: center;'
+          svgViewport.appendChild(svgContainer)
+          card.appendChild(svgViewport)
+
+          // Zoom Handlers
+          const applyZoom = () => {
+            zoomBadge.innerText = `${currentZoom}%`
+            svgContainer.style.transform = `scale(${currentZoom / 100})`
+          }
+
+          zoomOutBtn.onclick = () => {
+            currentZoom = Math.max(50, currentZoom - 15)
+            applyZoom()
+          }
+
+          zoomInBtn.onclick = () => {
+            currentZoom = Math.min(220, currentZoom + 15)
+            applyZoom()
+          }
+
+          resetBtn.onclick = () => {
+            currentZoom = 100
+            applyZoom()
+          }
+
+          // 3. Render SVG via Mermaid API
+          let renderedSvg = ''
           const id = `mermaid-render-${Date.now()}-${idx}`
           try {
             const { svg } = await w.mermaid.render(id, code)
-            container.innerHTML = svg
-            node.closest('pre')?.replaceWith(container) || node.replaceWith(container)
+            renderedSvg = svg
+            svgContainer.innerHTML = svg
+            const innerSvg = svgContainer.querySelector('svg')
+            if (innerSvg) {
+              innerSvg.style.maxWidth = '100%'
+              innerSvg.style.height = 'auto'
+            }
           } catch (err) {
-            console.warn('Mermaid render error:', err)
+            svgContainer.innerHTML = `<pre style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#64748B;padding:12px;margin:0;overflow-x:auto;">${code}</pre>`
+          }
+
+          fullBtn.onclick = () => {
+            setFullscreenDiagram({
+              svg: renderedSvg || code,
+              caption: caption || 'Electrical Diagram',
+              figNum: figNum || '',
+              category: category,
+            })
+            setModalZoom(100)
+          }
+
+          // 4. Legend & Glossary Key (if available)
+          if (legend && legend.length > 0) {
+            const legendDiv = document.createElement('div')
+            legendDiv.style.cssText = 'padding: 14px 20px; background: #FAF8F5; border-top: 1px solid #F1F5F9;'
+            legendDiv.innerHTML = `
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.15em; color: #475569; font-weight: 700; margin-bottom: 8px;">
+                🔑 ELECTRICAL SYMBOLS & ABBREVIATIONS KEY:
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px;">
+                ${legend
+                  .map(
+                    item => `
+                  <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 6px; padding: 6px 10px; display: flex; gap: 8px; align-items: center;">
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; color: ${item.color || '#C47D0E'}; background: #FEF3C7; padding: 2px 6px; border-radius: 3px; flex-shrink: 0;">${item.symbol}</span>
+                    <div>
+                      <div style="font-size: 12px; font-weight: 600; color: #0F172A;">${item.label}</div>
+                      <div style="font-size: 10.5px; color: #64748B;">${item.desc}</div>
+                    </div>
+                  </div>
+                `
+                  )
+                  .join('')}
+              </div>
+            `
+            card.appendChild(legendDiv)
+          }
+
+          // 5. Power Flow Steps (if available)
+          if (steps && steps.length > 0) {
+            const flowDiv = document.createElement('div')
+            flowDiv.style.cssText = 'padding: 14px 20px; background: #FEFDF9; border-top: 1px solid #F1F5F9;'
+            flowDiv.innerHTML = `
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.15em; color: #92400E; font-weight: 700; margin-bottom: 8px;">
+                ⚡ POWER FLOW & OPERATING SEQUENCE:
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                ${steps
+                  .map(
+                    s => `
+                  <div style="display: flex; gap: 10px; align-items: baseline; font-size: 12.5px; color: #334155;">
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; background: #059669; color: #FFFFFF; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">${s.stepNum}</span>
+                    <div>
+                      <strong style="color: #0F172A;">${s.title}:</strong> ${s.desc}
+                    </div>
+                  </div>
+                `
+                  )
+                  .join('')}
+              </div>
+            `
+            card.appendChild(flowDiv)
+          }
+
+          // Replace old node
+          if (isCustomBlock) {
+            node.replaceWith(card)
+          } else {
+            node.closest('pre')?.replaceWith(card) || node.replaceWith(card)
           }
         })
       }
@@ -366,7 +625,7 @@ export default function BlogPost() {
     const w = window as any
     if (!w.mermaid) {
       const s = document.createElement('script')
-      s.src = 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js'
+      s.src = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js'
       s.onload = renderMermaid
       document.head.appendChild(s)
     } else {
@@ -419,40 +678,46 @@ export default function BlogPost() {
   const shareTitle = article?.title || 'Engineering Article by Md Sahin Alom'
   const shareUrl = typeof window !== 'undefined' ? window.location.href : `https://sahinalom.com/blog/${slug}`
 
-  const shareWhatsApp = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareTitle + ' ' + shareUrl)}`
-  const shareLinkedIn = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`
-  const shareTwitter = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareTitle)}&url=${encodeURIComponent(shareUrl)}`
-  const shareFacebook = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`
+  const shareLinkedIn = () => {
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, '_blank', 'width=600,height=600')
+  }
 
-  // JSON-LD Structured Data Schema (TechArticle / BlogPosting)
+  const shareTwitter = () => {
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareTitle)}&url=${encodeURIComponent(shareUrl)}`, '_blank', 'width=600,height=500')
+  }
+
+  const shareFacebook = () => {
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank', 'width=600,height=500')
+  }
+
+  const shareWhatsApp = () => {
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareTitle + ' ' + shareUrl)}`, '_blank')
+  }
+
+  const shareEmail = () => {
+    window.location.href = `mailto:?subject=${encodeURIComponent(shareTitle)}&body=${encodeURIComponent('Read this engineering article:\n\n' + shareUrl)}`
+  }
+
+  // Structured Data Schema for Google Rich Results
   const jsonLdArticleSchema = useMemo(() => {
     if (!article) return undefined
-    const isBn = isBengali(article.title)
     return {
       '@context': 'https://schema.org',
       '@type': 'TechArticle',
       headline: article.title,
-      description: article.meta_desc || article.excerpt,
-      image: article.featured_image
-        ? [
-            article.featured_image.startsWith('http')
-              ? article.featured_image
-              : `https://sahinalom.com${article.featured_image}`,
-          ]
-        : ['https://sahinalom.com/img/lighting-design-cover.jpg'],
-      datePublished: article.created_at || article.updated_at,
-      dateModified: article.updated_at,
-      inLanguage: isBn ? 'bn' : 'en',
+      description: article.excerpt || article.meta_desc,
+      image: article.featured_image ? [article.featured_image] : undefined,
+      datePublished: article.created_at || new Date().toISOString(),
+      dateModified: article.updated_at || new Date().toISOString(),
       author: {
         '@type': 'Person',
         name: article.author || 'Md Sahin Alom',
-        jobTitle: 'Electrical Engineer',
         url: 'https://sahinalom.com',
+        jobTitle: 'Senior Electrical Engineer & Building Services Specialist',
       },
       publisher: {
-        '@type': 'Person',
-        name: 'Md Sahin Alom',
-        url: 'https://sahinalom.com',
+        '@type': 'Organization',
+        name: 'Md Sahin Alom Engineering',
         logo: {
           '@type': 'ImageObject',
           url: 'https://sahinalom.com/img/sahin.png',
@@ -460,42 +725,35 @@ export default function BlogPost() {
       },
       mainEntityOfPage: {
         '@type': 'WebPage',
-        '@id': shareUrl,
+        '@id': typeof window !== 'undefined' ? window.location.href : `https://sahinalom.com/blog/${slug}`,
       },
       keywords: article.tags?.join(', '),
       articleSection: article.category || 'Electrical Engineering',
       wordCount: wordCount,
+      inLanguage: isBengali(article.title) ? 'bn-BD' : 'en-US',
     }
-  }, [article, shareUrl, wordCount])
+  }, [article, slug, wordCount])
 
   if (loading) {
     return (
       <>
+        <SEOHead title="Loading Engineering Article..." description="Please wait while the article loads." />
         <EngineerNav />
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '80vh',
-            paddingTop: 'var(--nav-h)',
-            fontFamily: 'Outfit,sans-serif',
-            color: '#64748B',
-          }}
-        >
+        <div style={{ textAlign: 'center', padding: '140px 20px', fontFamily: 'Outfit,sans-serif' }}>
           <div
             style={{
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
               border: '3px solid #E2E8F0',
               borderTopColor: '#C47D0E',
               borderRadius: '50%',
-              marginBottom: 16,
+              margin: '0 auto 20px',
               animation: 'spin 0.8s linear infinite',
             }}
           />
-          <div>Loading article…</div>
+          <div style={{ color: '#64748B', fontSize: 15, fontWeight: 500 }}>
+            Loading engineering research & calculations…
+          </div>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       </>
@@ -600,237 +858,212 @@ export default function BlogPost() {
             height: '100%',
             width: `${readingProgress}%`,
             background: 'linear-gradient(90deg, #C47D0E 0%, #F59E0B 100%)',
-            transition: 'width 0.1s ease-out',
             boxShadow: '0 0 8px rgba(196,125,14,0.6)',
+            transition: 'width 0.1s linear',
           }}
         />
       </div>
 
       <EngineerNav />
 
-      <div style={{ background: '#F7F5F0', minHeight: '100vh', paddingTop: 'var(--nav-h)' }}>
-        {/* ══ TOP BREADCRUMB & READER CONTROLS RIBBON ═════════════════════════ */}
+      {/* ══ FULLSCREEN DIAGRAM MODAL ════════════════════════════════════════ */}
+      {fullscreenDiagram && (
         <div
           style={{
-            background: '#FFFFFF',
-            borderBottom: '1px solid #E2E8F0',
-            position: 'sticky',
-            top: 'var(--nav-h)',
-            zIndex: 40,
-            boxShadow: '0 1px 4px rgba(0,0,0,0.02)',
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.85)',
+            backdropFilter: 'blur(8px)',
+            zIndex: 1000,
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '16px',
           }}
+          onClick={() => setFullscreenDiagram(null)}
         >
           <div
             style={{
-              maxWidth: 1140,
-              margin: '0 auto',
-              padding: '10px 24px',
+              background: '#FFFFFF',
+              borderRadius: 14,
+              flex: 1,
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: 12,
+              flexDirection: 'column',
+              overflow: 'hidden',
+              boxShadow: '0 24px 64px rgba(0,0,0,0.4)',
             }}
+            onClick={e => e.stopPropagation()}
           >
-            {/* Back & Breadcrumb */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, overflow: 'hidden' }}>
-              <button
-                onClick={() => navigate('/blog')}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '6px 12px',
-                  borderRadius: 6,
-                  background: '#FAF8F5',
-                  border: '1px solid #E2E8F0',
-                  cursor: 'pointer',
-                  fontFamily: 'Outfit,sans-serif',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: '#475569',
-                  transition: 'all 0.15s ease',
-                  flexShrink: 0,
-                }}
-                onMouseEnter={e => {
-                  ;(e.currentTarget as HTMLElement).style.borderColor = '#C47D0E'
-                  ;(e.currentTarget as HTMLElement).style.color = '#C47D0E'
-                }}
-                onMouseLeave={e => {
-                  ;(e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0'
-                  ;(e.currentTarget as HTMLElement).style.color = '#475569'
-                }}
-              >
-                <ArrowLeft size={13} strokeWidth={2.5} /> Blog
-              </button>
-
-              <div
-                style={{
-                  fontFamily: 'JetBrains Mono,monospace',
-                  fontSize: 10,
-                  letterSpacing: '0.1em',
-                  color: '#94A3B8',
-                  textTransform: 'uppercase',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                <Link to="/blog" style={{ color: '#64748B', textDecoration: 'none' }}>
-                  BLOG
-                </Link>{' '}
-                /{' '}
-                <span style={{ color: '#C47D0E', fontWeight: 600 }}>
-                  {article.category?.toUpperCase() || 'ARTICLE'}
+            {/* Modal Header */}
+            <div
+              style={{
+                background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
+                padding: '14px 20px',
+                color: '#FFFFFF',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 10,
+                borderBottom: '3px solid #059669',
+              }}
+            >
+              <div>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, background: '#059669', color: '#FFF', padding: '2px 7px', borderRadius: 3, fontWeight: 700 }}>
+                  {fullscreenDiagram.category || 'ELECTRICAL SCHEMATIC'}
                 </span>
+                <h3 style={{ margin: '4px 0 0 0', fontSize: 16, color: '#FFFFFF', fontWeight: 700 }}>
+                  {fullscreenDiagram.figNum ? `${fullscreenDiagram.figNum}: ` : ''}
+                  {fullscreenDiagram.caption}
+                </h3>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  onClick={() => setModalZoom(z => Math.max(50, z - 20))}
+                  style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#FFF', width: 28, height: 28, borderRadius: 4, cursor: 'pointer', fontWeight: 'bold' }}
+                >
+                  −
+                </button>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#F8FAFC', minWidth: 42, textAlign: 'center' }}>
+                  {modalZoom}%
+                </span>
+                <button
+                  onClick={() => setModalZoom(z => Math.min(300, z + 20))}
+                  style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#FFF', width: 28, height: 28, borderRadius: 4, cursor: 'pointer', fontWeight: 'bold' }}
+                >
+                  +
+                </button>
+                <button
+                  onClick={() => setModalZoom(100)}
+                  style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#FFF', padding: '0 8px', height: 28, borderRadius: 4, cursor: 'pointer', fontSize: 11 }}
+                >
+                  Reset
+                </button>
+                <button
+                  onClick={() => setFullscreenDiagram(null)}
+                  style={{ background: 'rgba(239,68,68,0.2)', border: '1px solid rgba(239,68,68,0.4)', color: '#F87171', width: 28, height: 28, borderRadius: 4, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <X size={16} />
+                </button>
               </div>
             </div>
 
-            {/* Reader Controls (Font scale & Share) */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {/* Font Size Adjuster */}
+            {/* Modal SVG Viewport */}
+            <div
+              style={{
+                flex: 1,
+                padding: '30px',
+                overflow: 'auto',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                background: '#FFFFFF',
+              }}
+            >
               <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  background: '#FAF8F5',
-                  border: '1px solid #E2E8F0',
-                  borderRadius: 6,
-                  padding: '2px',
+                  transform: `scale(${modalZoom / 100})`,
+                  transition: 'transform 0.15s ease',
+                  transformOrigin: 'center center',
+                  maxWidth: '100%',
+                  maxHeight: '100%',
                 }}
-              >
-                <button
-                  onClick={() => setFontSizeScale('normal')}
-                  title="Normal Text Size"
-                  style={{
-                    border: 'none',
-                    background: fontSizeScale === 'normal' ? '#FFFFFF' : 'transparent',
-                    color: fontSizeScale === 'normal' ? '#C47D0E' : '#64748B',
-                    padding: '3px 8px',
-                    borderRadius: 4,
-                    fontSize: 11,
-                    fontFamily: 'JetBrains Mono,monospace',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    boxShadow: fontSizeScale === 'normal' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
-                  }}
-                >
-                  A
-                </button>
-                <button
-                  onClick={() => setFontSizeScale('large')}
-                  title="Large Text Size"
-                  style={{
-                    border: 'none',
-                    background: fontSizeScale === 'large' ? '#FFFFFF' : 'transparent',
-                    color: fontSizeScale === 'large' ? '#C47D0E' : '#64748B',
-                    padding: '3px 8px',
-                    borderRadius: 4,
-                    fontSize: 13,
-                    fontFamily: 'JetBrains Mono,monospace',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    boxShadow: fontSizeScale === 'large' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
-                  }}
-                >
-                  A+
-                </button>
-              </div>
-
-              {/* Copy Link Button */}
-              <button
-                onClick={handleCopyLink}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  padding: '6px 12px',
-                  borderRadius: 6,
-                  background: copiedToast ? '#16A34A' : '#FAF8F5',
-                  border: `1px solid ${copiedToast ? '#16A34A' : '#E2E8F0'}`,
-                  color: copiedToast ? '#FFFFFF' : '#475569',
-                  fontFamily: 'Outfit,sans-serif',
-                  fontSize: 11.5,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                {copiedToast ? <Check size={13} /> : <Copy size={13} />}
-                <span>{copiedToast ? 'Link Copied!' : 'Copy Link'}</span>
-              </button>
-
-              {/* Mobile Table of Contents Trigger */}
-              {toc.length >= 2 && (
-                <button
-                  className="mobile-only"
-                  onClick={() => setMobileTocOpen(true)}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 5,
-                    padding: '6px 12px',
-                    borderRadius: 6,
-                    background: '#FAF8F5',
-                    border: '1px solid #E2E8F0',
-                    color: '#C47D0E',
-                    fontFamily: 'Outfit,sans-serif',
-                    fontSize: 11.5,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  <ListOrdered size={13} /> Chapters
-                </button>
-              )}
+                dangerouslySetInnerHTML={{ __html: fullscreenDiagram.svg }}
+              />
             </div>
           </div>
         </div>
+      )}
 
-        {/* ══ ARTICLE HEADER / HERO ════════════════════════════════════════════ */}
-        <header
+      {/* ══ ARTICLE MAIN CONTAINER ════════════════════════════════════════════ */}
+      <main
+        style={{
+          background: '#FAF8F5',
+          minHeight: '100vh',
+          paddingTop: 'calc(var(--nav-h) + 24px)',
+          paddingBottom: '80px',
+        }}
+      >
+        <div
           style={{
-            background: 'linear-gradient(180deg, #FFFFFF 0%, #FAF8F5 100%)',
-            borderBottom: '1px solid #E2E8F0',
-            padding: '48px 0 40px',
+            maxWidth: '1240px',
+            margin: '0 auto',
+            padding: '0 24px',
           }}
         >
-          <div style={{ maxWidth: 840, margin: '0 auto', padding: '0 24px' }}>
-            {/* Category Ribbon */}
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                background: 'rgba(196,125,14,0.08)',
-                border: '1px solid rgba(196,125,14,0.25)',
-                padding: '3px 10px',
-                borderRadius: 4,
-                marginBottom: 16,
-              }}
-            >
+          {/* Breadcrumbs */}
+          <nav
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              fontSize: 13,
+              fontFamily: "'JetBrains Mono', monospace",
+              color: '#64748B',
+              marginBottom: 20,
+              flexWrap: 'wrap',
+            }}
+          >
+            <Link to="/" style={{ color: '#64748B', textDecoration: 'none' }}>
+              HOME
+            </Link>
+            <ChevronRight size={13} />
+            <Link to="/blog" style={{ color: '#C47D0E', textDecoration: 'none', fontWeight: 600 }}>
+              ENGINEERING JOURNAL
+            </Link>
+            <ChevronRight size={13} />
+            <span style={{ color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 320 }}>
+              {article.title}
+            </span>
+          </nav>
+
+          {/* Article Header & Hero */}
+          <header style={{ marginBottom: 36 }}>
+            {/* Badges Bar */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+              {article.category && (
+                <span
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: 10.5,
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    color: '#C47D0E',
+                    background: '#FEF3C7',
+                    padding: '3px 10px',
+                    borderRadius: 4,
+                    fontWeight: 700,
+                  }}
+                >
+                  ⚡ {article.category}
+                </span>
+              )}
               <span
                 style={{
-                  fontFamily: 'JetBrains Mono,monospace',
-                  fontSize: 9.5,
-                  letterSpacing: '0.15em',
-                  color: '#C47D0E',
-                  fontWeight: 700,
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: 10.5,
+                  letterSpacing: '0.12em',
                   textTransform: 'uppercase',
+                  color: '#16A34A',
+                  background: '#DCFCE7',
+                  padding: '3px 10px',
+                  borderRadius: 4,
+                  fontWeight: 700,
                 }}
               >
-                {article.category || 'TECHNICAL PUBLICATION'}
+                ✓ BNBC 2020 & IEC REVIEWED
               </span>
             </div>
 
-            {/* Article Title */}
+            {/* Title */}
             <h1
               style={{
-                ...getBlogTitleStyles(article.title),
-                fontSize: 'clamp(28px, 4.5vw, 50px)',
+                fontFamily: getBlogTitleStyles(article.title).fontFamily,
+                fontWeight: getBlogTitleStyles(article.title).fontWeight as any,
+                fontSize: isBengali(article.title) ? '36px' : '40px',
+                lineHeight: getBlogTitleStyles(article.title).lineHeight,
                 color: '#0F172A',
-                margin: '0 0 16px',
-                lineHeight: 1.25,
+                marginBottom: 16,
+                letterSpacing: getBlogTitleStyles(article.title).letterSpacing,
               }}
             >
               {article.title}
@@ -840,620 +1073,250 @@ export default function BlogPost() {
             {article.excerpt && (
               <p
                 style={{
-                  ...getBlogBodyStyles(article.excerpt),
-                  fontSize: 'clamp(16px, 2.2vw, 19px)',
+                  fontFamily: getBlogBodyStyles(article.excerpt).fontFamily,
+                  fontSize: '18px',
+                  lineHeight: '1.7',
                   color: '#475569',
-                  marginBottom: 24,
-                  lineHeight: 1.7,
+                  marginBottom: 20,
+                  borderLeft: '3px solid #C47D0E',
+                  paddingLeft: 16,
+                  fontStyle: 'normal',
                 }}
               >
                 {article.excerpt}
               </p>
             )}
 
-            {/* Author Profile Strip */}
+            {/* Author, Meta & Reader Font Controls Bar */}
             <div
               style={{
                 display: 'flex',
-                alignItems: 'center',
                 justifyContent: 'space-between',
+                alignItems: 'center',
                 flexWrap: 'wrap',
                 gap: 16,
-                paddingTop: 18,
-                borderTop: '1px solid #E2E8F0',
-              }}
-            >
-              {/* Author Photo & Credentials */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <img
-                  src={sahinAvatar}
-                  alt={article.author || 'Md Sahin Alom'}
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                    border: '2px solid #E2E8F0',
-                  }}
-                />
-                <div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      fontFamily: 'Outfit,sans-serif',
-                      fontWeight: 700,
-                      fontSize: 14.5,
-                      color: '#0F172A',
-                    }}
-                  >
-                    <span>{article.author || 'Md Sahin Alom'}</span>
-                    <span
-                      style={{
-                        background: '#DCFCE7',
-                        color: '#166534',
-                        fontSize: 9,
-                        fontWeight: 700,
-                        padding: '1px 6px',
-                        borderRadius: 4,
-                        fontFamily: 'JetBrains Mono,monospace',
-                      }}
-                    >
-                      ABC LICENSED
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: 'Outfit,sans-serif',
-                      fontSize: 12,
-                      color: '#64748B',
-                      display: 'flex',
-                      gap: 8,
-                      alignItems: 'center',
-                      flexWrap: 'wrap',
-                    }}
-                  >
-                    <span>Electrical Engineer</span>
-                    <span>•</span>
-                    <span>{formatDate(article.updated_at || article.created_at)}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Stats: Read Time & Word Count */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  fontFamily: 'JetBrains Mono,monospace',
-                  fontSize: 11,
-                  color: '#64748B',
-                }}
-              >
-                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <Clock size={12} style={{ color: '#C47D0E' }} /> {article.read_time || 5} MIN READ
-                </span>
-                {wordCount > 0 && (
-                  <>
-                    <span>•</span>
-                    <span>~{wordCount.toLocaleString()} WORDS</span>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Tags Strip */}
-            {article.tags && article.tags.length > 0 && (
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 18 }}>
-                {article.tags.map((t, i) => (
-                  <span
-                    key={i}
-                    style={{
-                      fontFamily: 'JetBrains Mono,monospace',
-                      fontSize: 9.5,
-                      letterSpacing: '0.08em',
-                      padding: '3px 9px',
-                      background: '#FFFFFF',
-                      border: '1px solid #E2E8F0',
-                      borderRadius: 4,
-                      color: '#475569',
-                    }}
-                  >
-                    #{t}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        </header>
-
-        {/* ══ FEATURED HERO COVER IMAGE ═══════════════════════════════════════ */}
-        {article.featured_image && (
-          <div style={{ maxWidth: 840, margin: '0 auto', padding: '32px 24px 0' }}>
-            <div
-              style={{
-                borderRadius: 14,
-                overflow: 'hidden',
-                boxShadow: '0 8px 30px rgba(0,0,0,0.06)',
-                border: '1px solid #E2E8F0',
-                background: '#0F172A',
-              }}
-            >
-              <img
-                src={article.featured_image}
-                alt={article.title}
-                style={{
-                  width: '100%',
-                  display: 'block',
-                  maxHeight: 460,
-                  objectFit: 'cover',
-                }}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* ══ MAIN 2-COLUMN ARTICLE LAYOUT ════════════════════════════════════ */}
-        <div
-          style={{
-            maxWidth: 1140,
-            margin: '0 auto',
-            padding: '40px 24px 80px',
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 780px) minmax(0, 300px)',
-            gap: 48,
-            alignItems: 'start',
-            justifyContent: 'center',
-          }}
-          className="blog-content-layout"
-        >
-          {/* LEFT: MAIN ARTICLE PROSE BODY */}
-          <main style={{ minWidth: 0 }}>
-            <article
-              ref={contentRef}
-              className={`article-body font-scale-${fontSizeScale}`}
-              dangerouslySetInnerHTML={{ __html: html }}
-            />
-
-            {/* ══ INLINE ARTICLE SHARE & ACTIONS STRIP ════════════════════════ */}
-            <div
-              style={{
-                marginTop: 48,
-                padding: '24px',
+                padding: '14px 20px',
                 background: '#FFFFFF',
+                borderRadius: 10,
                 border: '1px solid #E2E8F0',
-                borderRadius: 12,
                 boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
               }}
             >
-              <div
-                style={{
-                  fontFamily: 'JetBrains Mono,monospace',
-                  fontSize: 10,
-                  letterSpacing: '0.15em',
-                  color: '#C47D0E',
-                  textTransform: 'uppercase',
-                  marginBottom: 12,
-                }}
-              >
-                SHARE THIS ENGINEERING ARTICLE
+              {/* Author & Date */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <img
+                    src={sahinAvatar}
+                    alt={article.author || 'Md Sahin Alom'}
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      border: '2px solid #C47D0E',
+                    }}
+                  />
+                  <div>
+                    <div style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 700, fontSize: 14, color: '#0F172A' }}>
+                      {article.author || 'Md Sahin Alom'}
+                    </div>
+                    <div style={{ fontFamily: 'Outfit,sans-serif', fontSize: 11, color: '#64748B' }}>
+                      Senior Electrical Engineer & ABC Licensed
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ width: 1, height: 28, background: '#E2E8F0' }} />
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 12.5, color: '#64748B', fontFamily: 'Outfit,sans-serif' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                    <Calendar size={14} color="#C47D0E" />
+                    {formatDate(article.created_at || article.updated_at)}
+                  </span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                    <Clock size={14} color="#C47D0E" />
+                    {article.read_time || Math.max(3, Math.ceil(wordCount / 200))} min read
+                  </span>
+                </div>
               </div>
 
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                <a
-                  href={shareWhatsApp}
-                  target="_blank"
-                  rel="noopener noreferrer"
+              {/* Action Buttons: Font Scale, Share & Copy */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {/* Font Scaling */}
+                <div
                   style={{
-                    display: 'inline-flex',
+                    display: 'flex',
                     alignItems: 'center',
-                    gap: 6,
-                    padding: '8px 14px',
+                    background: '#F1F5F9',
                     borderRadius: 6,
-                    background: '#25D366',
-                    color: '#FFFFFF',
-                    fontFamily: 'Outfit,sans-serif',
-                    fontSize: 12.5,
-                    fontWeight: 600,
-                    textDecoration: 'none',
+                    padding: 2,
                   }}
                 >
-                  <MessageCircle size={14} /> WhatsApp
-                </a>
+                  <button
+                    onClick={() => setFontSizeScale('normal')}
+                    title="Normal text size"
+                    style={{
+                      border: 'none',
+                      background: fontSizeScale === 'normal' ? '#FFFFFF' : 'transparent',
+                      color: fontSizeScale === 'normal' ? '#C47D0E' : '#64748B',
+                      borderRadius: 4,
+                      padding: '4px 8px',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      fontFamily: 'Outfit,sans-serif',
+                      cursor: 'pointer',
+                      boxShadow: fontSizeScale === 'normal' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                    }}
+                  >
+                    A
+                  </button>
+                  <button
+                    onClick={() => setFontSizeScale('large')}
+                    title="Large text size"
+                    style={{
+                      border: 'none',
+                      background: fontSizeScale === 'large' ? '#FFFFFF' : 'transparent',
+                      color: fontSizeScale === 'large' ? '#C47D0E' : '#64748B',
+                      borderRadius: 4,
+                      padding: '4px 8px',
+                      fontSize: 13,
+                      fontWeight: 700,
+                      fontFamily: 'Outfit,sans-serif',
+                      cursor: 'pointer',
+                      boxShadow: fontSizeScale === 'large' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                    }}
+                  >
+                    A+
+                  </button>
+                  <button
+                    onClick={() => setFontSizeScale('larger')}
+                    title="Extra large text size"
+                    style={{
+                      border: 'none',
+                      background: fontSizeScale === 'larger' ? '#FFFFFF' : 'transparent',
+                      color: fontSizeScale === 'larger' ? '#C47D0E' : '#64748B',
+                      borderRadius: 4,
+                      padding: '4px 8px',
+                      fontSize: 15,
+                      fontWeight: 700,
+                      fontFamily: 'Outfit,sans-serif',
+                      cursor: 'pointer',
+                      boxShadow: fontSizeScale === 'larger' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                    }}
+                  >
+                    A++
+                  </button>
+                </div>
 
-                <a
-                  href={shareLinkedIn}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    padding: '8px 14px',
-                    borderRadius: 6,
-                    background: '#0A66C2',
-                    color: '#FFFFFF',
-                    fontFamily: 'Outfit,sans-serif',
-                    fontSize: 12.5,
-                    fontWeight: 600,
-                    textDecoration: 'none',
-                  }}
-                >
-                  <LinkedInIcon size={14} /> LinkedIn
-                </a>
-
-                <a
-                  href={shareTwitter}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    padding: '8px 14px',
-                    borderRadius: 6,
-                    background: '#0F172A',
-                    color: '#FFFFFF',
-                    fontFamily: 'Outfit,sans-serif',
-                    fontSize: 12.5,
-                    fontWeight: 600,
-                    textDecoration: 'none',
-                  }}
-                >
-                  <TwitterXIcon size={14} /> X (Twitter)
-                </a>
-
-                <a
-                  href={shareFacebook}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    padding: '8px 14px',
-                    borderRadius: 6,
-                    background: '#1877F2',
-                    color: '#FFFFFF',
-                    fontFamily: 'Outfit,sans-serif',
-                    fontSize: 12.5,
-                    fontWeight: 600,
-                    textDecoration: 'none',
-                  }}
-                >
-                  <FacebookIcon size={14} /> Facebook
-                </a>
-
+                {/* Copy Link Button */}
                 <button
                   onClick={handleCopyLink}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: 6,
-                    padding: '8px 14px',
+                    gap: 5,
+                    background: copiedToast ? '#16A34A' : '#FFFFFF',
+                    border: `1px solid ${copiedToast ? '#16A34A' : '#CBD5E1'}`,
+                    color: copiedToast ? '#FFFFFF' : '#475569',
                     borderRadius: 6,
-                    background: copiedToast ? '#16A34A' : '#FAF8F5',
-                    border: '1px solid #E2E8F0',
-                    color: copiedToast ? '#FFFFFF' : '#334155',
-                    fontFamily: 'Outfit,sans-serif',
-                    fontSize: 12.5,
+                    padding: '6px 12px',
+                    fontSize: 12,
                     fontWeight: 600,
+                    fontFamily: 'Outfit,sans-serif',
                     cursor: 'pointer',
+                    transition: 'all 0.15s ease',
                   }}
                 >
-                  {copiedToast ? <Check size={14} /> : <Copy size={14} />}
-                  <span>{copiedToast ? 'Copied' : 'Copy Link'}</span>
+                  {copiedToast ? <Check size={13} /> : <Copy size={13} />}
+                  <span>{copiedToast ? 'Link Copied!' : 'Copy Link'}</span>
                 </button>
               </div>
             </div>
 
-            {/* ══ AUTHOR DOSSIER & SIGNATURE CARD ══════════════════════════════ */}
-            <div
-              style={{
-                marginTop: 32,
-                background: '#FFFFFF',
-                border: '1px solid #E2E8F0',
-                borderRadius: 14,
-                padding: '28px',
-                display: 'flex',
-                gap: 20,
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
-              }}
-            >
-              <img
-                src={sahinAvatar}
-                alt="Md Sahin Alom"
-                style={{
-                  width: 72,
-                  height: 72,
-                  borderRadius: '50%',
-                  objectFit: 'cover',
-                  border: '2px solid #C47D0E',
-                  flexShrink: 0,
-                }}
-              />
-              <div style={{ flex: 1, minWidth: 240 }}>
-                <div
-                  style={{
-                    fontFamily: 'Outfit,sans-serif',
-                    fontWeight: 700,
-                    fontSize: 17,
-                    color: '#0F172A',
-                    marginBottom: 4,
-                  }}
-                >
-                  {article.author || 'Md Sahin Alom'}
-                </div>
-                <div
-                  style={{
-                    fontFamily: 'JetBrains Mono,monospace',
-                    fontSize: 10.5,
-                    color: '#C47D0E',
-                    marginBottom: 8,
-                    fontWeight: 600,
-                  }}
-                >
-                  Class ABC Licensed Electrical Engineer · Power Systems Specialist
-                </div>
-                <p
-                  style={{
-                    fontFamily: 'Outfit,sans-serif',
-                    fontSize: 13.5,
-                    color: '#64748B',
-                    lineHeight: 1.6,
-                    margin: '0 0 12px',
-                  }}
-                >
-                  Practicing electrical engineer in Bangladesh specializing in substation engineering, industrial power
-                  distribution, solar PV system integration, and building code compliance (BNBC 2020).
-                </p>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <a
-                    href="/#contact"
-                    style={{
-                      fontFamily: 'Outfit,sans-serif',
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: '#C47D0E',
-                      textDecoration: 'none',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4,
-                    }}
-                  >
-                    Request Technical Consultation <ChevronRight size={13} />
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {/* ══ NEXT / PREVIOUS ARTICLE NAVIGATION ══════════════════════════ */}
-            {(prevArticle || nextArticle) && (
+            {/* Featured Image */}
+            {article.featured_image && (
               <div
                 style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                  gap: 16,
-                  marginTop: 32,
+                  marginTop: 24,
+                  borderRadius: 12,
+                  overflow: 'hidden',
+                  border: '1px solid #E2E8F0',
+                  boxShadow: '0 6px 24px rgba(0,0,0,0.06)',
+                  maxHeight: 460,
                 }}
               >
-                {prevArticle && (
-                  <div
-                    onClick={() => navigate(`/blog/${prevArticle.slug}`)}
-                    style={{
-                      background: '#FFFFFF',
-                      border: '1px solid #E2E8F0',
-                      borderRadius: 10,
-                      padding: '18px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                    }}
-                    onMouseEnter={e => {
-                      ;(e.currentTarget as HTMLElement).style.borderColor = '#C47D0E'
-                      ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'
-                    }}
-                    onMouseLeave={e => {
-                      ;(e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0'
-                      ;(e.currentTarget as HTMLElement).style.transform = 'none'
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontFamily: 'JetBrains Mono,monospace',
-                        fontSize: 9.5,
-                        color: '#94A3B8',
-                        letterSpacing: '0.12em',
-                        marginBottom: 6,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 4,
-                      }}
-                    >
-                      <ArrowLeft size={10} /> PREVIOUS ARTICLE
-                    </div>
-                    <div
-                      style={{
-                        ...getBlogTitleStyles(prevArticle.title),
-                        fontSize: 15,
-                        color: '#0F172A',
-                        lineHeight: 1.3,
-                      }}
-                    >
-                      {prevArticle.title}
-                    </div>
-                  </div>
-                )}
-
-                {nextArticle && (
-                  <div
-                    onClick={() => navigate(`/blog/${nextArticle.slug}`)}
-                    style={{
-                      background: '#FFFFFF',
-                      border: '1px solid #E2E8F0',
-                      borderRadius: 10,
-                      padding: '18px',
-                      cursor: 'pointer',
-                      textAlign: 'right',
-                      transition: 'all 0.2s ease',
-                    }}
-                    onMouseEnter={e => {
-                      ;(e.currentTarget as HTMLElement).style.borderColor = '#C47D0E'
-                      ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'
-                    }}
-                    onMouseLeave={e => {
-                      ;(e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0'
-                      ;(e.currentTarget as HTMLElement).style.transform = 'none'
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontFamily: 'JetBrains Mono,monospace',
-                        fontSize: 9.5,
-                        color: '#94A3B8',
-                        letterSpacing: '0.12em',
-                        marginBottom: 6,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'flex-end',
-                        gap: 4,
-                      }}
-                    >
-                      NEXT ARTICLE <ChevronRight size={10} />
-                    </div>
-                    <div
-                      style={{
-                        ...getBlogTitleStyles(nextArticle.title),
-                        fontSize: 15,
-                        color: '#0F172A',
-                        lineHeight: 1.3,
-                      }}
-                    >
-                      {nextArticle.title}
-                    </div>
-                  </div>
-                )}
+                <img
+                  src={article.featured_image}
+                  alt={article.title}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    maxHeight: 460,
+                    objectFit: 'cover',
+                    display: 'block',
+                  }}
+                />
               </div>
             )}
+          </header>
 
-            {/* ══ RELATED ARTICLES SECTION ════════════════════════════════════ */}
-            {relatedArticles.length > 0 && (
-              <div style={{ marginTop: 48 }}>
-                <div
-                  style={{
-                    fontFamily: 'JetBrains Mono,monospace',
-                    fontSize: 10,
-                    letterSpacing: '0.18em',
-                    color: '#C47D0E',
-                    textTransform: 'uppercase',
-                    marginBottom: 16,
-                  }}
-                >
-                  RELATED ENGINEERING GUIDES
-                </div>
+          {/* ══ 2-COLUMN ARTICLE LAYOUT ════════════════════════════════════════ */}
+          <div
+            className="article-two-column"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'minmax(0, 1fr) 300px',
+              gap: 40,
+              alignItems: 'flex-start',
+            }}
+          >
+            {/* ── LEFT COLUMN: ARTICLE BODY ── */}
+            <article
+              ref={contentRef}
+              className={`article-body font-scale-${fontSizeScale}`}
+              style={{
+                background: '#FFFFFF',
+                borderRadius: 14,
+                padding: '36px 40px',
+                border: '1px solid #E2E8F0',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
+                fontFamily: getBlogBodyStyles(article.title).fontFamily,
+                color: '#1E293B',
+              }}
+              dangerouslySetInnerHTML={{ __html: html }}
+            />
 
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                    gap: 16,
-                  }}
-                >
-                  {relatedArticles.map(rel => (
-                    <div
-                      key={rel.id}
-                      onClick={() => navigate(`/blog/${rel.slug}`)}
-                      style={{
-                        background: '#FFFFFF',
-                        border: '1px solid #E2E8F0',
-                        borderRadius: 10,
-                        padding: '16px',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                      }}
-                      onMouseEnter={e => {
-                        ;(e.currentTarget as HTMLElement).style.borderColor = '#C47D0E'
-                        ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'
-                      }}
-                      onMouseLeave={e => {
-                        ;(e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0'
-                        ;(e.currentTarget as HTMLElement).style.transform = 'none'
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontFamily: 'JetBrains Mono,monospace',
-                          fontSize: 8.5,
-                          color: '#C47D0E',
-                          letterSpacing: '0.1em',
-                          fontWeight: 700,
-                        }}
-                      >
-                        {rel.category?.toUpperCase() || 'GUIDE'}
-                      </span>
-                      <h4
-                        style={{
-                          ...getBlogTitleStyles(rel.title),
-                          fontSize: 16,
-                          color: '#0F172A',
-                          margin: '6px 0 8px',
-                          lineHeight: 1.3,
-                        }}
-                      >
-                        {rel.title}
-                      </h4>
-                      <span
-                        style={{
-                          fontFamily: 'Outfit,sans-serif',
-                          fontSize: 11,
-                          color: '#94A3B8',
-                        }}
-                      >
-                        {rel.read_time || 5} min read
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </main>
-
-          {/* RIGHT: DESKTOP STICKY SIDEBAR (ToC + Author Box + Quick Tools) */}
-          <aside className="blog-desktop-sidebar">
-            <div
+            {/* ── RIGHT COLUMN: STICKY SIDEBAR ── */}
+            <aside
+              className="article-sidebar"
               style={{
                 position: 'sticky',
-                top: 'calc(var(--nav-h) + 60px)',
+                top: 'calc(var(--nav-h) + 20px)',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 20,
               }}
             >
-              {/* Interactive ScrollSpy Table of Contents */}
-              {toc.length >= 2 && (
+              {/* Table of Contents Box */}
+              {toc.length > 0 && (
                 <div
                   style={{
                     background: '#FFFFFF',
-                    border: '1px solid #E2E8F0',
                     borderRadius: 12,
-                    padding: '20px',
+                    padding: 20,
+                    border: '1px solid #E2E8F0',
                     boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
-                    maxHeight: 'calc(100vh - 220px)',
-                    overflowY: 'auto',
                   }}
                 >
                   <div
                     style={{
-                      fontFamily: 'JetBrains Mono,monospace',
+                      fontFamily: "'JetBrains Mono', monospace",
                       fontSize: 10,
                       letterSpacing: '0.15em',
                       color: '#C47D0E',
                       fontWeight: 700,
                       textTransform: 'uppercase',
-                      marginBottom: 14,
+                      marginBottom: 12,
                       display: 'flex',
                       alignItems: 'center',
                       gap: 6,
@@ -1461,342 +1324,516 @@ export default function BlogPost() {
                   >
                     <ListOrdered size={14} /> TABLE OF CONTENTS
                   </div>
-
-                  <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    {toc.map(item => {
-                      const isActive = activeHeadingId === item.id
-                      return (
-                        <a
-                          key={item.id}
-                          href={`#${item.id}`}
-                          onClick={e => {
-                            e.preventDefault()
-                            const el = document.getElementById(item.id)
-                            if (el) {
-                              const y = el.getBoundingClientRect().top + window.scrollY - 100
-                              window.scrollTo({ top: y, behavior: 'smooth' })
-                            }
-                          }}
-                          style={{
-                            display: 'block',
-                            fontFamily: 'Outfit,sans-serif',
-                            fontSize: item.level === 2 ? 13 : 12,
-                            color: isActive ? '#C47D0E' : item.level === 2 ? '#334155' : '#64748B',
-                            fontWeight: isActive ? 700 : item.level === 2 ? 500 : 400,
-                            padding: `5px 8px 5px ${item.level === 2 ? 8 : 16}px`,
-                            textDecoration: 'none',
-                            borderRadius: 4,
-                            background: isActive ? 'rgba(196,125,14,0.08)' : 'transparent',
-                            borderLeft: isActive ? '2px solid #C47D0E' : '2px solid transparent',
-                            transition: 'all 0.15s ease',
-                            lineHeight: 1.4,
-                          }}
-                          onMouseEnter={e => {
-                            if (!isActive) (e.currentTarget as HTMLElement).style.color = '#C47D0E'
-                          }}
-                          onMouseLeave={e => {
-                            if (!isActive)
-                              (e.currentTarget as HTMLElement).style.color =
-                                item.level === 2 ? '#334155' : '#64748B'
-                          }}
-                        >
-                          {item.text}
-                        </a>
-                      )
-                    })}
+                  <nav style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: '380px', overflowY: 'auto' }}>
+                    {toc.map(item => (
+                      <a
+                        key={item.id}
+                        href={`#${item.id}`}
+                        onClick={e => {
+                          e.preventDefault()
+                          const target = document.getElementById(item.id)
+                          if (target) {
+                            const y = target.getBoundingClientRect().top + window.scrollY - 100
+                            window.scrollTo({ top: y, behavior: 'smooth' })
+                          }
+                        }}
+                        style={{
+                          display: 'block',
+                          fontSize: item.level === 2 ? 13 : 12,
+                          paddingLeft: (item.level - 2) * 12,
+                          color: activeHeadingId === item.id ? '#C47D0E' : '#64748B',
+                          fontWeight: activeHeadingId === item.id ? 700 : 500,
+                          textDecoration: 'none',
+                          lineHeight: 1.4,
+                          borderLeft: activeHeadingId === item.id ? '2px solid #C47D0E' : '2px solid transparent',
+                          padding: '3px 8px',
+                          borderRadius: '0 4px 4px 0',
+                          background: activeHeadingId === item.id ? '#FEF9EC' : 'transparent',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        {item.text}
+                      </a>
+                    ))}
                   </nav>
                 </div>
               )}
 
-              {/* Sidebar Author Mini-Card */}
+              {/* Author Profile Card */}
               <div
                 style={{
                   background: '#FFFFFF',
-                  border: '1px solid #E2E8F0',
                   borderRadius: 12,
-                  padding: '18px',
+                  padding: 20,
+                  border: '1px solid #E2E8F0',
                   boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
+                  textAlign: 'center',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                  <img
-                    src={sahinAvatar}
-                    alt="Sahin"
-                    style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover' }}
-                  />
-                  <div>
-                    <div style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 700, fontSize: 13, color: '#0F172A' }}>
-                      Md Sahin Alom
-                    </div>
-                    <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, color: '#64748B' }}>
-                      Electrical Engineer
-                    </div>
-                  </div>
+                <img
+                  src={sahinAvatar}
+                  alt="Md Sahin Alom"
+                  style={{
+                    width: 64,
+                    height: 64,
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    margin: '0 auto 10px',
+                    border: '3px solid #C47D0E',
+                  }}
+                />
+                <h4 style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 700, fontSize: 16, color: '#0F172A', margin: '0 0 2px' }}>
+                  Md Sahin Alom
+                </h4>
+                <div style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12, color: '#64748B', marginBottom: 12 }}>
+                  Electrical Design & Safety Specialist
                 </div>
-                <p style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12, color: '#64748B', lineHeight: 1.5, margin: '0 0 12px' }}>
-                  Need technical review or electrical consulting? Let's connect.
+                <p style={{ fontSize: 12.5, color: '#475569', lineHeight: 1.5, margin: '0 0 14px' }}>
+                  10+ years specializing in Industrial Substation Design, BNBC 2020 Electrical Compliance, and Energy Efficiency.
                 </p>
-                <a
-                  href="/#contact"
+                <Link
+                  to="/contact"
                   style={{
                     display: 'block',
+                    background: '#0F172A',
+                    color: '#FFFFFF',
                     textAlign: 'center',
-                    padding: '8px 12px',
-                    background: '#FAF8F5',
-                    border: '1px solid #E2E8F0',
+                    padding: '8px 14px',
                     borderRadius: 6,
-                    color: '#C47D0E',
-                    fontFamily: 'JetBrains Mono,monospace',
-                    fontSize: 10,
-                    fontWeight: 700,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
+                    fontSize: 12,
+                    fontWeight: 600,
                     textDecoration: 'none',
-                    transition: 'all 0.15s ease',
-                  }}
-                  onMouseEnter={e => {
-                    ;(e.currentTarget as HTMLElement).style.borderColor = '#C47D0E'
-                    ;(e.currentTarget as HTMLElement).style.background = '#C47D0E'
-                    ;(e.currentTarget as HTMLElement).style.color = '#FFFFFF'
-                  }}
-                  onMouseLeave={e => {
-                    ;(e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0'
-                    ;(e.currentTarget as HTMLElement).style.background = '#FAF8F5'
-                    ;(e.currentTarget as HTMLElement).style.color = '#C47D0E'
+                    fontFamily: 'Outfit,sans-serif',
                   }}
                 >
-                  Contact Engineer
-                </a>
+                  Request Consultation
+                </Link>
               </div>
-            </div>
-          </aside>
-        </div>
 
-        {/* ══ MOBILE FLOATING TABLE OF CONTENTS DRAWER / MODAL ════════════════ */}
-        {mobileTocOpen && (
-          <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              zIndex: 300,
-              background: 'rgba(15,23,42,0.6)',
-              backdropFilter: 'blur(4px)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'flex-end',
-            }}
-            onClick={() => setMobileTocOpen(false)}
-          >
-            <div
-              style={{
-                background: '#FFFFFF',
-                borderTopLeftRadius: 18,
-                borderTopRightRadius: 18,
-                padding: '24px 20px',
-                maxHeight: '75vh',
-                overflowY: 'auto',
-                boxShadow: '0 -4px 24px rgba(0,0,0,0.15)',
-              }}
-              onClick={e => e.stopPropagation()}
-            >
+              {/* Social Share Box */}
               <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: 16,
-                  paddingBottom: 12,
-                  borderBottom: '1px solid #E2E8F0',
+                  background: '#FFFFFF',
+                  borderRadius: 12,
+                  padding: 18,
+                  border: '1px solid #E2E8F0',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
                 }}
               >
                 <div
                   style={{
-                    fontFamily: 'JetBrains Mono,monospace',
-                    fontSize: 11,
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: 10,
                     letterSpacing: '0.15em',
-                    color: '#C47D0E',
+                    color: '#64748B',
                     fontWeight: 700,
                     textTransform: 'uppercase',
+                    marginBottom: 10,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
                   }}
                 >
-                  ARTICLE CHAPTERS & SECTIONS
+                  <Share2 size={13} /> SHARE RESEARCH
                 </div>
-                <button
-                  onClick={() => setMobileTocOpen(false)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: '#64748B',
-                    padding: 4,
-                  }}
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {toc.map(item => (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
                   <button
-                    key={item.id}
-                    onClick={() => {
-                      setMobileTocOpen(false)
-                      const el = document.getElementById(item.id)
-                      if (el) {
-                        const y = el.getBoundingClientRect().top + window.scrollY - 100
-                        window.scrollTo({ top: y, behavior: 'smooth' })
-                      }
-                    }}
+                    onClick={shareLinkedIn}
+                    title="Share on LinkedIn"
                     style={{
-                      textAlign: 'left',
-                      padding: '8px 12px',
-                      borderRadius: 6,
-                      background: activeHeadingId === item.id ? 'rgba(196,125,14,0.1)' : '#FAF8F5',
+                      height: 36,
+                      background: '#0A66C2',
                       border: 'none',
-                      color: activeHeadingId === item.id ? '#C47D0E' : '#334155',
-                      fontFamily: 'Outfit,sans-serif',
-                      fontSize: 14,
-                      fontWeight: activeHeadingId === item.id ? 700 : 500,
+                      color: '#fff',
+                      borderRadius: 6,
                       cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
                   >
-                    {item.text}
+                    <LinkedInIcon size={16} />
                   </button>
+                  <button
+                    onClick={shareTwitter}
+                    title="Share on X"
+                    style={{
+                      height: 36,
+                      background: '#000000',
+                      border: 'none',
+                      color: '#fff',
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <TwitterXIcon size={14} />
+                  </button>
+                  <button
+                    onClick={shareFacebook}
+                    title="Share on Facebook"
+                    style={{
+                      height: 36,
+                      background: '#1877F2',
+                      border: 'none',
+                      color: '#fff',
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <FacebookIcon size={16} />
+                  </button>
+                  <button
+                    onClick={shareWhatsApp}
+                    title="Share via WhatsApp"
+                    style={{
+                      height: 36,
+                      background: '#25D366',
+                      border: 'none',
+                      color: '#fff',
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <MessageCircle size={16} />
+                  </button>
+                </div>
+              </div>
+            </aside>
+          </div>
+
+          {/* ══ ARTICLE FOOTER & SIGNATURE SECTION ══════════════════════════════ */}
+          <footer style={{ marginTop: 48 }}>
+            {/* Tags */}
+            {article.tags && article.tags.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 28 }}>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#64748B', fontWeight: 600 }}>
+                  TOPICS:
+                </span>
+                {article.tags.map(tag => (
+                  <span
+                    key={tag}
+                    style={{
+                      fontFamily: 'Outfit,sans-serif',
+                      fontSize: 12,
+                      background: '#FFFFFF',
+                      border: '1px solid #CBD5E1',
+                      borderRadius: 20,
+                      padding: '4px 12px',
+                      color: '#334155',
+                      fontWeight: 500,
+                    }}
+                  >
+                    #{tag}
+                  </span>
                 ))}
               </div>
+            )}
+
+            {/* Author Signature Box */}
+            <div
+              style={{
+                background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
+                color: '#FFFFFF',
+                borderRadius: 14,
+                padding: '32px',
+                border: '1px solid #334155',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 24,
+                flexWrap: 'wrap',
+                marginBottom: 40,
+                boxShadow: '0 12px 32px rgba(0,0,0,0.15)',
+              }}
+            >
+              <img
+                src={sahinAvatar}
+                alt="Md Sahin Alom"
+                style={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: '3px solid #C47D0E',
+                }}
+              />
+              <div style={{ flex: 1, minWidth: 260 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <h3 style={{ margin: 0, fontSize: 20, fontFamily: 'Outfit,sans-serif', fontWeight: 700, color: '#FFFFFF' }}>
+                    Md Sahin Alom
+                  </h3>
+                  <span style={{ background: '#C47D0E', color: '#FFFFFF', fontSize: 10, fontFamily: 'JetBrains Mono, monospace', padding: '2px 6px', borderRadius: 4, fontWeight: 700 }}>
+                    ABC LICENSED
+                  </span>
+                </div>
+                <div style={{ fontSize: 13, color: '#94A3B8', marginBottom: 8, fontFamily: 'Outfit,sans-serif' }}>
+                  Professional Electrical Engineer • Bangladesh National Building Code (BNBC 2020) Specialist
+                </div>
+                <p style={{ margin: 0, fontSize: 13.5, color: '#CBD5E1', lineHeight: 1.6, fontFamily: 'Outfit,sans-serif' }}>
+                  Have questions about this calculation or need assistance with your building's electrical & substation design? Connect with me directly.
+                </p>
+              </div>
+              <Link
+                to="/contact"
+                style={{
+                  background: '#C47D0E',
+                  color: '#FFFFFF',
+                  padding: '12px 20px',
+                  borderRadius: 6,
+                  textDecoration: 'none',
+                  fontSize: 13,
+                  fontWeight: 700,
+                  fontFamily: 'Outfit,sans-serif',
+                  whiteSpace: 'nowrap',
+                  boxShadow: '0 4px 14px rgba(196,125,14,0.4)',
+                }}
+              >
+                Get in Touch
+              </Link>
             </div>
-          </div>
-        )}
-      </div>
 
-      {/* ══ RICH PROSE & CODE STYLING ═════════════════════════════════════════ */}
+            {/* Next / Prev Article Navigation */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: 20,
+                marginBottom: 48,
+              }}
+            >
+              {prevArticle ? (
+                <Link
+                  to={`/blog/${prevArticle.slug}`}
+                  style={{
+                    background: '#FFFFFF',
+                    border: '1px solid #E2E8F0',
+                    borderRadius: 10,
+                    padding: '20px',
+                    textDecoration: 'none',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 6,
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#C47D0E', fontWeight: 700 }}>
+                    ← PREVIOUS ARTICLE
+                  </span>
+                  <span style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 700, fontSize: 15, color: '#0F172A', lineHeight: 1.4 }}>
+                    {prevArticle.title}
+                  </span>
+                </Link>
+              ) : <div />}
+
+              {nextArticle ? (
+                <Link
+                  to={`/blog/${nextArticle.slug}`}
+                  style={{
+                    background: '#FFFFFF',
+                    border: '1px solid #E2E8F0',
+                    borderRadius: 10,
+                    padding: '20px',
+                    textDecoration: 'none',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-end',
+                    gap: 6,
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#C47D0E', fontWeight: 700 }}>
+                    NEXT ARTICLE →
+                  </span>
+                  <span style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 700, fontSize: 15, color: '#0F172A', lineHeight: 1.4, textAlign: 'right' }}>
+                    {nextArticle.title}
+                  </span>
+                </Link>
+              ) : <div />}
+            </div>
+          </footer>
+        </div>
+      </main>
+
+      {/* ══ MOBILE FLOATING ToC BUTTON ══════════════════════════════════════ */}
+      {toc.length > 0 && (
+        <div className="mobile-toc-fab-container">
+          <button
+            onClick={() => setMobileTocOpen(!mobileTocOpen)}
+            style={{
+              position: 'fixed',
+              bottom: 24,
+              right: 24,
+              zIndex: 900,
+              background: '#0F172A',
+              color: '#FFFFFF',
+              border: '1px solid #334155',
+              borderRadius: 30,
+              padding: '10px 18px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+              cursor: 'pointer',
+              fontFamily: 'Outfit,sans-serif',
+              fontSize: 13,
+              fontWeight: 600,
+            }}
+          >
+            <ListOrdered size={16} color="#C47D0E" />
+            <span>Table of Contents ({toc.length})</span>
+          </button>
+
+          {/* Mobile ToC Drawer Sheet */}
+          {mobileTocOpen && (
+            <div
+              style={{
+                position: 'fixed',
+                inset: 0,
+                background: 'rgba(0,0,0,0.5)',
+                zIndex: 950,
+                display: 'flex',
+                justifyContent: 'flex-end',
+                flexDirection: 'column',
+              }}
+              onClick={() => setMobileTocOpen(false)}
+            >
+              <div
+                style={{
+                  background: '#FFFFFF',
+                  borderTopLeftRadius: 16,
+                  borderTopRightRadius: 16,
+                  maxHeight: '75vh',
+                  padding: '24px 20px',
+                  overflowY: 'auto',
+                }}
+                onClick={e => e.stopPropagation()}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <h3 style={{ margin: 0, fontSize: 16, fontFamily: 'Outfit,sans-serif', fontWeight: 700, color: '#0F172A' }}>
+                    Table of Contents
+                  </h3>
+                  <button onClick={() => setMobileTocOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+                    <X size={18} />
+                  </button>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {toc.map(item => (
+                    <a
+                      key={item.id}
+                      href={`#${item.id}`}
+                      onClick={() => {
+                        setMobileTocOpen(false)
+                        const target = document.getElementById(item.id)
+                        if (target) {
+                          const y = target.getBoundingClientRect().top + window.scrollY - 90
+                          window.scrollTo({ top: y, behavior: 'smooth' })
+                        }
+                      }}
+                      style={{
+                        fontSize: 14,
+                        paddingLeft: (item.level - 2) * 12,
+                        color: activeHeadingId === item.id ? '#C47D0E' : '#334155',
+                        fontWeight: activeHeadingId === item.id ? 700 : 500,
+                        textDecoration: 'none',
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {item.text}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ══ COMPREHENSIVE CSS STYLING INJECTION ══════════════════════════════ */}
       <style>{`
-        /* Article Content Layout Responsiveness */
-        @media (max-width: 1024px) {
-          .blog-content-layout {
-            grid-template-columns: 1fr !important;
-          }
-          .blog-desktop-sidebar {
-            display: none !important;
-          }
+        /* Dynamic Typography Scaling */
+        .article-body.font-scale-normal {
+          font-size: 17px;
+          line-height: 1.8;
         }
-
-        /* Prose Font Scaling */
-        .article-body {
-          font-family: 'Hind Siliguri', 'Outfit', sans-serif;
-          color: #0F172A;
+        .article-body.font-scale-large {
+          font-size: 19px;
           line-height: 1.85;
         }
-        .article-body.font-scale-normal p,
-        .article-body.font-scale-normal li {
-          font-size: 17.5px;
-        }
-        .article-body.font-scale-large p,
-        .article-body.font-scale-large li {
-          font-size: 19px;
-        }
-        .article-body.font-scale-larger p,
-        .article-body.font-scale-larger li {
+        .article-body.font-scale-larger {
           font-size: 21px;
+          line-height: 1.9;
         }
 
         .article-body p {
-          margin: 0 0 1.4em;
-          color: #1E293B;
-          letter-spacing: 0.01em;
+          margin-bottom: 1.6em;
+          color: #334155;
         }
 
-        .article-body h1 {
-          font-family: 'Hind Siliguri', 'Barlow Condensed', sans-serif;
-          font-weight: 700;
-          font-size: clamp(28px, 4vw, 36px);
-          line-height: 1.3;
-          margin: 2.2em 0 0.7em;
+        .article-body h1, .article-body h2, .article-body h3, .article-body h4 {
           color: #0F172A;
-          scroll-margin-top: 100px;
-        }
-        .article-body h2 {
-          font-family: 'Hind Siliguri', 'Barlow Condensed', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-weight: 700;
-          font-size: clamp(23px, 3.2vw, 28px);
+          margin-top: 1.8em;
+          margin-bottom: 0.8em;
           line-height: 1.35;
-          margin: 2em 0 0.6em;
-          color: #0F172A;
-          scroll-margin-top: 100px;
         }
-        .article-body h3 {
-          font-family: 'Hind Siliguri', 'Outfit', sans-serif;
-          font-weight: 600;
-          font-size: 21px;
-          line-height: 1.4;
-          margin: 1.6em 0 0.5em;
-          color: #0F172A;
-          scroll-margin-top: 100px;
-        }
-        .article-body h4 {
-          font-family: 'Hind Siliguri', 'Outfit', sans-serif;
-          font-weight: 600;
-          font-size: 17px;
-          line-height: 1.4;
-          margin: 1.3em 0 0.4em;
-          color: #0F172A;
-          scroll-margin-top: 100px;
-        }
+        .article-body h1 { font-size: 28px; border-bottom: 2px solid #F1F5F9; padding-bottom: 8px; }
+        .article-body h2 { font-size: 23px; border-bottom: 1px solid #F1F5F9; padding-bottom: 6px; }
+        .article-body h3 { font-size: 19px; }
+        .article-body h4 { font-size: 17px; }
 
         .article-body ul, .article-body ol {
-          margin: 0 0 1.4em;
-          padding-left: 1.8em;
-          color: #1E293B;
+          margin-bottom: 1.6em;
+          padding-left: 24px;
+          color: #334155;
         }
         .article-body li {
-          margin-bottom: 0.45em;
-          line-height: 1.8;
+          margin-bottom: 0.5em;
+          line-height: 1.7;
         }
 
         .article-body blockquote {
           border-left: 4px solid #C47D0E;
+          background: #FAF8F5;
+          padding: 18px 22px;
+          border-radius: 0 8px 8px 0;
           margin: 1.8em 0;
-          padding: 16px 24px;
-          background: #FEF9EC;
-          border-radius: 0 10px 10px 0;
           color: #334155;
-          font-size: 17px;
-          line-height: 1.75;
-          box-shadow: 0 1px 4px rgba(196,125,14,0.06);
+          font-size: 16px;
+          line-height: 1.7;
         }
 
         .article-body hr {
           border: none;
           border-top: 1px solid #E2E8F0;
-          margin: 2.8em 0;
+          margin: 2.4em 0;
         }
 
-        .article-body a {
-          color: #C47D0E;
-          text-decoration: underline;
-          text-underline-offset: 3px;
-          font-weight: 500;
-          transition: color 0.15s;
-        }
-        .article-body a:hover {
-          color: #D97706;
-        }
-
-        .article-body code {
+        .article-body code:not(pre code) {
           font-family: 'JetBrains Mono', monospace;
-          font-size: 13.5px;
           background: #F1F5F9;
-          border: 1px solid #E2E8F0;
-          border-radius: 4px;
+          color: #92400E;
           padding: 2px 6px;
-          color: #0F172A;
+          border-radius: 4px;
+          font-size: 0.88em;
+          font-weight: 600;
         }
 
-        /* Syntax Highlighted Code Blocks */
         .article-body pre {
-          background: #0F172A;
-          border-radius: 10px;
+          background: #0F172A !important;
+          color: #F8FAFC !important;
           padding: 16px 20px 20px;
+          border-radius: 10px;
           margin: 1.8em 0;
           overflow-x: auto;
           box-shadow: 0 4px 20px rgba(15,23,42,0.12);
@@ -1869,139 +1906,351 @@ export default function BlogPost() {
         .katex-display {
           overflow-x: auto;
           overflow-y: hidden;
-          padding: 12px 0;
+          padding: 14px 0;
           margin: 1.5em 0 !important;
         }
+        .katex {
+          font-size: 1.15em !important;
+        }
 
-        /* Calculation Blocks */
+        /* Upgraded Calculation Blocks */
         .article-body .calc-block-wrapper {
           border: 1px solid #E2E8F0;
-          border-radius: 10px;
+          border-radius: 12px;
           overflow: hidden;
-          margin: 1.8em 0;
+          margin: 2em 0;
           font-family: 'Outfit', sans-serif;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+          box-shadow: 0 4px 20px rgba(0,0,0,0.04);
           background: #FFFFFF;
         }
         .article-body .calc-block-header {
-          border-left: 4px solid #C47D0E;
-          background: #FAF8F5;
-          padding: 14px 20px;
+          background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+          padding: 16px 22px;
+          color: #FFFFFF;
+          border-bottom: 3px solid #C47D0E;
         }
-        .article-body .calc-label {
+        .article-body .calc-header-meta {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 6px;
+          flex-wrap: wrap;
+        }
+        .article-body .calc-category-badge {
           font-family: 'JetBrains Mono', monospace;
-          font-size: 9.5px;
-          letter-spacing: 0.2em;
-          color: #C47D0E;
-          display: block;
-          margin-bottom: 4px;
+          font-size: 9px;
+          letter-spacing: 0.18em;
+          background: #C47D0E;
+          color: #FFFFFF;
+          padding: 2px 8px;
+          border-radius: 4px;
           font-weight: 700;
+        }
+        .article-body .calc-standard-badge {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 9px;
+          letter-spacing: 0.12em;
+          background: rgba(255,255,255,0.12);
+          color: #F8FAFC;
+          padding: 2px 8px;
+          border-radius: 4px;
         }
         .article-body .calc-title {
-          font-size: 16px;
+          margin: 0;
+          font-size: 18px;
           font-weight: 700;
-          color: #0F172A;
+          color: #FFFFFF;
         }
+
         .article-body .calc-section {
-          padding: 16px 20px;
+          padding: 16px 22px;
           border-top: 1px solid #F1F5F9;
         }
-        .article-body .calc-formula-section {
-          background: #FEF9EC;
+        .article-body .calc-given-section {
+          background: #FAF8F5;
         }
         .article-body .calc-section-label {
           display: inline-block;
           font-family: 'JetBrains Mono', monospace;
-          font-size: 8.5px;
-          letter-spacing: 0.2em;
-          color: #C47D0E;
+          font-size: 9px;
+          letter-spacing: 0.15em;
+          color: #92400E;
           background: #FEF3C7;
-          padding: 2px 6px;
+          padding: 2px 8px;
           border-radius: 3px;
-          margin-bottom: 8px;
+          margin-bottom: 12px;
           font-weight: 700;
         }
-        .article-body .calc-given-row {
+        .article-body .calc-given-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+          gap: 10px;
+        }
+        .article-body .calc-given-card {
+          background: #FFFFFF;
+          border: 1px solid #E2E8F0;
+          border-radius: 8px;
+          padding: 10px 14px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+        .article-body .calc-given-top {
           display: flex;
           justify-content: space-between;
-          font-size: 13.5px;
-          padding: 4px 0;
+          align-items: center;
+          margin-bottom: 4px;
         }
         .article-body .calc-given-label {
+          font-size: 12px;
           color: #64748B;
+          font-weight: 500;
         }
-        .article-body .calc-given-value {
+        .article-body .calc-given-symbol {
           font-family: 'JetBrains Mono', monospace;
-          color: #0F172A;
-          font-weight: 600;
-        }
-        .article-body .calc-formula {
-          font-size: 20px;
-          text-align: center;
-          color: #0F172A;
-          padding: 10px 0;
-        }
-        .article-body .calc-step {
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 12.5px;
-          color: #334155;
-          padding: 3px 0;
-        }
-        .article-body .calc-result-section {
-          background: #FEF3C7;
-          padding: 18px 20px;
-          border-top: 1px solid #F5E6C8;
-        }
-        .article-body .calc-result-label {
-          display: inline-block;
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 8.5px;
-          letter-spacing: 0.2em;
-          color: #92400E;
-          margin-bottom: 8px;
+          font-size: 11px;
+          color: #C47D0E;
           font-weight: 700;
         }
-        .article-body .calc-result-value {
+        .article-body .calc-given-val-row {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 16px;
+          font-weight: 700;
+          color: #0F172A;
+        }
+        .article-body .calc-given-unit {
+          font-size: 12px;
+          color: #64748B;
+          font-weight: 500;
+        }
+        .article-body .calc-given-note {
+          display: block;
+          font-size: 10.5px;
+          color: #94A3B8;
+          margin-top: 3px;
+        }
+
+        .article-body .calc-formula-section {
+          background: #FEFDF9;
+        }
+        .article-body .calc-formula-display {
+          background: #FFFFFF;
+          border: 1px solid #F5E6C8;
+          border-radius: 8px;
+          padding: 18px;
+          text-align: center;
+          margin-bottom: 12px;
+          font-size: 20px;
+          color: #0F172A;
+        }
+        .article-body .calc-nomenclature-box {
+          background: #FAF8F5;
+          border-radius: 6px;
+          padding: 12px 16px;
+          border: 1px solid #F1F5F9;
+        }
+        .article-body .calc-nomen-title {
+          display: block;
+          font-size: 11px;
+          font-weight: 700;
+          color: #475569;
+          margin-bottom: 8px;
+          font-family: 'JetBrains Mono', monospace;
+        }
+        .article-body .calc-nomen-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 6px;
+          font-size: 12.5px;
+        }
+        .article-body .calc-nomen-item {
+          display: flex;
+          gap: 6px;
+          align-items: baseline;
+        }
+        .article-body .calc-nomen-sym {
+          font-family: 'JetBrains Mono', monospace;
+          font-weight: 700;
+          color: #C47D0E;
+        }
+        .article-body .calc-nomen-eq { color: #94A3B8; }
+        .article-body .calc-nomen-desc { color: #334155; }
+
+        .article-body .calc-steps-section {
+          background: #FFFFFF;
+        }
+        .article-body .calc-steps-list {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        .article-body .calc-step-row {
+          display: flex;
+          gap: 12px;
+          align-items: baseline;
+          padding: 10px 14px;
+          background: #FAF8F5;
+          border-radius: 6px;
+          border-left: 3px solid #C47D0E;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 13.5px;
+          color: #334155;
+        }
+        .article-body .calc-step-card {
+          background: #FAF8F5;
+          border-radius: 8px;
+          border: 1px solid #F1F5F9;
+          border-left: 3px solid #C47D0E;
+          padding: 12px 16px;
+        }
+        .article-body .calc-step-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 4px;
+        }
+        .article-body .calc-step-badge {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 10px;
+          font-weight: 700;
+          color: #C47D0E;
+          background: #FEF3C7;
+          padding: 2px 7px;
+          border-radius: 3px;
+        }
+        .article-body .calc-step-title {
+          font-size: 13.5px;
+          font-weight: 700;
+          color: #0F172A;
+        }
+        .article-body .calc-step-math {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 14px;
+          color: #1E293B;
+          margin: 6px 0;
+          font-weight: 600;
+        }
+        .article-body .calc-step-expl {
+          font-size: 12px;
+          color: #64748B;
+          margin-top: 4px;
+          font-style: italic;
+        }
+
+        .article-body .calc-result-box {
+          background: linear-gradient(180deg, #FEF9EC 0%, #FEF3C7 100%);
+          padding: 22px;
+          border-top: 1px solid #F5E6C8;
+        }
+        .article-body .calc-result-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+          flex-wrap: wrap;
+          gap: 6px;
+        }
+        .article-body .calc-result-tag {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 10px;
+          letter-spacing: 0.2em;
+          color: #92400E;
+          font-weight: 700;
+        }
+        .article-body .calc-compliance-tag {
+          font-size: 11.5px;
+          color: #16A34A;
+          font-weight: 700;
+        }
+        .article-body .calc-result-main {
+          margin: 6px 0 12px 0;
+        }
+        .article-body .calc-result-number {
           font-family: 'Barlow Condensed', sans-serif;
           font-weight: 800;
-          font-size: 38px;
-          color: #C47D0E;
+          font-size: 40px;
+          color: #92400E;
           text-transform: uppercase;
           line-height: 1;
         }
-        .article-body .calc-result-unit {
+        .article-body .calc-result-unit-large {
           font-size: 24px;
+          color: #B45309;
+          font-weight: 600;
         }
-        .article-body .calc-result-note {
-          font-size: 13px;
-          color: #64748B;
-          margin-top: 6px;
+        .article-body .calc-result-note-box {
+          background: rgba(255,255,255,0.9);
+          border-left: 3px solid #C47D0E;
+          border-radius: 6px;
+          padding: 12px 16px;
+          font-size: 13.5px;
+          color: #334155;
+          line-height: 1.5;
+          margin-bottom: 14px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.03);
         }
-        .article-body .calc-edit-btn {
-          display: none;
+        .article-body .calc-equipment-specs-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+          gap: 10px;
+          margin-top: 12px;
+        }
+        .article-body .calc-spec-item {
+          background: #FFFFFF;
+          border: 1px solid #F5E6C8;
+          border-radius: 6px;
+          padding: 10px 14px;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+        .article-body .calc-spec-lbl {
+          font-size: 11px;
+          color: #78350F;
+          text-transform: uppercase;
+          font-weight: 600;
+          font-family: 'JetBrains Mono', monospace;
+        }
+        .article-body .calc-spec-val {
+          font-size: 13.5px;
+          font-weight: 700;
+          color: #0F172A;
+        }
+        .article-body .calc-spec-badge {
+          font-size: 10px;
+          color: #16A34A;
+          font-weight: 600;
         }
 
-        /* Syntax Highlight Lowlight Theme */
-        .article-body .hljs-keyword { color: #C47D0E; font-weight: 600; }
-        .article-body .hljs-string { color: #86EFAC; }
-        .article-body .hljs-number { color: #60A5FA; }
-        .article-body .hljs-comment { color: #64748B; font-style: italic; }
-        .article-body .hljs-function, .article-body .hljs-title { color: #A78BFA; }
-        .article-body .hljs-params { color: #E2E8F0; }
+        /* Responsive Breakpoints */
+        @media (max-width: 1024px) {
+          .article-two-column {
+            grid-template-columns: 1fr !important;
+          }
+          .article-sidebar {
+            display: none !important;
+          }
+          .mobile-toc-fab-container {
+            display: block !important;
+          }
+        }
+
+        @media (min-width: 1025px) {
+          .mobile-toc-fab-container {
+            display: none !important;
+          }
+        }
 
         @media (max-width: 768px) {
-          .article-body p, .article-body li {
-            font-size: 16px !important;
+          .article-body {
+            padding: 24px 18px !important;
           }
           .article-body h1 {
-            font-size: 26px !important;
+            font-size: 24px !important;
           }
           .article-body h2 {
-            font-size: 22px !important;
+            font-size: 20px !important;
           }
           .article-body pre {
-            padding: 14px 16px 16px;
-            border-radius: 8px;
+            padding: 14px 16px;
           }
         }
       `}</style>

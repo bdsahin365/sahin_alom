@@ -153,17 +153,25 @@ export const INITIAL_ARTICLES: Article[] = [
 
 <hr/>
 
-<h2>৪. প্রফেশনাল লাইটিং ডিজাইনের ৭টি ধাপ (Workflow)</h2>
+<h2>৪. প্রফেশনাল লাইটিং ডিজাইনের ৭টি ধাপ (Workflow Diagram)</h2>
 <p>প্রফেশনাল লাইটিং ডিজাইনে কাজ হয় একটি ধারাবাহিক বৈজ্ঞানিক পদ্ধতিতে:</p>
 
-<pre><code class="language-mermaid">graph TD
-    A[ধাপ ১: স্পেসের ব্যবহার ও অ্যাক্টিভিটি বিশ্লেষণ] --> B[ধাপ ২: টার্গেট Lux নির্ধারণ - BNBC 2020]
-    B --> C[ধাপ ৩: রুম জিওমেট্রি ও রিফ্লেক্ট্যান্স ডাটা সংগ্রহ]
-    C --> D[ধাপ ৪: উপযুক্ত Luminaire ও অপটিক্স নির্বাচন]
-    D --> E[ধাপ ৫: লুমেন মেথডে গাণিতিক হিসাব ও ফিক্সচার সংখ্যা]
-    E --> F[ধাপ ৬: ফিক্সচার গ্রিড লেআউট ও সুষম স্পেসিং]
-    F --> G[ধাপ ৭: DIALux সিমুলেশন ও ফিল্ড ভেরিফিকেশন]
-</code></pre>
+<div data-type="mermaid-block" data-fig="Fig. 1" data-caption="BNBC 2020 Standard Lighting Design 7-Step Engineering Workflow" data-category="LIGHTING ENGINEERING WORKFLOW" data-voltage="BNBC 2020 Part 8 / IESNA RP-7" data-standard="BNBC 2020 Part 8 Chap 1">
+  <div class="mermaid-render-zone">
+    <pre class="mermaid">graph TD
+    classDef step fill:#FAF8F5,stroke:#C47D0E,stroke-width:2px,color:#0F172A;
+    classDef code fill:#FEF3C7,stroke:#D97706,stroke-width:2px,color:#92400E;
+    classDef sim fill:#DCFCE7,stroke:#16A34A,stroke-width:2px,color:#166534;
+
+    S1[Step 1: Space Activity & Visual Task Analysis]:::step --> S2[Step 2: Target Lux Selection - BNBC 2020 Part 8]:::code
+    S2 --> S3[Step 3: Room Geometry L, W, H & Reflectances]:::step
+    S3 --> S4[Step 4: Luminaire Selection - Efficacy lm/W, CCT, CRI]:::step
+    S4 --> S5[Step 5: Lumen Method Mathematical Calculation - UF, MF]:::code
+    S5 --> S6[Step 6: Fixture Grid Layout & Spacing Uniformity U0]:::step
+    S6 --> S7[Step 7: DIALux evo 3D Simulation & Glare Check UGR]:::sim
+    </pre>
+  </div>
+</div>
 
 <ol>
   <li><strong>রুমের ব্যবহার বুঝুন:</strong> রেসিডেন্সিয়াল লিভিং রুম আর ড্রয়িং অফিসের ভিজ্যুয়াল টাস্ক এক নয়।</li>
@@ -193,25 +201,17 @@ export const INITIAL_ARTICLES: Article[] = [
 
 <hr/>
 
-<h2>৬. রিয়েল-ওয়ার্ল্ড কেস স্টাডি: একটি গার্মেন্টস সুইং ফ্লোর</h2>
-<p>বিষয়টি সহজে বোঝার জন্য আসুন একটি বাস্তব উদাহরণ দেখি। ধরুন, গাজীপুরের একটি গার্মেন্টস কারখানার সুইং ফ্লোর:</p>
+<h2>৬. রিয়েল-ওয়ার্ল্ড ইঞ্জিনিয়ারিং ক্যালকুলেশন: একটি গার্মেন্টস সুইং ফ্লোর</h2>
+<p>বিষয়টি সহজে বোঝার জন্য আসুন একটি বাস্তব গাণিতিক ডিজাইন দেখি। ধরুন, গাজীপুরের একটি গার্মেন্টস কারখানার সুইং ফ্লোর:</p>
 <ul>
   <li><strong>দৈর্ঘ্য:</strong> 30 m</li>
   <li><strong>প্রস্থ:</strong> 20 m</li>
   <li><strong>মোট এরিয়া:</strong> 600 m²</li>
+  <li><strong>টার্গেট লাক্স (BNBC 2020):</strong> 500 Lux (সেলাই ও সূক্ষ্ম কাটিংয়ের জন্য)</li>
 </ul>
 
-<h3>অ-প্রকৌশলগত পদ্ধতি:</h3>
-<p>একজন সাধারণ টেকনিশিয়ান বলল—<em>"ভাই, ফ্লোরটা বেশ বড়। এখানে সমান দূরত্বে ১০০টা ৪০ ওয়াটের ব্যাটেন লাইট ঝুলিয়ে দেন। ফ্লোর একদম দিনের মতো ফকফকা হয়ে যাবে!"</em></p>
-
-<h3>ইঞ্জিনিয়ারিং পদ্ধতি:</h3>
-<p>একজন কোয়ালিফাইড ইলেকট্রিক্যাল ডিজাইনারের কাছে এই প্রস্তাব গ্রহণযোগ্য নয়। তিনি নিচের বিষয়গুলো সমাধান করবেন:</p>
-<ul>
-  <li><strong>টাস্ক অ্যানালাইসিস:</strong> সুইং ফ্লোরে সূক্ষ্ম সুঁই ও কালার শেড নিয়ে কাজ হয়। BNBC ও বায়ার স্ট্যান্ডার্ড অনুযায়ী সুইং নিডেল পয়েন্টে ন্যূনতম <strong>500 Lux</strong> প্রয়োজন।</li>
-  <li><strong>মাউন্টিং হাইট:</strong> ফিক্সচার কি সিলিংয়ে লাগবে নাকি ট্রাঙ্কিং দিয়ে সুইং টেবিল থেকে 1.8 m উপরে সাসপেন্ড করা হবে?</li>
-  <li><strong>Maintenance Factor (MF):</strong> কাপড়ের ডাস্ট ও ফাইবার ওড়ার কারণে লাইটের কভারে ধুলো জমবে। তাই এখানে রক্ষণাবেক্ষণ ফ্যাক্টর 0.75 - 0.80 ধরতে হবে।</li>
-  <li><strong>Uniformity (U₀):</strong> প্রতিটি মেশিনের উপর আলো যেন সমান হয়, তার জন্য ইউনিফরমিটি রেশিও অবশ্যই $U_0 \\ge 0.60$ হতে হবে।</li>
-</ul>
+<div data-type="calc-block" data-attrs="%7B%22title%22%3A%22Garments%20Sewing%20Floor%20Lighting%20Design%20(BNBC%202020)%22%2C%22category%22%3A%22INTERIOR%20LIGHTING%20DESIGN%22%2C%22standardRef%22%3A%22BNBC%202020%20Part%208%20Chap%201%20%2F%20IESNA%20RP-7%22%2C%22given%22%3A%5B%7B%22label%22%3A%22Target%20Illuminance%20(E)%22%2C%22symbol%22%3A%22E%22%2C%22value%22%3A%22500%22%2C%22unit%22%3A%22Lux%20(lx)%22%2C%22note%22%3A%22BNBC%20Standard%20for%20Garment%20Sewing%20%26%20Inspection%22%7D%2C%7B%22label%22%3A%22Room%20Dimensions%20(L%20%C3%97%20W)%22%2C%22symbol%22%3A%22L%20%5C%5Ctimes%20W%22%2C%22value%22%3A%2230m%20%C3%97%2020m%20(600%20m%C2%B2)%22%2C%22unit%22%3A%22%22%2C%22note%22%3A%22Clear%20working%20floor%20area%22%7D%2C%7B%22label%22%3A%22Working%20Height%20%2F%20Mounting%20Height%22%2C%22symbol%22%3A%22H_m%22%2C%22value%22%3A%222.5%22%2C%22unit%22%3A%22m%22%2C%22note%22%3A%22Height%20from%20working%20plane%20(0.8m)%20to%20luminaire%22%7D%2C%7B%22label%22%3A%22Selected%20Luminaire%20Flux%20(%CE%A6)%22%2C%22symbol%22%3A%22%5C%5CPhi%22%2C%22value%22%3A%224000%22%2C%22unit%22%3A%22Lumens%20(lm)%22%2C%22note%22%3A%2240W%20High-Efficiency%20LED%20Panel%20(100%20lm%2FW)%22%7D%2C%7B%22label%22%3A%22Utilization%20Factor%20(UF)%22%2C%22symbol%22%3A%22UF%22%2C%22value%22%3A%220.62%22%2C%22unit%22%3A%22%22%2C%22note%22%3A%22Based%20on%20Room%20Index%20K%3D2.4%20and%2070%2F50%2F20%20reflectances%22%7D%2C%7B%22label%22%3A%22Maintenance%20Factor%20(MF)%22%2C%22symbol%22%3A%22MF%22%2C%22value%22%3A%220.80%22%2C%22unit%22%3A%22%22%2C%22note%22%3A%22Clean%20industrial%20environment%20with%20regular%20cleaning%22%7D%5D%2C%22formula%22%3A%22N%20%3D%20%5C%5Cfrac%7BE%20%5C%5Ctimes%20A%7D%7Bn%20%5C%5Ctimes%20%5C%5CPhi%20%5C%5Ctimes%20UF%20%5C%5Ctimes%20MF%7D%22%2C%22nomenclature%22%3A%5B%7B%22symbol%22%3A%22N%22%2C%22meaning%22%3A%22Total%20Number%20of%20Luminaires%20Required%22%2C%22unit%22%3A%22fixtures%22%7D%2C%7B%22symbol%22%3A%22E%22%2C%22meaning%22%3A%22Required%20Maintained%20Illuminance%22%2C%22unit%22%3A%22Lux%20(lm%2Fm%C2%B2)%22%7D%2C%7B%22symbol%22%3A%22A%22%2C%22meaning%22%3A%22Total%20Working%20Floor%20Area%20(600%20m%C2%B2)%22%2C%22unit%22%3A%22m%C2%B2%22%7D%2C%7B%22symbol%22%3A%22%5C%5CPhi%22%2C%22meaning%22%3A%22Luminous%20Flux%20per%20Luminaire%20(4000%20lm)%22%2C%22unit%22%3A%22Lumens%22%7D%2C%7B%22symbol%22%3A%22UF%22%2C%22meaning%22%3A%22Utilization%20Factor%20(Coefficients%20of%20Utilization)%22%2C%22unit%22%3A%22dimensionless%22%7D%2C%7B%22symbol%22%3A%22MF%22%2C%22meaning%22%3A%22Maintenance%20Factor%20(Aging%20%26%20Dust%20depreciation)%22%2C%22unit%22%3A%22dimensionless%22%7D%5D%2C%22steps%22%3A%5B%7B%22title%22%3A%22Calculate%20Gross%20Floor%20Working%20Area%22%2C%22math%22%3A%22A%20%3D%2030%20%5C%5Ctext%7B%20m%7D%20%5C%5Ctimes%2020%20%5C%5Ctext%7B%20m%7D%20%3D%20600%20%5C%5Ctext%7B%20m%7D%5E2%22%2C%22explanation%22%3A%22Total%20horizontal%20working%20plane%20area%20requiring%20uniform%20500%20Lux%20illuminance.%22%7D%2C%7B%22title%22%3A%22Calculate%20Gross%20Required%20Luminous%20Flux%20(%CE%A6total)%22%2C%22math%22%3A%22%5C%5CPhi_%7B%5C%5Ctext%7Btotal%7D%7D%20%3D%20%5C%5Cfrac%7BE%20%5C%5Ctimes%20A%7D%7BUF%20%5C%5Ctimes%20MF%7D%20%3D%20%5C%5Cfrac%7B500%20%5C%5Ctext%7B%20lx%7D%20%5C%5Ctimes%20600%20%5C%5Ctext%7B%20m%7D%5E2%7D%7B0.62%20%5C%5Ctimes%200.80%7D%20%3D%20%5C%5Cfrac%7B300%2C000%7D%7B0.496%7D%20%3D%20604%2C838.71%20%5C%5Ctext%7B%20Lumens%7D%22%2C%22explanation%22%3A%22Gross%20flux%20emitted%20by%20all%20light%20sources%20compensating%20for%20ceiling%20absorption%20and%20dust%20degradation.%22%7D%2C%7B%22title%22%3A%22Calculate%20Number%20of%20Luminaires%20(N)%22%2C%22math%22%3A%22N%20%3D%20%5C%5Cfrac%7B604%2C838.71%20%5C%5Ctext%7B%20lm%7D%7D%7B4000%20%5C%5Ctext%7B%20lm%2Ffixture%7D%7D%20%3D%20151.21%20%5C%5Crightarrow%20%5C%5Ctext%7BRound%20up%20to%20%7D%20152%20%5C%5Ctext%7B%20Fixtures%7D%22%2C%22explanation%22%3A%22Minimum%20number%20of%20fixtures%20needed%20to%20achieve%20average%20maintained%20illuminance%20E%20%E2%89%A5%20500%20Lux.%22%7D%2C%7B%22title%22%3A%22Determine%20Grid%20Layout%20%26%20Lighting%20Power%20Density%20(LPD)%22%2C%22math%22%3A%22%5C%5Ctext%7BGrid%3A%20%7D%2019%20%5C%5Ctext%7B%20Rows%7D%20%5C%5Ctimes%208%20%5C%5Ctext%7B%20Columns%7D%20%3D%20152%20%5C%5Ctext%7B%20Fixtures%7D.%20%5C%5Cquad%20%5C%5Ctext%7BLPD%7D%20%3D%20%5C%5Cfrac%7B152%20%5C%5Ctimes%2040%20%5C%5Ctext%7B%20W%7D%7D%7B600%20%5C%5Ctext%7B%20m%7D%5E2%7D%20%3D%2010.13%20%5C%5Ctext%7B%20W%2Fm%7D%5E2%22%2C%22explanation%22%3A%22Installed%20LPD%20is%2010.13%20W%2Fm%C2%B2%2C%20fully%20compliant%20with%20BNBC%202020%20maximum%20allowable%20limit%20of%2012.0%20W%2Fm%C2%B2.%22%7D%5D%2C%22result%22%3A%22152%20Fixtures%20(19%20%C3%97%208%20Grid)%22%2C%22resultUnit%22%3A%2240W%20LED%20Panels%22%2C%22resultNote%22%3A%22Installed%20Lighting%20Power%20Density%3A%2010.13%20W%2Fm%C2%B2%20(BNBC%20allows%20up%20to%2012.0%20W%2Fm%C2%B2).%20Fixture%20spacing-to-height%20ratio%20(SHR%20%3D%201.25)%20guarantees%20uniformity%20U0%20%E2%89%A5%200.65%20with%20low%20glare%20UGR%20%3C%2019.%22%2C%22equipmentSpecs%22%3A%5B%7B%22label%22%3A%22Total%20Luminaire%20Count%22%2C%22value%22%3A%22152%20Units%20(40W%202x2%20LED)%22%2C%22badge%22%3A%22BNBC%20Compliant%22%7D%2C%7B%22label%22%3A%22Lighting%20Power%20Density%22%2C%22value%22%3A%2210.13%20W%2Fm%C2%B2%20(Max%2012%20W%2Fm%C2%B2)%22%2C%22badge%22%3A%22PASS%22%7D%2C%7B%22label%22%3A%22Uniformity%20Ratio%20(U0)%22%2C%22value%22%3A%22%E2%89%A5%200.65%20(Even%20Distribution)%22%2C%22badge%22%3A%22Good%22%7D%5D%7D">
+</div>
 
 <hr/>
 
@@ -250,6 +250,89 @@ export const INITIAL_ARTICLES: Article[] = [
   <li>বিভিন্ন স্পেসের (অফিস, কনফারেন্স রুম, মিটিং রুম, করিডোর, লাইব্রেরি, ল্যাবরেটরি) জন্য কোড অনুযায়ী স্ট্যান্ডার্ড লাক্স তালিকা।</li>
   <li>ক্লায়েন্টের বাজেট ও রিকোয়ারমেন্ট অনুযায়ী নিখুঁত লাক্স লেভেল সিলেক্ট করার নিয়ম।</li>
   <li>লাক্স মিটার দিয়ে সাইটে সঠিক পদ্ধতিতে আলো পরিমাপ করার কৌশল।</li>
+</ul>
+`
+  },
+  {
+    id: 'art-ch2-substation-sld',
+    title: 'Chapter 2: 33kV/11kV/415V Substation Single Line Diagram (SLD) ও Transformer Sizing ক্যালকুলেশন',
+    slug: 'chapter-2-substation-sld-transformer-sizing',
+    excerpt: 'একটি ইন্ডাস্ট্রিয়াল পাওয়ার সাবস্টেশনের সিঙ্গেল লাইন ডায়াগ্রাম (SLD) কীভাবে পড়তে ও ডিজাইন করতে হয়? জানুন VCB, ACB, PFI, Busbar Sizing এবং 1000 kVA ট্রান্সফরমারের সম্পূর্ণ গাণিতিক হিসাব।',
+    status: 'published',
+    category: 'Electrical Engineering',
+    tags: ['Substation', 'Single Line Diagram', 'SLD', 'Transformer Sizing', 'VCB', 'ACB', 'PFI', 'BNBC 2020'],
+    author: 'Md Sahin Alom',
+    featured_image: '/img/lighting-design-cover.jpg',
+    read_time: 12,
+    meta_title: 'Chapter 2: Substation Single Line Diagram (SLD) ও Transformer Sizing — Md Sahin Alom',
+    meta_desc: '33kV/11kV/415V ইন্ডাস্ট্রিয়াল সাবস্টেশন সিঙ্গেল লাইন ডায়াগ্রাম (SLD) অ্যানালাইসিস এবং 1000 kVA ট্রান্সফরমার ফুল লোড কারেন্ট ও বাসবার সাইজিং ক্যালকুলেশন।',
+    updated_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    content: `
+<h2>ভূমিকা: Single Line Diagram (SLD) কেন পাওয়ার সিস্টেমের প্রাণ?</h2>
+<p>একজন ইলেকট্রিক্যাল ইঞ্জিনিয়ারের কাছে একটি ইন্ডাস্ট্রি বা পাওয়ার প্ল্যান্টের <strong>Single Line Diagram (SLD)</strong> হলো একটি মানচিত্রের মতো। গ্রিড ইনকামার থেকে শুরু করে শেষ প্রান্তের মোটর বা লাইটিং প্যানেল পর্যন্ত বিদ্যুৎ কীভাবে প্রবাহিত হচ্ছে, কোথায় কী সুরক্ষামূলক সুইচগিয়ার (Protection Switchgear) বসানো আছে—তা এক নজরে বোঝার একমাত্র উপায় হলো SLD।</p>
+
+<hr/>
+
+<h2>১. 33kV / 11kV / 0.415kV Substation Single Line Diagram</h2>
+<p>নিচে একটি স্ট্যান্ডার্ড ইন্ডাস্ট্রিয়াল ডিস্ট্রিবিউশন সাবস্টেশনের পূর্ণাঙ্গ সিঙ্গেল লাইন ডায়াগ্রাম দেওয়া হলো:</p>
+
+<div data-type="mermaid-block" data-fig="Fig. 1" data-caption="33kV / 11kV / 0.415kV Industrial Substation Single Line Diagram (SLD)" data-category="SUBSTATION POWER DISTRIBUTION" data-voltage="33kV HT / 11kV MT / 0.415kV LT" data-standard="BNBC 2020 Part 8 / IEC 60076 / IEEE 141">
+  <div class="mermaid-render-zone">
+    <pre class="mermaid">graph TD
+    classDef grid fill:#FEE2E2,stroke:#DC2626,stroke-width:2px,color:#991B1B;
+    classDef tx fill:#FEF3C7,stroke:#C47D0E,stroke-width:2px,color:#92400E;
+    classDef sw fill:#E0E7FF,stroke:#4338CA,stroke-width:2px,color:#3730A3;
+    classDef load fill:#DCFCE7,stroke:#16A34A,stroke-width:2px,color:#166534;
+
+    Grid([33kV National Grid Incomer]):::grid --> LA[33kV Lightning Arrester]
+    LA --> ISO1[33kV Gang Isolator & Earth Switch]
+    ISO1 --> VCB33[33kV Vacuum Circuit Breaker - VCB]
+    VCB33 --> PT[Power Transformer 33kV/11kV 5MVA]:::tx
+    PT --> VCB11[11kV Incomer VCB Switchgear]:::sw
+    VCB11 --> Bus11((11kV Main Busbar)):::sw
+    
+    Bus11 --> DT1[Dist. Transformer 11kV/0.415kV 1000kVA]:::tx
+    Bus11 --> DT2[Dist. Transformer 11kV/0.415kV 1000kVA]:::tx
+    
+    DT1 --> ACB1[2000A LT Main ACB]:::sw
+    DT2 --> ACB2[2000A LT Main ACB]:::sw
+    
+    ACB1 --> BusLT((415V Main LT Switchboard)):::sw
+    ACB2 --> BusLT
+    
+    BusLT --> PFI[350 kVAr Automatic PFI Bank]:::load
+    BusLT --> MDB1[MDB 1 - Production Plant]:::load
+    BusLT --> MDB2[MDB 2 - HVAC & Utility]:::load
+    </pre>
+  </div>
+</div>
+
+<hr/>
+
+<h2>২. সাবস্টেশন ইকুইপমেন্ট ও সিম্বলের ব্যাখ্যা</h2>
+<ul>
+  <li><strong>Lightning Arrester (LA):</strong> লাইটনিং বা গ্রিড স্যুইচিংয়ের হাই-ভোল্টেজ সার্জ থেকে ট্রান্সফরমারকে রক্ষা করে সার্জ গ্রাউন্ডে ডিসচার্জ করে দেয়।</li>
+  <li><strong>Vacuum Circuit Breaker (VCB):</strong> 11kV/33kV মিডিয়াম ভোল্টেজ সিস্টেমে শর্ট সার্কিট ফল্ট মুহূর্তে মাত্র কয়েক মিলিসেকেন্ডে ভ্যাকুয়াম চেম্বারে আর্ক নিভিয়ে সার্কিট বিচ্ছিন্ন করে।</li>
+  <li><strong>Air Circuit Breaker (ACB):</strong> 415V লো-ভোল্টেজ মেইন ইনকামারে ব্যবহৃত ড্র-আউট টাইপ ব্রেকার, যাতে ওভারলোড, শর্ট সার্কিট ও আর্থ ফল্টের মাইক্রোপ্রসেসর রিলিজ থাকে।</li>
+  <li><strong>Power Factor Improvement (PFI):</strong> ইনডাক্টিভ মোটরের কারণে নষ্ট হওয়া পাওয়ার ফ্যাক্টরকে $\\cos\\phi \\ge 0.98$-এ উন্নীত রাখে এবং জরিমানা থেকে রক্ষা করে।</li>
+</ul>
+
+<hr/>
+
+<h2>৩. 1000 kVA Transformer Sizing ও LT Busbar ক্যালকুলেশন</h2>
+<p>নিচে একটি 1000 kVA ডিস্ট্রিবিউশন ট্রান্সফরমারের HV ও LV কারেন্ট এবং মেইন বাসবারের পূর্ণাঙ্গ গাণিতিক হিসাব দেওয়া হলো:</p>
+
+<div data-type="calc-block" data-attrs="%7B%22title%22%3A%221000%20kVA%20Substation%20Transformer%20HV%2FLV%20Current%20%26%20Busbar%20Sizing%22%2C%22category%22%3A%22SUBSTATION%20%26%20HV%2FLV%20TRANSFORMER%22%2C%22standardRef%22%3A%22BNBC%202020%20Part%208%20%2F%20IEC%2060076%22%2C%22given%22%3A%5B%7B%22label%22%3A%22Transformer%20Rated%20Capacity%20(S)%22%2C%22symbol%22%3A%22S%22%2C%22value%22%3A%221000%22%2C%22unit%22%3A%22kVA%22%2C%22note%22%3A%22ONAN%20Cast%20Resin%20%2F%20Oil%20Immersed%22%7D%2C%7B%22label%22%3A%22Primary%20High%20Voltage%20(V_HV)%22%2C%22symbol%22%3A%22V_%7BHV%7D%22%2C%22value%22%3A%2211%22%2C%22unit%22%3A%22kV%22%2C%22note%22%3A%2211%2C000%20Volts%20Delta%20Connected%22%7D%2C%7B%22label%22%3A%22Secondary%20Low%20Voltage%20(V_LV)%22%2C%22symbol%22%3A%22V_%7BLV%7D%22%2C%22value%22%3A%22415%22%2C%22unit%22%3A%22V%22%2C%22note%22%3A%22415%20Volts%20Star%20Connected%20(Wye)%22%7D%2C%7B%22label%22%3A%22Transformer%20Percent%20Impedance%20(%25Z)%22%2C%22symbol%22%3A%22%25Z%22%2C%22value%22%3A%225.75%22%2C%22unit%22%3A%22%25%22%2C%22note%22%3A%22IEC%2060076%20Standard%20Impedance%22%7D%5D%2C%22formula%22%3A%22I_%7BLV%7D%20%3D%20%5C%5Cfrac%7BS%20%5C%5Ctimes%2010%5E3%7D%7B%5C%5Csqrt%7B3%7D%20%5C%5Ctimes%20V_%7BLV%7D%7D%2C%20%5C%5Cquad%20I_%7BHV%7D%20%3D%20%5C%5Cfrac%7BS%20%5C%5Ctimes%2010%5E3%7D%7B%5C%5Csqrt%7B3%7D%20%5C%5Ctimes%20V_%7BHV%7D%7D%22%2C%22nomenclature%22%3A%5B%7B%22symbol%22%3A%22S%22%2C%22meaning%22%3A%22Apparent%20Power%20Rating%22%2C%22unit%22%3A%22kVA%22%7D%2C%7B%22symbol%22%3A%22I_%7BLV%7D%22%2C%22meaning%22%3A%22Secondary%20Low%20Voltage%20Full%20Load%20Current%22%2C%22unit%22%3A%22A%22%7D%2C%7B%22symbol%22%3A%22I_%7BHV%7D%22%2C%22meaning%22%3A%22Primary%20High%20Voltage%20Full%20Load%20Current%22%2C%22unit%22%3A%22A%22%7D%2C%7B%22symbol%22%3A%22V_%7BLV%7D%22%2C%22meaning%22%3A%22Nominal%20Secondary%20Voltage%20(415V)%22%2C%22unit%22%3A%22V%22%7D%2C%7B%22symbol%22%3A%22V_%7BHV%7D%22%2C%22meaning%22%3A%22Nominal%20Primary%20Voltage%20(11%2C000V)%22%2C%22unit%22%3A%22V%22%7D%5D%2C%22steps%22%3A%5B%7B%22title%22%3A%22Calculate%20Secondary%20(LV%20415V)%20Full%20Load%20Current%22%2C%22math%22%3A%22I_%7BLV%7D%20%3D%20%5C%5Cfrac%7B1000%20%5C%5Ctimes%201000%7D%7B%5C%5Csqrt%7B3%7D%20%5C%5Ctimes%20415%7D%20%3D%20%5C%5Cfrac%7B1%2C000%2C000%7D%7B718.80%7D%20%3D%201391.24%20%5C%5Ctext%7B%20A%7D%22%2C%22explanation%22%3A%22Rated%20secondary%20phase-to-phase%20current%20delivered%20to%20the%20main%20LT%20panel%20at%20full%20transformer%20load.%22%7D%2C%7B%22title%22%3A%22Calculate%20Primary%20(HV%2011kV)%20Full%20Load%20Current%22%2C%22math%22%3A%22I_%7BHV%7D%20%3D%20%5C%5Cfrac%7B1000%20%5C%5Ctimes%201000%7D%7B%5C%5Csqrt%7B3%7D%20%5C%5Ctimes%2011%2C000%7D%20%3D%20%5C%5Cfrac%7B1%2C000%2C000%7D%7B19%2C052.56%7D%20%3D%2052.49%20%5C%5Ctext%7B%20A%7D%22%2C%22explanation%22%3A%22Nominal%20primary%20current%20drawn%20from%20the%2011kV%20grid%20feeder%20through%20the%20Vacuum%20Circuit%20Breaker%20(VCB).%22%7D%2C%7B%22title%22%3A%22Main%20LT%20Busbar%20Continuous%20Rating%20(125%25%20S.F.)%22%2C%22math%22%3A%22I_%7B%5C%5Ctext%7Bbusbar%7D%7D%20%3D%201391.24%20%5C%5Ctext%7B%20A%7D%20%5C%5Ctimes%201.25%20%3D%201739.05%20%5C%5Ctext%7B%20A%7D%20%5C%5Crightarrow%20%5C%5Ctext%7BSelect%20%7D%202000%20%5C%5Ctext%7B%20A%7D%22%2C%22explanation%22%3A%22Main%20copper%20busbar%20must%20accommodate%20transformer%20short-term%20overload%20capacity%20and%20thermal%20derating%20in%2040%C2%B0C%20ambient.%22%7D%5D%2C%22result%22%3A%221391.24%20A%20(LV)%20%2F%2052.49%20A%20(HV)%22%2C%22resultUnit%22%3A%22Full%20Load%20Current%22%2C%22resultNote%22%3A%22Main%20LT%20Incomer%20Switchgear%3A%202000%20A%204-Pole%20Air%20Circuit%20Breaker%20(ACB)%20with%20Microprocessor%20Trip%20Unit%20(LSIG).%20HT%20Incomer%3A%20630%20A%2011kV%20Vacuum%20Circuit%20Breaker%20(VCB).%22%2C%22equipmentSpecs%22%3A%5B%7B%22label%22%3A%22LT%20Main%20Incomer%22%2C%22value%22%3A%222000%20A%204P%20Drawout%20ACB%22%2C%22badge%22%3A%2250%20kA%20%2F%201s%22%7D%2C%7B%22label%22%3A%22HT%20Incomer%20Breaker%22%2C%22value%22%3A%22630%20A%2011kV%20VCB%20Panel%22%2C%22badge%22%3A%2225%20kA%20%2F%203s%22%7D%2C%7B%22label%22%3A%22LT%20Main%20Busbar%22%2C%22value%22%3A%222%20%C3%97%20(100%20%C3%97%2010%20mm)%20Cu%22%2C%22badge%22%3A%222000%20A%20Rated%22%7D%5D%7D">
+</div>
+
+<hr/>
+
+<h2>📌 Chapter 2 Key Takeaways</h2>
+<ul>
+  <li>✔ <strong>SLD হলো পাওয়ার সিস্টেমের মাস্টার ড্রয়িং:</strong> ভোল্টেজ লেভেল, ট্রান্সফরমার এবং প্রোটেকশন ব্রেকারের সঠিক পজিশন নির্দেশ করে।</li>
+  <li>✔ <strong>1000 kVA ট্রান্সফরমার কারেন্ট:</strong> 415V-এ ফুল লোড কারেন্ট $1391.24\\text{ A}$ এবং 11kV-এ $52.49\\text{ A}$।</li>
+  <li>✔ <strong>125% বাসবার সেফটি রুল:</strong> ট্রান্সফরমারের ইনকামার বাসবার সাইজিং সবসময় মিনিমাম ১২৫% সেফটি ফ্যাক্টর ধরে করতে হয়।</li>
 </ul>
 `
   }
