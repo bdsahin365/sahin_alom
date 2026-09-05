@@ -20,6 +20,17 @@ export type EngineerInfo = typeof D_ENG & {
   available: boolean
   credentialsTag?: string
   whatsapp?: string
+  fatherName?: string
+  motherName?: string
+  dob?: string
+  bloodGroup?: string
+  nationality?: string
+  religion?: string
+  maritalStatus?: string
+  presentAddress?: string
+  permanentAddress?: string
+  declaration?: string
+  cvTools?: string[]
 }
 
 export type Credential    = { label: string; value: string; detail: string; url?: string }
@@ -121,8 +132,23 @@ const DEFAULT: SiteData = {
   engineer: {
     ...D_ENG,
     available: true,
-    credentialsTag: 'PE',
+    credentialsTag: 'Class ABC Licensed',
     whatsapp: '01760816120',
+    nationality: 'Bangladeshi (By Birth)',
+    religion: 'Islam',
+    maritalStatus: 'Single',
+    fatherName: 'Late Md. ...',
+    motherName: 'Mrs. ...',
+    dob: '1995-01-01',
+    bloodGroup: 'B+',
+    presentAddress: 'Savar, Dhaka, Bangladesh',
+    permanentAddress: 'Savar, Dhaka, Bangladesh',
+    declaration: 'Certified electrical engineer. All details and educational qualifications stated herein are accurate, authentic, and verifiable in all aspects.',
+    cvTools: [
+      'AutoCAD Electrical', 'Single-Line Diagrams (SLD)', 'Load Schedule Analysis',
+      'Generator / ATS Wiring', 'Transformer & Switchgear', 'Power Factor Improvement (PFI)',
+      'Fluke Earth Tester', 'Megger Insulation Tester', 'MS Office / Excel', 'ETAP', 'PVSyst'
+    ],
   },
   credentials: D_CRED,
   expertise:   D_EXP,

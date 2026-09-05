@@ -1453,12 +1453,44 @@ function ProfilePanel() {
         <AddButton label="Add paragraph" onClick={() => updateEngineer({ bio: [...E.bio, ''] })} />
       </Section>
 
+      <Section title="Biodata & Personal Particulars" description="Personal details displayed in the Official Biodata (/biodata)">
+        <Grid2>
+          <Input label="Father's Name"      value={E.fatherName || ''}       onChange={u('fatherName') as (v: string) => void}       placeholder="Father's full name" />
+          <Input label="Mother's Name"      value={E.motherName || ''}       onChange={u('motherName') as (v: string) => void}       placeholder="Mother's full name" />
+          <Input label="Date of Birth"      value={E.dob || ''}              onChange={u('dob') as (v: string) => void}              placeholder="YYYY-MM-DD or DD Month YYYY" />
+          <Input label="Blood Group"        value={E.bloodGroup || ''}       onChange={u('bloodGroup') as (v: string) => void}       placeholder="B+, A+, O+, etc." />
+          <Input label="Nationality"        value={E.nationality || ''}      onChange={u('nationality') as (v: string) => void}      placeholder="Bangladeshi (By Birth)" />
+          <Input label="Religion"           value={E.religion || ''}         onChange={u('religion') as (v: string) => void}         placeholder="Islam, Christianity, Hinduism..." />
+          <Input label="Marital Status"     value={E.maritalStatus || ''}    onChange={u('maritalStatus') as (v: string) => void}    placeholder="Single / Married" />
+          <Input label="Present Address"    value={E.presentAddress || ''}   onChange={u('presentAddress') as (v: string) => void}   placeholder="Present residential address" />
+          <Input label="Permanent Address"  value={E.permanentAddress || ''} onChange={u('permanentAddress') as (v: string) => void} placeholder="Permanent home district / address" />
+        </Grid2>
+      </Section>
+
+      <Section title="Official Affirmation & Declaration" description="Legal declaration statement displayed in the footer of CV (/cv) and Biodata (/biodata)">
+        <Textarea
+          label="Declaration Statement"
+          value={E.declaration || ''}
+          onChange={u('declaration') as (v: string) => void}
+          placeholder="Certified electrical engineer. All details and educational qualifications stated herein are accurate..."
+          rows={3}
+        />
+      </Section>
+
+      <Section title="CV Tools & Software Skills" description="Specific technical instruments, software, and tools listed in the CV (/cv)">
+        <TagChips
+          label="Software, Standards & Tools List"
+          tags={E.cvTools || []}
+          onChange={t => updateEngineer({ cvTools: t })}
+        />
+      </Section>
+
       <Section title="Availability">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Switch checked={E.available} onChange={v => updateEngineer({ available: v })} />
           <div>
             <div style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 500, fontSize: 13, color: '#1E293B' }}>Available for new projects</div>
-            <div style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12, color: '#64748B', marginTop: 2 }}>Shows a green indicator in the hero section when enabled</div>
+            <div style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12, color: '#64748B', marginTop: 2 }}>Shows status in admin and consultation options when enabled</div>
           </div>
         </div>
       </Section>

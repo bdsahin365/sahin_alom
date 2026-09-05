@@ -40,6 +40,13 @@
     <priority>0.80</priority>
   </url>
 
+  <url>
+    <loc>https://sahinalom.com/contact</loc>
+    <lastmod>2026-09-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
   <!-- Blog Articles & Technical Chapters -->
   <url>
     <loc>https://sahinalom.com/blog/chapter-1-lighting-design-ki</loc>

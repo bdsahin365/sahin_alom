@@ -1068,8 +1068,8 @@ export default function BlogIndex() {
               </p>
 
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                <a
-                  href="/#contact"
+                <button
+                  onClick={() => navigate('/contact')}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -1077,13 +1077,14 @@ export default function BlogIndex() {
                     padding: '12px 24px',
                     background: '#C47D0E',
                     color: '#FFFFFF',
+                    border: 'none',
                     borderRadius: 6,
                     fontFamily: 'Outfit, sans-serif',
                     fontSize: 13,
                     fontWeight: 700,
                     letterSpacing: '0.04em',
                     textTransform: 'uppercase',
-                    textDecoration: 'none',
+                    cursor: 'pointer',
                     transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={e => {
@@ -1096,7 +1097,7 @@ export default function BlogIndex() {
                   }}
                 >
                   Schedule Engineering Review <ArrowRight size={14} />
-                </a>
+                </button>
 
                 <button
                   onClick={() => navigate('/cv')}

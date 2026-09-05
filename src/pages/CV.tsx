@@ -187,7 +187,7 @@ export default function CV() {
               </div>
             )}
 
-            {/* 2. Identity & Badges */}
+            {/* 2. Identity */}
             <div style={{ minWidth: 0 }}>
               <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 10.5, letterSpacing: '0.22em', color: '#C47D0E', textTransform: 'uppercase', display: 'block', marginBottom: 4, fontWeight: 700 }}>
                 {E.title} · Power Systems
@@ -200,40 +200,10 @@ export default function CV() {
                 letterSpacing: '0.01em',
                 lineHeight: 0.95,
                 color: '#0D1218',
-                margin: '0 0 10px',
+                margin: '0',
               }}>
                 {E.name}
               </h1>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                <span style={{
-                  padding: '3px 9px',
-                  background: '#0D1218',
-                  color: '#FAF8F5',
-                  fontFamily: 'JetBrains Mono,monospace',
-                  fontSize: 9.5,
-                  fontWeight: 700,
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
-                  borderRadius: 2,
-                  whiteSpace: 'nowrap'
-                }}>
-                  Class ABC Licensed
-                </span>
-                <span style={{
-                  padding: '3px 9px',
-                  background: 'rgba(196,125,14,0.12)',
-                  color: '#C47D0E',
-                  fontFamily: 'JetBrains Mono,monospace',
-                  fontSize: 9.5,
-                  fontWeight: 700,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  borderRadius: 2,
-                  whiteSpace: 'nowrap'
-                }}>
-                  Industrial Power & Electrical Systems
-                </span>
-              </div>
             </div>
 
             {/* 3. Contact Details Card */}
@@ -397,11 +367,11 @@ export default function CV() {
               <div>
                 <SectionHead title="Tools & Instrumentation" icon={<Wrench size={14} color="#C47D0E" />} />
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-                  {[
+                  {(E.cvTools && E.cvTools.length > 0 ? E.cvTools : [
                     'AutoCAD Electrical', 'Single-Line Diagrams (SLD)', 'Load Schedule Analysis',
                     'Generator / ATS Wiring', 'Transformer & Switchgear', 'Power Factor Improvement (PFI)',
                     'Fluke Earth Tester', 'Megger Insulation Tester', 'MS Office / Excel', 'ETAP', 'PVSyst'
-                  ].map((t, j) => (
+                  ]).map((t, j) => (
                     <span
                       key={j}
                       style={{
@@ -537,7 +507,7 @@ export default function CV() {
                 </span>
               </div>
               <p style={{ fontFamily: 'Outfit,sans-serif', fontSize: 11.5, color: '#6B7280', lineHeight: 1.6, margin: 0 }}>
-                Certified electrical engineer credentialed by the Electricity Licensing Board (ELB), Bangladesh. All details and educational qualifications are accurate and verifiable.
+                {E.declaration || 'Certified electrical engineer credentialed by the Electricity Licensing Board (ELB), Bangladesh. All details and educational qualifications are accurate and verifiable.'}
               </p>
             </div>
 

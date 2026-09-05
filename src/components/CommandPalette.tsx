@@ -132,7 +132,7 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
       { name: 'Featured Engineering Projects', href: '#projects', desc: 'Substations, Industrial Plants, Solar PV' },
       { name: 'Professional Engineering Services', href: '#services', desc: 'Design, Audits, Power Flow Simulation' },
       { name: 'About Md Sahin Alom', href: '#about', desc: 'Credentials, Experience, ABC License' },
-      { name: 'Direct Contact & Consultation', href: '#contact', desc: 'Phone, Email, Office, Inquiries' },
+      { name: 'Schedule Engineering Review', to: '/contact', desc: 'Direct technical consultation booking & inquiries' },
       { name: 'Full Engineering CV / Resume', to: '/cv', desc: 'Career history, certifications, education' },
       { name: 'Personal & Professional Biodata', to: '/biodata', desc: 'Detailed professional profile & background' },
       { name: 'Tools & Calculators Hub', to: '/tools', desc: '20+ IEC standard electrical calculators' },

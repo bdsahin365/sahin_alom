@@ -273,16 +273,21 @@ export default function Biodata() {
           <Section title="02. Personal Particulars" icon={<User size={15} color="#C47D0E" />}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '8px 24px', background: '#FAFAF8', padding: '16px 20px', border: '1px solid #EDE8DF' }}>
               {[
-                { l: 'Full Name',        v: E.name },
-                { l: 'Designation',      v: `${E.title} (EEE)` },
-                { l: 'Statutory License',v: 'Class ABC (Electricity Licensing Board)' },
-                { l: 'Nationality',      v: 'Bangladeshi (By Birth)' },
-                { l: 'Religion',         v: 'Islam' },
-                { l: 'Marital Status',   v: 'Single' },
-                { l: 'Contact Mobile',   v: E.phone },
-                { l: 'Email Address',    v: E.email },
-                { l: 'Present Location', v: E.location },
-                { l: 'LinkedIn Profile', v: 'linkedin.com/in/sahinalom', link: E.linkedin },
+                { l: 'Full Name',         v: E.name },
+                { l: 'Designation',       v: `${E.title} (EEE)` },
+                ...(E.fatherName ? [{ l: "Father's Name", v: E.fatherName }] : []),
+                ...(E.motherName ? [{ l: "Mother's Name", v: E.motherName }] : []),
+                ...(E.dob ? [{ l: 'Date of Birth', v: E.dob }] : []),
+                ...(E.bloodGroup ? [{ l: 'Blood Group', v: E.bloodGroup }] : []),
+                { l: 'Statutory License', v: E.credentialsTag ? `${E.credentialsTag} (Electricity Licensing Board)` : 'Class ABC (Electricity Licensing Board)' },
+                { l: 'Nationality',       v: E.nationality || 'Bangladeshi (By Birth)' },
+                { l: 'Religion',          v: E.religion || 'Islam' },
+                { l: 'Marital Status',    v: E.maritalStatus || 'Single' },
+                { l: 'Contact Mobile',    v: E.phone },
+                { l: 'Email Address',     v: E.email },
+                { l: 'Present Address',   v: E.presentAddress || E.location },
+                { l: 'Permanent Address', v: E.permanentAddress || E.location },
+                ...(E.linkedin ? [{ l: 'LinkedIn Profile', v: E.linkedin.replace(/^https?:\/\/(www\.)?/, ''), link: E.linkedin }] : []),
               ].map((r, i) => (
                 <div key={i} style={{ display: 'flex', gap: 8, paddingBottom: 8, borderBottom: '1px dashed #EDE8DF', alignItems: 'baseline' }}>
                   <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, letterSpacing: '0.12em', color: '#6B7280', textTransform: 'uppercase', flexShrink: 0, minWidth: 120 }}>
@@ -475,7 +480,7 @@ export default function Biodata() {
                 </span>
               </div>
               <p style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12.5, color: '#4B5563', lineHeight: 1.7, margin: 0 }}>
-                I hereby declare under solemn affirmation that all information and particulars stated in this official Biodata are true, correct, and verifiable in all aspects to the best of my knowledge and belief.
+                {E.declaration || 'I hereby declare under solemn affirmation that all information and particulars stated in this official Biodata are true, correct, and verifiable in all aspects to the best of my knowledge and belief.'}
               </p>
             </div>
 

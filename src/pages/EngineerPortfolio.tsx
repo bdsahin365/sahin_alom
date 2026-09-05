@@ -7,6 +7,7 @@ import {
 import { useSite } from '../context/SiteContext'
 import { supabase } from '../lib/supabase'
 import sahinPhoto from '../img/sahin.png'
+import HeaderLogo from '../components/HeaderLogo'
 
 // ── Reveal ─────────────────────────────────────────────────────────────────
 function useReveal() {
@@ -78,50 +79,39 @@ function Hero() {
       position: 'relative',
       overflow: 'hidden',
     }}>
-      {/* ── Desktop-only Structural CAD Grid Lines ── */}
-      <div className="hero-grid-desktop" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
+      {/* ── Minimal & Modern Engineering Background (Desktop & Mobile) ── */}
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
+        {/* Ambient warm center glow */}
+        <div style={{
+          position: 'absolute', top: '35%', left: '50%',
+          width: 'clamp(360px, 60vw, 850px)', height: 'clamp(360px, 60vw, 850px)',
+          transform: 'translate(-50%, -50%)',
+          background: 'radial-gradient(circle, rgba(196,125,14,0.08) 0%, transparent 68%)',
+        }} />
+
+        {/* Minimal architectural precision vertical lines */}
         {[20, 40, 60, 80].map(pct => (
           <div key={pct} style={{
             position: 'absolute', top: 0, bottom: 0,
             left: `${pct}%`, width: 1,
             background: 'var(--border)',
-            opacity: 0.45,
+            opacity: 0.35,
           }} />
         ))}
-        {/* Amber vertical accent line */}
+        {/* Soft amber vertical accent line */}
         <div style={{
           position: 'absolute', top: 0, bottom: 0, left: '20%',
           width: 1, background: 'var(--accent)', opacity: 0.22,
         }} />
-        {/* Horizontal rule at 62% height */}
-        <div style={{
-          position: 'absolute', top: '62%', left: 0, right: 0,
-          height: 1, background: 'var(--border)', opacity: 0.7,
-        }} />
-      </div>
 
-      {/* ── Mobile-Optimized Clean Ambient Gradient Background (No Harsh Lines) ── */}
-      <div className="hero-ambient-mobile" style={{
-        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
-        background: 'radial-gradient(ellipse 90% 60% at 50% 12%, rgba(196,125,14,0.12) 0%, rgba(247,245,240,0) 70%)',
-      }}>
-        {/* Soft engineering micro-dot pattern on mobile */}
+        {/* Subtle modern engineering micro-grid pattern */}
         <div style={{
           position: 'absolute', inset: 0,
-          backgroundImage: 'radial-gradient(rgba(196,125,14,0.15) 1px, transparent 1px)',
-          backgroundSize: '24px 24px',
-          opacity: 0.6,
+          backgroundImage: 'radial-gradient(rgba(196,125,14,0.12) 1px, transparent 1px)',
+          backgroundSize: '28px 28px',
+          opacity: 0.45,
         }} />
       </div>
-
-      {/* Ambient center warm glow orb */}
-      <div style={{
-        position: 'absolute', top: '30%', left: '50%',
-        width: 700, height: 700,
-        transform: 'translate(-50%,-50%)',
-        background: 'radial-gradient(circle, rgba(232,160,32,0.08) 0%, transparent 65%)',
-        pointerEvents: 'none', zIndex: 0,
-      }} />
 
       {/* Top bar / Intro section badge */}
       <div style={{
@@ -136,36 +126,22 @@ function Hero() {
         zIndex: 1,
       }}>
         <SIdx n="01" label="Introduction" />
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 7,
-          padding: '4px 10px',
-          background: 'rgba(255, 255, 255, 0.7)',
-          backdropFilter: 'blur(8px)',
-          border: '1px solid var(--border)',
-          borderRadius: 20,
-        }}>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: E.available ? 'var(--green)' : 'var(--fg-dim)', boxShadow: E.available ? '0 0 8px var(--green)' : 'none' }} />
-          <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, letterSpacing: '0.15em', textTransform: 'uppercase' as const, color: E.available ? 'var(--green)' : 'var(--fg-dim)', fontWeight: 600 }}>
-            {E.available ? 'Available for Work' : 'Unavailable'}
-          </span>
-        </div>
       </div>
 
       {/* Main headline & hero content container */}
       <div style={{ position: 'relative', zIndex: 1 }}>
-        {/* Name & location sub-ribbon */}
+        {/* Name sub-ribbon */}
         <div style={{ ...fade(0.15), marginBottom: 'clamp(8px,1.5vh,20px)', display: 'flex', alignItems: 'center', gap: 16 }}>
           <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 11, color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase' as const, fontWeight: 700 }}>{E.initials}</span>
           <div style={{ flex: 1, height: 1, background: 'var(--border-strong)' }} />
-          <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 10, color: 'var(--fg-dim)', letterSpacing: '0.15em', textTransform: 'uppercase' as const }}>{E.location}</span>
         </div>
 
-        {/* Giant headline — responsive scaling for both mobile and desktop */}
+        {/* Giant headline — majestic condensed typography */}
         <h1 className="display" style={{
-          fontSize: 'clamp(44px, 12vw, 200px)',
-          lineHeight: 0.92,
+          fontSize: 'clamp(64px, 13.5vw, 210px)',
+          lineHeight: 0.91,
           color: 'var(--fg)',
-          marginBottom: 'clamp(8px, 1.5vh, 16px)',
+          marginBottom: 'clamp(6px, 1vh, 14px)',
           letterSpacing: '-0.02em',
         }}>
           {['Power', 'Systems'].map((word, i) => (
@@ -187,12 +163,12 @@ function Hero() {
         </h1>
 
         {/* Rule + Tagline & CTA Group */}
-        <div style={{ ...fade(0.48), display: 'flex', alignItems: 'flex-start', gap: 'clamp(20px, 3vw, 48px)', marginTop: 'clamp(16px, 2.5vh, 32px)', paddingTop: 'clamp(16px, 2.5vh, 32px)', borderTop: '1px solid var(--border-strong)', flexWrap: 'wrap' }}>
-          <p style={{ fontFamily: 'Outfit,sans-serif', fontSize: 'clamp(14px, 1.4vw, 17px)', color: 'var(--fg-dim)', lineHeight: 1.65, maxWidth: 480, fontWeight: 400 }}>
+        <div style={{ ...fade(0.48), display: 'flex', alignItems: 'flex-start', gap: 'clamp(24px, 4vw, 64px)', marginTop: 'clamp(20px, 3vh, 36px)', paddingTop: 'clamp(20px, 3vh, 36px)', borderTop: '1px solid var(--border-strong)', flexWrap: 'wrap' }}>
+          <p style={{ fontFamily: 'Outfit,sans-serif', fontSize: 'clamp(15px, 1.5vw, 18px)', color: 'var(--fg-dim)', lineHeight: 1.65, maxWidth: 480, fontWeight: 300 }}>
             {E.tagline}
           </p>
-          <div className="hero-cta-wrap" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginLeft: 'auto' }}>
-            <a href="#contact" className="btn-primary" style={{ gap: 8, fontSize: 12 }}>
+          <div className="hero-cta-wrap" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginLeft: 'auto' }}>
+            <a href="#contact" className="btn-primary" style={{ gap: 10, fontSize: 12 }}>
               Hire me <ArrowUpRight size={14} strokeWidth={2} />
             </a>
             <a href="#projects" className="btn-outline" style={{ fontSize: 12 }}>
@@ -201,7 +177,7 @@ function Hero() {
           </div>
         </div>
 
-        {/* Stats strip (4-column on desktop, 2x2 cards on mobile) */}
+        {/* Stats strip */}
         <div className="hero-stats-grid" style={fade(0.58)}>
           {[
             { v: E.yearsExp,      l: 'Years exp.' },
@@ -210,7 +186,7 @@ function Hero() {
             { v: E.clients,       l: 'Clients' },
           ].map(s => (
             <div key={s.l} className="hero-stat-cell">
-              <div className="display" style={{ fontSize: 'clamp(26px, 4vw, 54px)', color: 'var(--accent)', lineHeight: 1, marginBottom: 4 }}>{s.v}</div>
+              <div className="display" style={{ fontSize: 'clamp(28px, 4.5vw, 56px)', color: 'var(--accent)', lineHeight: 1, marginBottom: 4 }}>{s.v}</div>
               <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, letterSpacing: '0.15em', color: 'var(--muted)', textTransform: 'uppercase' as const, fontWeight: 600 }}>{s.l}</div>
             </div>
           ))}
@@ -832,18 +808,13 @@ function Contact() {
 function Footer() {
   const { data: { engineer: E } } = useSite()
   return (
-    <footer style={{ borderTop: '1px solid var(--border)', padding: 'clamp(28px,5vh,48px) var(--px)' }}>
+    <footer style={{ borderTop: '1px solid var(--border)', padding: 'clamp(28px,5vh,48px) var(--px)', background: 'var(--bg-2)' }}>
       <div style={{ maxWidth: 'var(--max-w)', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 24, height: 24, background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Zap size={12} strokeWidth={2.5} style={{ color: '#FFFFFF' }} />
-          </div>
-          <span className="display" style={{ fontSize: 20, color: 'var(--fg)', letterSpacing: 0 }}>{E.initials}</span>
-        </div>
-        <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9, color: 'var(--muted)', letterSpacing: '0.15em', textTransform: 'uppercase' as const }}>
+        <HeaderLogo compact={true} showSubtitle={false} />
+        <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, color: 'var(--muted)', letterSpacing: '0.12em', textTransform: 'uppercase' as const }}>
           &copy; {new Date().getFullYear()} {E.name} · Power Systems Engineer
         </span>
-        <a href="#hero" style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9, color: 'var(--fg-dim)', letterSpacing: '0.15em', textTransform: 'uppercase' as const, textDecoration: 'none', transition: 'color 0.2s' }}
+        <a href="#hero" style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, color: 'var(--fg-dim)', letterSpacing: '0.15em', textTransform: 'uppercase' as const, textDecoration: 'none', transition: 'color 0.2s', fontWeight: 600 }}
           onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
           onMouseLeave={e => (e.currentTarget.style.color = 'var(--fg-dim)')}>
           Back to top ↑

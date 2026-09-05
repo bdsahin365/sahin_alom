@@ -11,6 +11,8 @@ import ToolPage from './pages/tools/ToolPage'
 import ArticleEditor from './pages/blog/ArticleEditor'
 import BlogIndex from './pages/BlogIndex'
 import BlogPost from './pages/BlogPost'
+import ContactPage from './pages/ContactPage'
+import NotFound from './pages/NotFound'
 
 export const router = createBrowserRouter(
   [
@@ -21,6 +23,7 @@ export const router = createBrowserRouter(
         { index: true, Component: SiteView },
         { path: 'cv', Component: CV },
         { path: 'biodata', Component: Biodata },
+        { path: 'contact', Component: ContactPage },
         { path: 'tools', Component: ToolsPage },
         { path: 'tools/:slug', Component: ToolPage },
         { path: 'blog', Component: BlogIndex },
@@ -39,9 +42,11 @@ export const router = createBrowserRouter(
             },
           ],
         },
+        { path: '*', Component: NotFound },
       ],
     },
   ],
   { basename: import.meta.env.BASE_URL.replace(/\/$/, '') || '/' }
 )
+
 
