@@ -648,9 +648,219 @@ function BrandingPanel() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <HeaderLogo />
           </div>
-          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#C47D0E', background: 'rgba(196, 125, 14, 0.1)', padding: '4px 10px', borderRadius: 4, fontWeight: 700 }}>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: B.primaryColor || '#C47D0E', background: 'var(--accent-dim, rgba(196, 125, 14, 0.1))', padding: '4px 10px', borderRadius: 4, fontWeight: 700 }}>
             LIVE PREVIEW
           </div>
+        </div>
+      </Section>
+
+      {/* ── Brand Accent Color & Theme Palette ── */}
+      <Section title="Brand Accent Color & Theme Palette" description="Choose a signature engineering accent color or define a custom hex code applied across buttons, highlights, badges, and emblems site-wide.">
+        <div style={{ marginBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+            <div style={{
+              width: 38, height: 38, borderRadius: 8,
+              background: B.primaryColor || '#C47D0E',
+              boxShadow: `0 2px 8px ${B.primaryColor || '#C47D0E'}40`,
+              border: '2px solid #FFFFFF',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF',
+              flexShrink: 0
+            }}>
+              <Zap size={18} />
+            </div>
+            <div>
+              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: 13, color: '#0F172A' }}>
+                Active Accent Color: <span style={{ fontFamily: 'JetBrains Mono, monospace', color: B.primaryColor || '#C47D0E' }}>{B.primaryColor || '#C47D0E'}</span>
+              </div>
+              <div style={{ fontFamily: 'Outfit, sans-serif', fontSize: 11.5, color: '#64748B' }}>
+                Applied across the entire site including navigation, buttons, icons, highlights, and the hero section.
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Preset Palette Chips */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+            {[
+              { name: 'Precision Amber', hex: '#C47D0E' },
+              { name: 'Electric Cobalt', hex: '#1E6FD9' },
+              { name: 'High-Voltage Emerald', hex: '#16A34A' },
+              { name: 'Cyber Violet', hex: '#7C3AED' },
+              { name: 'Signal Crimson', hex: '#DC2626' },
+              { name: 'Tech Cyan', hex: '#0891B2' },
+              { name: 'Solar Copper', hex: '#D97706' },
+              { name: 'Slate Titanium', hex: '#475569' },
+              { name: 'Deep Obsidian', hex: '#0F172A' },
+            ].map(p => {
+              const active = (B.primaryColor || '#C47D0E').toLowerCase() === p.hex.toLowerCase()
+              return (
+                <button
+                  key={p.hex}
+                  type="button"
+                  onClick={() => updateB({ primaryColor: p.hex })}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 7,
+                    padding: '6px 12px',
+                    borderRadius: 6,
+                    border: active ? `2px solid ${p.hex}` : '1px solid #E2E8F0',
+                    background: active ? `${p.hex}15` : '#FFFFFF',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <span style={{ width: 12, height: 12, borderRadius: '50%', background: p.hex, display: 'inline-block', flexShrink: 0 }} />
+                  <span style={{ fontFamily: 'Outfit, sans-serif', fontSize: 11.5, fontWeight: active ? 700 : 500, color: active ? p.hex : '#334155' }}>
+                    {p.name}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Custom Hex & Native Color Picker */}
+          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', marginTop: 22 }}>
+              <input
+                type="color"
+                value={B.primaryColor || '#C47D0E'}
+                onChange={e => updateB({ primaryColor: e.target.value })}
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 6,
+                  border: '1px solid #CBD5E1',
+                  cursor: 'pointer',
+                  padding: 2,
+                  background: '#FFFFFF',
+                }}
+                title="Click to pick custom color"
+              />
+            </div>
+            <div style={{ flex: 1, minWidth: 160 }}>
+              <Input
+                label="Custom Hex Color Code"
+                value={B.primaryColor || '#C47D0E'}
+                onChange={v => updateB({ primaryColor: v.startsWith('#') ? v : `#${v}` })}
+                placeholder="#C47D0E"
+              />
+            </div>
+            {(B.primaryColor && B.primaryColor !== '#C47D0E') && (
+              <button
+                type="button"
+                onClick={() => updateB({ primaryColor: '#C47D0E' })}
+                style={{
+                  padding: '9px 14px', borderRadius: 6,
+                  background: '#F8FAFC', border: '1px solid #E2E8F0',
+                  color: '#64748B', fontSize: 11.5, fontFamily: 'Outfit,sans-serif',
+                  fontWeight: 500, cursor: 'pointer', marginTop: 22
+                }}
+              >
+                ↺ Reset Amber
+              </button>
+            )}
+          </div>
+        </div>
+      </Section>
+
+      {/* ── Brand Typography & Font Selection ── */}
+      <Section title="Brand Typography & Google Fonts" description="Select the primary display font for headlines & header titles, and the body reading font.">
+        <Grid2>
+          {/* Display Font */}
+          <div>
+            <label style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12, fontWeight: 600, color: '#0F172A', display: 'block', marginBottom: 6 }}>
+              Display / Headline Font
+            </label>
+            <select
+              value={B.displayFont || 'Barlow Condensed'}
+              onChange={e => updateB({ displayFont: e.target.value })}
+              style={{
+                width: '100%', padding: '9px 12px', background: '#FFFFFF',
+                border: '1px solid #E2E8F0', borderRadius: 6,
+                color: '#0F172A', fontFamily: 'Outfit,sans-serif', fontSize: 13,
+                outline: 'none', marginBottom: 6
+              }}
+            >
+              <option value="Barlow Condensed">Barlow Condensed (Architectural & Technical — Default)</option>
+              <option value="Outfit">Outfit (Modern Clean Geometric)</option>
+              <option value="Space Grotesk">Space Grotesk (Futuristic Precision)</option>
+              <option value="Plus Jakarta Sans">Plus Jakarta Sans (Refined Contemporary)</option>
+              <option value="Inter">Inter (Minimalist Swiss Tech)</option>
+              <option value="Roboto Condensed">Roboto Condensed (Structured Industrial)</option>
+              <option value="Syne">Syne (Bold Display)</option>
+            </select>
+            <div style={{ fontFamily: 'Outfit,sans-serif', fontSize: 11, color: '#64748B' }}>
+              Used for giant hero headlines, section banners, and brand headers.
+            </div>
+          </div>
+
+          {/* Body Font */}
+          <div>
+            <label style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12, fontWeight: 600, color: '#0F172A', display: 'block', marginBottom: 6 }}>
+              Body &amp; Reading Font
+            </label>
+            <select
+              value={B.bodyFont || 'Outfit'}
+              onChange={e => updateB({ bodyFont: e.target.value })}
+              style={{
+                width: '100%', padding: '9px 12px', background: '#FFFFFF',
+                border: '1px solid #E2E8F0', borderRadius: 6,
+                color: '#0F172A', fontFamily: 'Outfit,sans-serif', fontSize: 13,
+                outline: 'none', marginBottom: 6
+              }}
+            >
+              <option value="Outfit">Outfit (Clean & High Readability — Default)</option>
+              <option value="Inter">Inter (Standard Modern Tech UI)</option>
+              <option value="Plus Jakarta Sans">Plus Jakarta Sans (Refined Editorial)</option>
+              <option value="Hind Siliguri">Hind Siliguri (Bengali & English Bilingual)</option>
+              <option value="Roboto">Roboto (Universal Neutral)</option>
+              <option value="Space Grotesk">Space Grotesk (Tech Monospace Feel)</option>
+            </select>
+            <div style={{ fontFamily: 'Outfit,sans-serif', fontSize: 11, color: '#64748B' }}>
+              Used for article paragraphs, project specifications, and body text.
+            </div>
+          </div>
+        </Grid2>
+
+        {/* Live Font & Color Preview Box */}
+        <div style={{
+          marginTop: 16,
+          padding: '16px 20px',
+          background: '#F8FAFC',
+          border: '1px solid #E2E8F0',
+          borderRadius: 8,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9.5, letterSpacing: '0.12em', color: '#64748B', textTransform: 'uppercase', fontWeight: 600 }}>
+              Live Typography &amp; Color Preview
+            </span>
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9.5, color: B.primaryColor || '#C47D0E', fontWeight: 700 }}>
+              {B.displayFont || 'Barlow Condensed'} + {B.bodyFont || 'Outfit'}
+            </span>
+          </div>
+
+          <div style={{
+            fontFamily: `var(--font-display, '${B.displayFont || "Barlow Condensed"}', sans-serif)`,
+            fontSize: 24,
+            fontWeight: 800,
+            color: '#0D1218',
+            textTransform: 'uppercase',
+            letterSpacing: '0.02em',
+            lineHeight: 1.1,
+            marginBottom: 6,
+          }}>
+            Substation <span style={{ color: B.primaryColor || '#C47D0E' }}>Engineering</span> &amp; Power Systems
+          </div>
+
+          <p style={{
+            fontFamily: `var(--font-body, '${B.bodyFont || "Outfit"}', sans-serif)`,
+            fontSize: 13,
+            color: '#475569',
+            lineHeight: 1.6,
+            margin: 0,
+          }}>
+            Design and verification of 11kV/0.415kV electrical substations according to BNBC 2020 standards, IEEE guidelines, and local statutory Electricity Licensing Board regulations.
+          </p>
         </div>
       </Section>
 

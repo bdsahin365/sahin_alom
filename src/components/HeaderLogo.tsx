@@ -139,7 +139,7 @@ export default function HeaderLogo({ compact = false, showSubtitle = true, onCli
             {showBrandTitle && (
               <span
                 style={{
-                  fontFamily: 'Barlow Condensed, sans-serif',
+                  fontFamily: 'var(--font-display, "Barlow Condensed", sans-serif)',
                   fontWeight: 800,
                   fontSize: compact ? 19 : 22,
                   letterSpacing: '0.04em',
@@ -155,9 +155,9 @@ export default function HeaderLogo({ compact = false, showSubtitle = true, onCli
             {showBadge && (
               <span
                 style={{
-                  background: 'linear-gradient(135deg, rgba(196,125,14,0.15) 0%, rgba(196,125,14,0.05) 100%)',
-                  border: '1px solid rgba(196, 125, 14, 0.35)',
-                  color: '#C47D0E',
+                  background: 'var(--accent-dim, rgba(196,125,14,0.15))',
+                  border: '1px solid var(--accent, #C47D0E)',
+                  color: 'var(--accent, #C47D0E)',
                   fontFamily: 'JetBrains Mono, monospace',
                   fontSize: 8,
                   fontWeight: 700,

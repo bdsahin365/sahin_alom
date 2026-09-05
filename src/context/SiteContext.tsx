@@ -74,6 +74,9 @@ export type BrandingSettings = {
   brandSubtitle?: string
   showBrandSubtitle?: boolean
   showLogoEmblem?: boolean
+  primaryColor?: string
+  displayFont?: string
+  bodyFont?: string
 }
 
 export type Settings = {
@@ -195,6 +198,9 @@ const DEFAULT: SiteData = {
       brandSubtitle: 'ELECTRICAL ENGINEER • ABC LICENSED',
       showBrandSubtitle: true,
       showLogoEmblem: true,
+      primaryColor: '#C47D0E',
+      displayFont: 'Barlow Condensed',
+      bodyFont: 'Outfit',
     },
     social: {
       linkedin: siteConfig.social.linkedin || 'https://linkedin.com/in/sahinalom',
@@ -274,6 +280,48 @@ export function SiteProvider({ children }: { children: ReactNode }) {
       fav.href = faviconUrl
     }
   }, [data.settings.branding?.favicon])
+
+  // Dynamically synchronize primary brand color and typography across entire site
+  useEffect(() => {
+    const primaryColor = data.settings.branding?.primaryColor || '#C47D0E'
+    const displayFont = data.settings.branding?.displayFont || 'Barlow Condensed'
+    const bodyFont = data.settings.branding?.bodyFont || 'Outfit'
+
+    // 1. Update CSS Variables on :root
+    document.documentElement.style.setProperty('--accent', primaryColor)
+    document.documentElement.style.setProperty('--font-display', `'${displayFont}', sans-serif`)
+    document.documentElement.style.setProperty('--font-body', `'${bodyFont}', 'Hind Siliguri', sans-serif`)
+
+    // Compute RGB for dim & glow tokens
+    const hex = primaryColor.replace('#', '')
+    if (hex.length === 6) {
+      const r = parseInt(hex.substring(0, 2), 16)
+      const g = parseInt(hex.substring(2, 4), 16)
+      const b = parseInt(hex.substring(4, 6), 16)
+      if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+        document.documentElement.style.setProperty('--accent-dim', `rgba(${r}, ${g}, ${b}, 0.1)`)
+        document.documentElement.style.setProperty('--accent-glow', `rgba(${r}, ${g}, ${b}, 0.07)`)
+      }
+    }
+
+    // 2. Ensure selected Google Fonts are loaded dynamically
+    const fontFamilies = [displayFont, bodyFont].filter(f => f && f !== 'sans-serif')
+    const uniqueFonts = Array.from(new Set(fontFamilies))
+    const fontQuery = uniqueFonts.map(f => `family=${encodeURIComponent(f)}:wght@300;400;500;600;700;800;900`).join('&')
+    
+    let fontLink = document.getElementById('dynamic-google-fonts') as HTMLLinkElement
+    if (!fontLink) {
+      fontLink = document.createElement('link')
+      fontLink.id = 'dynamic-google-fonts'
+      fontLink.rel = 'stylesheet'
+      document.head.appendChild(fontLink)
+    }
+    fontLink.href = `https://fonts.googleapis.com/css2?${fontQuery}&display=swap`
+  }, [
+    data.settings.branding?.primaryColor,
+    data.settings.branding?.displayFont,
+    data.settings.branding?.bodyFont
+  ])
 
   // Fetch from Supabase on mount
   useEffect(() => {
