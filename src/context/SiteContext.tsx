@@ -12,6 +12,9 @@ import type { Project, Experience } from '../data/engineer'
 import { supabase } from '../lib/supabase'
 import { siteConfig } from '../config/siteConfig'
 
+import breakerVideo from '../vid/How_circuit_breaker_works_202608220725.mp4'
+import fieldVideo from '../vid/lv_0_20260822030810.mp4'
+
 // ── Types ────────────────────────────────────────────────────────────────────
 export type EngineerInfo = typeof D_ENG & {
   available: boolean
@@ -23,6 +26,17 @@ export type Credential    = { label: string; value: string; detail: string; url?
 export type ExpertiseItem = { id: string; num: string; title: string; tags: string[]; desc: string }
 export type ServiceItem   = { id: string; num: string; name: string; detail: string }
 export type EducationItem = { period: string; degree: string; institution: string; note: string }
+
+export type StoryItem = {
+  id: string
+  title: string
+  subtitle: string
+  category: string
+  videoUrl: string
+  poster?: string
+  timestamp: string
+  enabled?: boolean
+}
 
 export type AnalyticsSettings = {
   googleAnalyticsId: string
@@ -71,32 +85,36 @@ export type Settings = {
 export { type Project, type Experience }
 
 export type SiteData = {
-  engineer:    EngineerInfo
-  credentials: Credential[]
-  expertise:   ExpertiseItem[]
-  projects:    Project[]
-  services:    ServiceItem[]
-  education:   EducationItem[]
-  experience:  Experience[]
-  settings:    Settings
+  engineer:                 EngineerInfo
+  credentials:              Credential[]
+  expertise:                ExpertiseItem[]
+  projects:                 Project[]
+  services:                 ServiceItem[]
+  education:                EducationItem[]
+  experience:               Experience[]
+  settings:                 Settings
+  shorts:                   StoryItem[]
+  showFloatingShortsBubble?: boolean
 }
 
 type Ctx = {
-  data:              SiteData
-  loading:           boolean
-  saved:             boolean
-  updateEngineer:    (p: Partial<EngineerInfo>) => void
-  updateCredentials: (v: Credential[]) => void
-  updateExpertise:   (v: ExpertiseItem[]) => void
-  updateProjects:    (v: Project[]) => void
-  updateServices:    (v: ServiceItem[]) => void
-  updateEducation:   (v: EducationItem[]) => void
-  updateExperience:  (v: Experience[]) => void
-  updateSettings:    (p: Partial<Settings>) => void
-  resetToDefaults:   () => void
+  data:                       SiteData
+  loading:                    boolean
+  saved:                      boolean
+  updateEngineer:             (p: Partial<EngineerInfo>) => void
+  updateCredentials:          (v: Credential[]) => void
+  updateExpertise:            (v: ExpertiseItem[]) => void
+  updateProjects:             (v: Project[]) => void
+  updateServices:             (v: ServiceItem[]) => void
+  updateEducation:            (v: EducationItem[]) => void
+  updateExperience:           (v: Experience[]) => void
+  updateSettings:             (p: Partial<Settings>) => void
+  updateShorts:               (v: StoryItem[]) => void
+  updateFloatingShortsBubble: (v: boolean) => void
+  resetToDefaults:            () => void
 }
 
-const CACHE_KEY = 'msa_site_v12'
+const CACHE_KEY = 'msa_site_v13'
 const DB_ROW_ID = 1
 
 const DEFAULT: SiteData = {
@@ -112,6 +130,27 @@ const DEFAULT: SiteData = {
   services:    D_SVC,
   education:   D_EDU,
   experience:  D_EXP2,
+  shorts: [
+    {
+      id: 'story-breaker',
+      title: 'How Circuit Breakers Work',
+      subtitle: 'Trip mechanism, arc chute & thermal-magnetic protection in industrial power systems',
+      category: 'Protection Engineering',
+      videoUrl: breakerVideo,
+      timestamp: 'Featured Demo',
+      enabled: true,
+    },
+    {
+      id: 'story-field',
+      title: 'Industrial Field Operations',
+      subtitle: 'On-site power distribution, switchgear maintenance & electrical commissioning',
+      category: 'Field Engineering',
+      videoUrl: fieldVideo,
+      timestamp: 'Field Log',
+      enabled: true,
+    },
+  ],
+  showFloatingShortsBubble: true,
   settings: {
     siteTitle:       siteConfig.siteName || 'Md Sahin Alom — Senior Electrical Engineer',
     pageDescription: siteConfig.defaultDescription || 'Power systems engineer specialized in substation design, BNBC 2020, and industrial power distribution.',
@@ -157,7 +196,7 @@ function deepMerge(parsed: Partial<SiteData>): SiteData {
     ...parsed,
     engineer: {
       ...DEFAULT.engineer,
-      ...parsed.engineer,
+      ...(parsed.engineer ?? {}),
       photo: parsed.engineer?.photo || DEFAULT.engineer.photo,
       credentialsTag: parsed.engineer?.credentialsTag || DEFAULT.engineer.credentialsTag,
       whatsapp: parsed.engineer?.whatsapp || DEFAULT.engineer.whatsapp,
@@ -165,12 +204,14 @@ function deepMerge(parsed: Partial<SiteData>): SiteData {
     experience: parsed.experience ?? DEFAULT.experience,
     settings: {
       ...DEFAULT.settings,
-      ...parsed.settings,
+      ...(parsed.settings ?? {}),
       branding: { ...DEFAULT.settings.branding, ...(parsed.settings?.branding ?? {}) },
       social: { ...DEFAULT.settings.social, ...(parsed.settings?.social ?? {}) },
       analytics: { ...DEFAULT.settings.analytics, ...(parsed.settings?.analytics ?? {}) },
       verification: { ...DEFAULT.settings.verification, ...(parsed.settings?.verification ?? {}) },
     },
+    shorts: parsed.shorts && parsed.shorts.length > 0 ? parsed.shorts : DEFAULT.shorts,
+    showFloatingShortsBubble: parsed.showFloatingShortsBubble ?? DEFAULT.showFloatingShortsBubble,
   }
 }
 
@@ -224,7 +265,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
         const baseData: Partial<SiteData> = configRow?.data ? (configRow.data as Partial<SiteData>) : {}
 
         // 2. Fetch structured tables in parallel to merge any direct edits
-        const [engRes, credRes, expRes, projRes, svcRes, eduRes, exp2Res, setRes] = await Promise.allSettled([
+        const [engRes, credRes, expRes, projRes, svcRes, eduRes, exp2Res, setRes, shortsRes] = await Promise.allSettled([
           supabase.from('engineer_profile').select('*').single(),
           supabase.from('credentials').select('*').order('display_order', { ascending: true }),
           supabase.from('expertise').select('*').order('display_order', { ascending: true }),
@@ -233,6 +274,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
           supabase.from('education').select('*').order('display_order', { ascending: true }),
           supabase.from('experience').select('*').order('display_order', { ascending: true }),
           supabase.from('site_settings').select('*').single(),
+          supabase.from('shorts').select('*').order('display_order', { ascending: true }),
         ])
 
         if (cancelled) return
@@ -247,6 +289,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
         const eduData = eduRes.status === 'fulfilled' ? eduRes.value.data : null
         const exp2Data = exp2Res.status === 'fulfilled' ? exp2Res.value.data : null
         const setDataRes = setRes.status === 'fulfilled' ? setRes.value.data : null
+        const shortsData = shortsRes.status === 'fulfilled' ? shortsRes.value.data : null
 
         if (engData) {
           structured.engineer = {
@@ -266,6 +309,19 @@ export function SiteProvider({ children }: { children: ReactNode }) {
         if (svcData?.length) structured.services = svcData
         if (eduData?.length) structured.education = eduData
         if (exp2Data?.length) structured.experience = exp2Data
+
+        if (shortsData?.length) {
+          structured.shorts = shortsData.map((s: any) => ({
+            id: s.id,
+            title: s.title,
+            subtitle: s.subtitle,
+            category: s.category,
+            videoUrl: s.video_url || s.videoUrl,
+            poster: s.poster_url || s.poster,
+            timestamp: s.timestamp_badge || s.timestamp || 'Demo',
+            enabled: s.enabled !== false,
+          }))
+        }
 
         if (setDataRes) {
           structured.settings = {
@@ -378,6 +434,21 @@ export function SiteProvider({ children }: { children: ReactNode }) {
         }).then(() => {}).catch(() => {})
       }
 
+      if (next.shorts?.length) {
+        supabase.from('shorts').upsert(next.shorts.map((s, i) => ({
+          id: s.id,
+          title: s.title,
+          subtitle: s.subtitle,
+          category: s.category,
+          video_url: s.videoUrl,
+          poster_url: s.poster || '',
+          timestamp_badge: s.timestamp,
+          enabled: s.enabled !== false,
+          display_order: i + 1,
+          updated_at: now
+        }))).then(() => {}).catch(() => {})
+      }
+
       if (next.projects?.length) {
         supabase.from('projects').upsert(next.projects.map((p, i) => ({
           id: p.id,
@@ -478,14 +549,16 @@ export function SiteProvider({ children }: { children: ReactNode }) {
     return () => { cancelled = true }
   }, [timer])
 
-  const updateEngineer    = (p: Partial<EngineerInfo>) => persist({ ...data, engineer: { ...data.engineer, ...p } })
-  const updateCredentials = (v: Credential[])           => persist({ ...data, credentials: v })
-  const updateExpertise   = (v: ExpertiseItem[])        => persist({ ...data, expertise: v })
-  const updateProjects    = (v: Project[])              => persist({ ...data, projects: v })
-  const updateServices    = (v: ServiceItem[])          => persist({ ...data, services: v })
-  const updateEducation   = (v: EducationItem[])        => persist({ ...data, education: v })
-  const updateExperience  = (v: Experience[])           => persist({ ...data, experience: v })
-  const updateSettings    = (p: Partial<Settings>)      => persist({ ...data, settings: { ...data.settings, ...p } })
+  const updateEngineer             = (p: Partial<EngineerInfo>) => persist({ ...data, engineer: { ...data.engineer, ...p } })
+  const updateCredentials          = (v: Credential[])           => persist({ ...data, credentials: v })
+  const updateExpertise            = (v: ExpertiseItem[])        => persist({ ...data, expertise: v })
+  const updateProjects             = (v: Project[])              => persist({ ...data, projects: v })
+  const updateServices             = (v: ServiceItem[])          => persist({ ...data, services: v })
+  const updateEducation            = (v: EducationItem[])        => persist({ ...data, education: v })
+  const updateExperience           = (v: Experience[])           => persist({ ...data, experience: v })
+  const updateSettings             = (p: Partial<Settings>)      => persist({ ...data, settings: { ...data.settings, ...p } })
+  const updateShorts               = (v: StoryItem[])            => persist({ ...data, shorts: v })
+  const updateFloatingShortsBubble = (v: boolean)                => persist({ ...data, showFloatingShortsBubble: v })
 
   const resetToDefaults = () => {
     supabase.from('site_config').delete().eq('id', DB_ROW_ID)
@@ -499,7 +572,8 @@ export function SiteProvider({ children }: { children: ReactNode }) {
       data, loading, saved,
       updateEngineer, updateCredentials, updateExpertise,
       updateProjects, updateServices, updateEducation,
-      updateExperience, updateSettings, resetToDefaults,
+      updateExperience, updateSettings, updateShorts, updateFloatingShortsBubble,
+      resetToDefaults,
     }}>
       {children}
     </SiteCtx.Provider>

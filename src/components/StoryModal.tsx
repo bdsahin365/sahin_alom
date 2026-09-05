@@ -7,14 +7,9 @@ import breakerVideo from '../vid/How_circuit_breaker_works_202608220725.mp4'
 import fieldVideo from '../vid/lv_0_20260822030810.mp4'
 import sahinAvatar from '../img/sahin.png'
 
-export type StoryItem = {
-  id: string
-  title: string
-  subtitle: string
-  category: string
-  videoUrl: string
-  timestamp: string
-}
+import { useSite, type StoryItem } from '../context/SiteContext'
+
+export { type StoryItem }
 
 export const STORIES: StoryItem[] = [
   {
@@ -23,7 +18,8 @@ export const STORIES: StoryItem[] = [
     subtitle: 'Trip mechanism, arc chute & thermal-magnetic protection in industrial power systems',
     category: 'Protection Engineering',
     videoUrl: breakerVideo,
-    timestamp: 'Featured Story',
+    timestamp: 'Featured Demo',
+    enabled: true,
   },
   {
     id: 'story-field',
@@ -32,6 +28,7 @@ export const STORIES: StoryItem[] = [
     category: 'Field Engineering',
     videoUrl: fieldVideo,
     timestamp: 'Field Log',
+    enabled: true,
   },
 ]
 
@@ -39,6 +36,7 @@ type Props = {
   isOpen: boolean
   onClose: () => void
   initialIndex?: number
+  stories?: StoryItem[]
 }
 
 type FloatingReaction = {
@@ -47,7 +45,13 @@ type FloatingReaction = {
   x: number
 }
 
-export default function StoryModal({ isOpen, onClose, initialIndex = 0 }: Props) {
+export default function StoryModal({ isOpen, onClose, initialIndex = 0, stories }: Props) {
+  const site = useSite()
+  const siteShorts = site?.data?.shorts
+  const activeStories = (stories && stories.length > 0)
+    ? stories
+    : (siteShorts && siteShorts.length > 0 ? siteShorts.filter(s => s.enabled !== false) : STORIES)
+
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
   const [isPlaying, setIsPlaying] = useState(true)
   const [isMuted, setIsMuted] = useState(false)
@@ -61,12 +65,12 @@ export default function StoryModal({ isOpen, onClose, initialIndex = 0 }: Props)
   const videoRef = useRef<HTMLVideoElement>(null)
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const currentStory = STORIES[currentIndex]
+  const currentStory = activeStories[currentIndex] || activeStories[0] || STORIES[0]
 
   // Reset when opened
   useEffect(() => {
     if (isOpen) {
-      setCurrentIndex(initialIndex)
+      setCurrentIndex(Math.min(initialIndex, Math.max(0, activeStories.length - 1)))
       setProgress(0)
       setIsPlaying(true)
       document.body.style.overflow = 'hidden'
@@ -74,18 +78,18 @@ export default function StoryModal({ isOpen, onClose, initialIndex = 0 }: Props)
       document.body.style.overflow = ''
     }
     return () => { document.body.style.overflow = '' }
-  }, [isOpen, initialIndex])
+  }, [isOpen, initialIndex, activeStories.length])
 
   // Navigation handlers
   const nextStory = useCallback(() => {
-    if (currentIndex < STORIES.length - 1) {
+    if (currentIndex < activeStories.length - 1) {
       setCurrentIndex(prev => prev + 1)
       setProgress(0)
       setIsVideoLoading(true)
     } else {
       onClose()
     }
-  }, [currentIndex, onClose])
+  }, [currentIndex, activeStories.length, onClose])
 
   const prevStory = useCallback(() => {
     if (currentIndex > 0) {
@@ -305,7 +309,7 @@ export default function StoryModal({ isOpen, onClose, initialIndex = 0 }: Props)
         >
           {/* Segmented Story Progress Bars */}
           <div style={{ display: 'flex', gap: 4, marginBottom: 12 }}>
-            {STORIES.map((s, idx) => {
+            {activeStories.map((s, idx) => {
               let fillPct = 0
               if (idx < currentIndex) fillPct = 100
               else if (idx === currentIndex) fillPct = progress

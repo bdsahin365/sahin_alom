@@ -340,7 +340,7 @@ export const INITIAL_ARTICLES: Article[] = [
 
 const STORAGE_KEY = 'msa_articles_v1'
 
-function getStoredArticles(): Article[] {
+export function getStoredArticles(): Article[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
@@ -357,7 +357,7 @@ function getStoredArticles(): Article[] {
   return INITIAL_ARTICLES
 }
 
-function saveStoredArticles(articles: Article[]) {
+export function saveStoredArticles(articles: Article[]) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(articles))
   } catch (e) {

@@ -2,10 +2,12 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router'
 import { 
   Search, X, Zap, Calculator, BookOpen, FileText, User, ArrowUpRight, 
-  Phone, MessageSquare, Mail, Sparkles, ChevronRight, Layers, ShieldCheck
+  Phone, MessageSquare, Mail, Sparkles, ChevronRight, Layers, ShieldCheck,
+  Play, Video, FolderOpen, Briefcase
 } from 'lucide-react'
 import { TOOLS } from '../data/tools'
-import { INITIAL_ARTICLES } from '../lib/articlesService'
+import { getStoredArticles } from '../lib/articlesService'
+import { useSite } from '../context/SiteContext'
 import { siteConfig } from '../config/siteConfig'
 
 type Props = {
@@ -17,7 +19,7 @@ type SearchItem = {
   id: string
   title: string
   subtitle: string
-  category: 'Tools' | 'Articles' | 'Portfolio' | 'Actions'
+  category: 'Tools' | 'Articles' | 'Projects' | 'Shorts' | 'Portfolio' | 'Actions'
   badge?: string
   icon: React.ReactNode
   onSelect: () => void
@@ -25,9 +27,10 @@ type SearchItem = {
 
 export default function CommandPalette({ isOpen, onClose }: Props) {
   const navigate = useNavigate()
+  const { data } = useSite()
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
-  const [activeFilter, setActiveFilter] = useState<'All' | 'Tools' | 'Articles' | 'Portfolio' | 'Actions'>('All')
+  const [activeFilter, setActiveFilter] = useState<'All' | 'Tools' | 'Articles' | 'Projects' | 'Shorts' | 'Actions'>('All')
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
@@ -40,11 +43,11 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
     }
   }, [isOpen])
 
-  // Build searchable items catalogue
+  // Build searchable items catalogue from dynamic context and articles
   const allItems = useMemo<SearchItem[]>(() => {
     const items: SearchItem[] = []
 
-    // 1. Engineering Tools
+    // 1. Engineering Tools (IEC Calculators)
     TOOLS.forEach(tool => {
       items.push({
         id: `tool-${tool.slug}`,
@@ -60,14 +63,15 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
       })
     })
 
-    // 2. Blog Articles
-    INITIAL_ARTICLES.forEach(art => {
+    // 2. Dynamic Articles (from database / local storage)
+    const dynamicArticles = getStoredArticles()
+    dynamicArticles.forEach(art => {
       items.push({
         id: `article-${art.slug}`,
         title: art.title,
-        subtitle: `${art.excerpt.slice(0, 75)}... • ${art.read_time} min read`,
+        subtitle: `${(art.excerpt || '').slice(0, 75)}... • ${art.read_time || 5} min read`,
         category: 'Articles',
-        badge: 'Engineering Journal',
+        badge: art.category || 'Engineering Journal',
         icon: <BookOpen size={15} className="text-blue-600" />,
         onSelect: () => {
           navigate(`/blog/${art.slug}`)
@@ -76,7 +80,53 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
       })
     })
 
-    // 3. Portfolio Sections
+    // 3. Dynamic Projects Portfolio
+    if (data.projects && data.projects.length > 0) {
+      data.projects.forEach(proj => {
+        items.push({
+          id: `proj-${proj.id}`,
+          title: proj.title,
+          subtitle: `${proj.category} • ${proj.capacity || proj.location || 'Engineering Project'}`,
+          category: 'Projects',
+          badge: proj.category || 'Project',
+          icon: <FolderOpen size={15} className="text-amber-600" />,
+          onSelect: () => {
+            if (window.location.pathname === '/') {
+              const el = document.querySelector('#projects')
+              if (el) el.scrollIntoView({ behavior: 'smooth' })
+              else window.location.hash = '#projects'
+            } else {
+              navigate('/#projects')
+            }
+            onClose()
+          }
+        })
+      })
+    }
+
+    // 4. Video Shorts & Stories
+    if (data.shorts && data.shorts.length > 0) {
+      data.shorts.filter(s => s.enabled !== false).forEach(short => {
+        items.push({
+          id: `short-${short.id}`,
+          title: short.title,
+          subtitle: `${short.subtitle || 'Video Demonstration'} • ${short.category}`,
+          category: 'Shorts',
+          badge: short.timestamp || 'Video Short',
+          icon: <Play size={15} className="text-rose-500" />,
+          onSelect: () => {
+            if (window.location.pathname === '/') {
+              window.dispatchEvent(new CustomEvent('open-story', { detail: { storyId: short.id } }))
+            } else {
+              navigate(`/?story=${encodeURIComponent(short.id)}`)
+            }
+            onClose()
+          }
+        })
+      })
+    }
+
+    // 5. Portfolio Sections & Key Pages
     const sections = [
       { name: 'Core Electrical Expertise', href: '#expertise', desc: 'Substation, Switchgear, BNBC Compliance' },
       { name: 'Featured Engineering Projects', href: '#projects', desc: 'Substations, Industrial Plants, Solar PV' },
@@ -114,48 +164,53 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
       })
     })
 
-    // 4. Quick Actions
+    // 6. Direct Contact & Quick Actions (Dynamic Engineer Phone / WhatsApp / Email)
+    const engPhone = data.engineer?.phone || siteConfig.author.phone
+    const engEmail = data.engineer?.email || siteConfig.author.email
+    const engWhatsApp = data.engineer?.whatsapp || engPhone.replace(/[^0-9]/g, '')
+
     items.push(
       {
         id: 'action-whatsapp',
         title: 'Quick WhatsApp Consultation',
-        subtitle: 'Chat directly on WhatsApp for engineering inquiries',
+        subtitle: `Chat directly on WhatsApp (${engWhatsApp})`,
         category: 'Actions',
         badge: 'Direct Chat',
         icon: <MessageSquare size={15} className="text-green-600" />,
         onSelect: () => {
-          window.open(`https://wa.me/8801700000000?text=${encodeURIComponent('Hello Engr. Sahin Alom, I would like to consult with you regarding an electrical engineering project.')}`, '_blank')
+          const cleanWA = engWhatsApp.startsWith('0') ? '88' + engWhatsApp : engWhatsApp
+          window.open(`https://wa.me/${cleanWA}?text=${encodeURIComponent(`Hello Engr. ${data.engineer?.name || 'Sahin Alom'}, I would like to consult with you regarding an electrical engineering project.`)}`, '_blank')
           onClose()
         }
       },
       {
         id: 'action-call',
         title: 'Call Engineering Office',
-        subtitle: `Direct line: ${siteConfig.author.phone}`,
+        subtitle: `Direct line: ${engPhone}`,
         category: 'Actions',
         badge: 'Phone Call',
         icon: <Phone size={15} className="text-amber-600" />,
         onSelect: () => {
-          window.location.href = `tel:${siteConfig.author.phone}`
+          window.location.href = `tel:${engPhone}`
           onClose()
         }
       },
       {
         id: 'action-email',
         title: 'Send Project Email',
-        subtitle: `Email: ${siteConfig.author.email}`,
+        subtitle: `Email: ${engEmail}`,
         category: 'Actions',
         badge: 'Email',
         icon: <Mail size={15} className="text-blue-600" />,
         onSelect: () => {
-          window.location.href = `mailto:${siteConfig.author.email}?subject=Electrical%20Engineering%20Consultation%20Inquiry`
+          window.location.href = `mailto:${engEmail}?subject=Electrical%20Engineering%20Consultation%20Inquiry`
           onClose()
         }
       }
     )
 
     return items
-  }, [navigate, onClose])
+  }, [navigate, onClose, data])
 
   // Filter items based on activeFilter and query
   const filteredItems = useMemo(() => {
@@ -316,7 +371,7 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
             overflowX: 'auto',
           }}
         >
-          {(['All', 'Tools', 'Articles', 'Portfolio', 'Actions'] as const).map(filter => {
+          {(['All', 'Tools', 'Articles', 'Projects', 'Shorts', 'Actions'] as const).map(filter => {
             const active = activeFilter === filter
             return (
               <button

@@ -26,6 +26,30 @@ export default function SiteView() {
     setStoryOpen(true)
   }
 
+  // Support opening story from search or deep link
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const storyIdParam = params.get('story')
+    if (storyIdParam && data.shorts) {
+      const idx = data.shorts.findIndex(s => s.id === storyIdParam)
+      if (idx >= 0) {
+        handleOpenStory(idx)
+      }
+    }
+
+    const openStoryHandler = (e: any) => {
+      if (e.detail?.storyId && data.shorts) {
+        const idx = data.shorts.findIndex((s: any) => s.id === e.detail.storyId)
+        handleOpenStory(idx >= 0 ? idx : 0)
+      } else {
+        handleOpenStory(e.detail?.index ?? 0)
+      }
+    }
+
+    window.addEventListener('open-story', openStoryHandler)
+    return () => window.removeEventListener('open-story', openStoryHandler)
+  }, [data.shorts])
+
   return (
     <>
       <EngineerNav
@@ -44,69 +68,72 @@ export default function SiteView() {
         isOpen={storyOpen}
         onClose={() => setStoryOpen(false)}
         initialIndex={storyIndex}
+        stories={data.shorts}
       />
 
       {/* ── Floating Story Bubble (Bottom Left) ── */}
-      <button
-        onClick={() => handleOpenStory(0)}
-        title="Watch Engineering Video Shorts (2)"
-        style={{
-          position: 'fixed',
-          bottom: 24,
-          left: 24,
-          zIndex: 300,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          background: 'rgba(255, 255, 255, 0.95)',
-          border: '1px solid rgba(196, 125, 14, 0.4)',
-          borderRadius: 40,
-          padding: '6px 14px 6px 6px',
-          cursor: 'pointer',
-          boxShadow: '0 8px 30px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.8)',
-          backdropFilter: 'blur(16px)',
-          transition: 'all 0.25s cubic-bezier(0.16,1,0.3,1)',
-        }}
-        onMouseEnter={e => {
-          e.currentTarget.style.transform = 'translateY(-3px) scale(1.04)'
-          e.currentTarget.style.boxShadow = '0 12px 36px rgba(196,125,14,0.3)'
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.transform = 'none'
-          e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.15)'
-        }}
-      >
-        <div style={{
-          width: 34,
-          height: 34,
-          borderRadius: '50%',
-          padding: 2,
-          background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-          <img
-            src={data.engineer.photo || sahinAvatar}
-            alt="Shorts"
-            style={{
-              width: '100%',
-              height: '100%',
-              borderRadius: '50%',
-              objectFit: 'cover',
-              border: '1px solid #FFFFFF',
-            }}
-          />
-        </div>
-        <div style={{ textAlign: 'left' }}>
-          <div style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 700, fontSize: 12, color: '#0D1218', lineHeight: 1.1 }}>
-            Field Shorts
+      {data.showFloatingShortsBubble !== false && (data.shorts || []).filter(s => s.enabled !== false).length > 0 && (
+        <button
+          onClick={() => handleOpenStory(0)}
+          title={`Watch Engineering Video Shorts (${(data.shorts || []).filter(s => s.enabled !== false).length})`}
+          style={{
+            position: 'fixed',
+            bottom: 24,
+            left: 24,
+            zIndex: 300,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            background: 'rgba(255, 255, 255, 0.95)',
+            border: '1px solid rgba(196, 125, 14, 0.4)',
+            borderRadius: 40,
+            padding: '6px 14px 6px 6px',
+            cursor: 'pointer',
+            boxShadow: '0 8px 30px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.8)',
+            backdropFilter: 'blur(16px)',
+            transition: 'all 0.25s cubic-bezier(0.16,1,0.3,1)',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.transform = 'translateY(-3px) scale(1.04)'
+            e.currentTarget.style.boxShadow = '0 12px 36px rgba(196,125,14,0.3)'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.transform = 'none'
+            e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.15)'
+          }}
+        >
+          <div style={{
+            width: 34,
+            height: 34,
+            borderRadius: '50%',
+            padding: 2,
+            background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <img
+              src={data.engineer.photo || sahinAvatar}
+              alt="Shorts"
+              style={{
+                width: '100%',
+                height: '100%',
+                borderRadius: '50%',
+                objectFit: 'cover',
+                border: '1px solid #FFFFFF',
+              }}
+            />
           </div>
-          <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, color: '#C47D0E', fontWeight: 600 }}>
-            ▶ 2 Stories
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 700, fontSize: 12, color: '#0D1218', lineHeight: 1.1 }}>
+              Field Shorts
+            </div>
+            <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, color: '#C47D0E', fontWeight: 600 }}>
+              ▶ {(data.shorts || []).filter(s => s.enabled !== false).length} {((data.shorts || []).filter(s => s.enabled !== false).length) === 1 ? 'Story' : 'Stories'}
+            </div>
           </div>
-        </div>
-      </button>
+        </button>
+      )}
     </>
   )
 }

@@ -222,7 +222,7 @@ ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS clarity_id TEXT;
 ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS google_verification TEXT;
 ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS bing_verification TEXT;
 ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS yandex_verification TEXT;
-ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS pinterest_verification TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS show_floating_shorts_bubble BOOLEAN DEFAULT true;
 
 ALTER TABLE public.engineer_profile ADD COLUMN IF NOT EXISTS whatsapp TEXT;
 ALTER TABLE public.engineer_profile ADD COLUMN IF NOT EXISTS credentials_tag TEXT DEFAULT 'PE';
@@ -232,6 +232,29 @@ DROP POLICY IF EXISTS "Public read site_settings" ON public.site_settings;
 CREATE POLICY "Public read site_settings" ON public.site_settings FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Write site_settings" ON public.site_settings;
 CREATE POLICY "Write site_settings" ON public.site_settings FOR ALL USING (true) WITH CHECK (true);
+
+-- --------------------------------------------------------------------
+-- 8b. Table: shorts (Video Shorts & Stories)
+-- --------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.shorts (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  subtitle TEXT,
+  category TEXT DEFAULT 'General',
+  video_url TEXT NOT NULL,
+  poster_url TEXT,
+  timestamp TEXT DEFAULT 'Featured Demo',
+  enabled BOOLEAN DEFAULT true,
+  display_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE public.shorts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public read shorts" ON public.shorts;
+CREATE POLICY "Public read shorts" ON public.shorts FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Write shorts" ON public.shorts;
+CREATE POLICY "Write shorts" ON public.shorts FOR ALL USING (true) WITH CHECK (true);
 
 -- --------------------------------------------------------------------
 -- 9. Table: articles
