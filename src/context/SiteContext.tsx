@@ -13,7 +13,12 @@ import { supabase } from '../lib/supabase'
 import { siteConfig } from '../config/siteConfig'
 
 // ── Types ────────────────────────────────────────────────────────────────────
-export type EngineerInfo  = typeof D_ENG & { available: boolean }
+export type EngineerInfo = typeof D_ENG & {
+  available: boolean
+  credentialsTag?: string
+  whatsapp?: string
+}
+
 export type Credential    = { label: string; value: string; detail: string; url?: string }
 export type ExpertiseItem = { id: string; num: string; title: string; tags: string[]; desc: string }
 export type ServiceItem   = { id: string; num: string; name: string; detail: string }
@@ -31,11 +36,20 @@ export type VerificationSettings = {
   pinterestVerification?: string
 }
 
+export type BrandingSettings = {
+  logo?: string
+  logoType?: 'default_emblem' | 'custom_image'
+  favicon?: string
+  ogImage?: string
+  resumeUrl?: string
+}
+
 export type Settings = {
   siteTitle: string
   pageDescription: string
   siteUrl: string
   tools: string[]
+  branding: BrandingSettings
   social: {
     linkedin: string
     twitter: string
@@ -75,11 +89,16 @@ type Ctx = {
   resetToDefaults:   () => void
 }
 
-const CACHE_KEY = 'msa_site_v10'
+const CACHE_KEY = 'msa_site_v11'
 const DB_ROW_ID = 1
 
 const DEFAULT: SiteData = {
-  engineer:    { ...D_ENG, available: true },
+  engineer: {
+    ...D_ENG,
+    available: true,
+    credentialsTag: 'PE',
+    whatsapp: '01760816120',
+  },
   credentials: D_CRED,
   expertise:   D_EXP,
   projects:    D_PROJ,
@@ -91,6 +110,13 @@ const DEFAULT: SiteData = {
     pageDescription: siteConfig.defaultDescription || 'Power systems engineer specialized in substation design, BNBC 2020, and industrial power distribution.',
     siteUrl:         siteConfig.siteUrl || 'https://sahinalom.com',
     tools: ['PSS/E', 'PSCAD', 'ETAP', 'DIgSILENT', 'AutoCAD Electrical', 'CYMGRD', 'SKM Power Tools', 'MATLAB/Simulink', 'Python', 'Microstation'],
+    branding: {
+      logo: '',
+      logoType: 'default_emblem',
+      favicon: '',
+      ogImage: '/img/lighting-design-cover.jpg',
+      resumeUrl: '/CV.pdf',
+    },
     social: {
       linkedin: siteConfig.social.linkedin || 'https://linkedin.com/in/sahinalom',
       twitter: siteConfig.social.twitter || 'https://twitter.com/sahinalom',
@@ -115,11 +141,18 @@ function deepMerge(parsed: Partial<SiteData>): SiteData {
   return {
     ...DEFAULT,
     ...parsed,
-    engineer: { ...DEFAULT.engineer, ...parsed.engineer, photo: parsed.engineer?.photo || DEFAULT.engineer.photo },
+    engineer: {
+      ...DEFAULT.engineer,
+      ...parsed.engineer,
+      photo: parsed.engineer?.photo || DEFAULT.engineer.photo,
+      credentialsTag: parsed.engineer?.credentialsTag || DEFAULT.engineer.credentialsTag,
+      whatsapp: parsed.engineer?.whatsapp || DEFAULT.engineer.whatsapp,
+    },
     experience: parsed.experience ?? DEFAULT.experience,
     settings: {
       ...DEFAULT.settings,
       ...parsed.settings,
+      branding: { ...DEFAULT.settings.branding, ...(parsed.settings?.branding ?? {}) },
       social: { ...DEFAULT.settings.social, ...(parsed.settings?.social ?? {}) },
       analytics: { ...DEFAULT.settings.analytics, ...(parsed.settings?.analytics ?? {}) },
       verification: { ...DEFAULT.settings.verification, ...(parsed.settings?.verification ?? {}) },
@@ -147,6 +180,20 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   const [saved, setSaved]     = useState(true)
   const [timer, setTimer]     = useState<ReturnType<typeof setTimeout> | null>(null)
 
+  // Dynamically synchronize favicon with document head
+  useEffect(() => {
+    const faviconUrl = data.settings.branding?.favicon
+    if (faviconUrl) {
+      let fav = document.querySelector("link[rel*='icon']") as HTMLLinkElement
+      if (!fav) {
+        fav = document.createElement('link')
+        fav.rel = 'icon'
+        document.head.appendChild(fav)
+      }
+      fav.href = faviconUrl
+    }
+  }, [data.settings.branding?.favicon])
+
   // Fetch from Supabase on mount
   useEffect(() => {
     let cancelled = false
@@ -171,6 +218,8 @@ export function SiteProvider({ children }: { children: ReactNode }) {
             yearsExp: engRes.data.years_exp ?? DEFAULT.engineer.yearsExp,
             projectsMW: engRes.data.projects_mw ?? DEFAULT.engineer.projectsMW,
             projectsCount: engRes.data.projects_count ?? DEFAULT.engineer.projectsCount,
+            credentialsTag: engRes.data.credentials_tag ?? DEFAULT.engineer.credentialsTag,
+            whatsapp: engRes.data.whatsapp ?? DEFAULT.engineer.whatsapp,
           }
         }
         if (credRes.data?.length) structured.credentials = credRes.data
@@ -185,6 +234,13 @@ export function SiteProvider({ children }: { children: ReactNode }) {
             pageDescription: setRes.data.page_description || DEFAULT.settings.pageDescription,
             siteUrl: setRes.data.site_url || DEFAULT.settings.siteUrl,
             tools: setRes.data.tools || DEFAULT.settings.tools,
+            branding: {
+              logo: setRes.data.logo_url || DEFAULT.settings.branding.logo,
+              logoType: setRes.data.logo_type || DEFAULT.settings.branding.logoType,
+              favicon: setRes.data.favicon_url || DEFAULT.settings.branding.favicon,
+              ogImage: setRes.data.og_image_url || DEFAULT.settings.branding.ogImage,
+              resumeUrl: setRes.data.resume_url || DEFAULT.settings.branding.resumeUrl,
+            },
             social: {
               linkedin: setRes.data.social_linkedin || DEFAULT.settings.social.linkedin,
               twitter: setRes.data.social_twitter || DEFAULT.settings.social.twitter,
@@ -276,6 +332,8 @@ export function SiteProvider({ children }: { children: ReactNode }) {
         projects_count: next.engineer.projectsCount,
         clients: next.engineer.clients,
         available: next.engineer.available,
+        credentials_tag: next.engineer.credentialsTag,
+        whatsapp: next.engineer.whatsapp,
         updated_at: now
       }).then(() => {}).catch(() => {})
     }
@@ -367,6 +425,11 @@ export function SiteProvider({ children }: { children: ReactNode }) {
         page_description: next.settings.pageDescription,
         site_url: next.settings.siteUrl,
         tools: next.settings.tools,
+        logo_url: next.settings.branding?.logo || '',
+        logo_type: next.settings.branding?.logoType || 'default_emblem',
+        favicon_url: next.settings.branding?.favicon || '',
+        og_image_url: next.settings.branding?.ogImage || '',
+        resume_url: next.settings.branding?.resumeUrl || '',
         social_linkedin: next.settings.social?.linkedin || '',
         social_twitter: next.settings.social?.twitter || '',
         social_github: next.settings.social?.github || '',

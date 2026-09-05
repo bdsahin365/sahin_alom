@@ -7,6 +7,7 @@
 -- ====================================================================
 
 -- --------------------------------------------------------------------
+-- --------------------------------------------------------------------
 -- 1. Table: engineer_profile
 -- --------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.engineer_profile (
@@ -19,6 +20,7 @@ CREATE TABLE IF NOT EXISTS public.engineer_profile (
   location TEXT,
   email TEXT NOT NULL,
   phone TEXT,
+  whatsapp TEXT,
   linkedin TEXT,
   tagline TEXT,
   bio TEXT[] DEFAULT '{}',
@@ -27,6 +29,7 @@ CREATE TABLE IF NOT EXISTS public.engineer_profile (
   projects_count TEXT,
   clients TEXT,
   available BOOLEAN DEFAULT true,
+  credentials_tag TEXT DEFAULT 'PE',
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -171,10 +174,24 @@ CREATE TABLE IF NOT EXISTS public.site_settings (
   id TEXT PRIMARY KEY DEFAULT 'general',
   site_title TEXT NOT NULL,
   page_description TEXT,
+  site_url TEXT,
+  logo_url TEXT,
+  logo_type TEXT DEFAULT 'default_emblem',
+  favicon_url TEXT,
+  og_image_url TEXT,
+  resume_url TEXT,
   tools TEXT[] DEFAULT '{}',
   social_linkedin TEXT,
   social_twitter TEXT,
   social_github TEXT,
+  social_facebook TEXT,
+  social_youtube TEXT,
+  ga_id TEXT,
+  clarity_id TEXT,
+  google_verification TEXT,
+  bing_verification TEXT,
+  yandex_verification TEXT,
+  pinterest_verification TEXT,
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 

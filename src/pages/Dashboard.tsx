@@ -10,9 +10,10 @@ import {
   ToggleLeft, ToggleRight,
   AlertTriangle, Globe, Pencil,
   Inbox, LogOut, Mail, Clock, BookOpen, Menu, Upload,
-  BarChart2, ShieldCheck, ExternalLink,
+  BarChart2, ShieldCheck, ExternalLink, Sparkles, Palette,
 } from 'lucide-react'
 import ArticlesList from './blog/ArticlesList'
+import HeaderLogo from '../components/HeaderLogo'
 import { supabase } from '../lib/supabase'
 import { cn } from '../lib/utils'
 import { compressAndConvertToBase64, formatBytes } from '../lib/imageUtils'
@@ -475,19 +476,20 @@ function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
 }
 
 // ── Nav items ────────────────────────────────────────────────────────────────
-type SectionId = 'overview' | 'profile' | 'credentials' | 'expertise' | 'projects' | 'services' | 'education' | 'settings' | 'messages' | 'articles'
+type SectionId = 'overview' | 'branding' | 'articles' | 'profile' | 'credentials' | 'expertise' | 'projects' | 'services' | 'education' | 'settings' | 'messages'
 
 const NAV_ITEMS: { id: SectionId; label: string; icon: ReactNode }[] = [
-  { id: 'overview',    label: 'Overview',    icon: <LayoutDashboard size={15} /> },
-  { id: 'articles',    label: 'Articles',    icon: <BookOpen size={15} /> },
-  { id: 'profile',     label: 'Profile',     icon: <User size={15} /> },
-  { id: 'credentials', label: 'Credentials', icon: <Award size={15} /> },
-  { id: 'expertise',   label: 'Expertise',   icon: <Zap size={15} /> },
-  { id: 'projects',    label: 'Projects',    icon: <FolderOpen size={15} /> },
-  { id: 'services',    label: 'Services',    icon: <Briefcase size={15} /> },
-  { id: 'education',   label: 'Education',   icon: <GraduationCap size={15} /> },
-  { id: 'settings',    label: 'Settings',    icon: <Settings2 size={15} /> },
-  { id: 'messages',    label: 'Messages',    icon: <Inbox size={15} /> },
+  { id: 'overview',    label: 'Overview',          icon: <LayoutDashboard size={15} /> },
+  { id: 'branding',    label: 'Logo & Branding',   icon: <Sparkles size={15} /> },
+  { id: 'articles',    label: 'Articles',          icon: <BookOpen size={15} /> },
+  { id: 'profile',     label: 'Profile & Bio',     icon: <User size={15} /> },
+  { id: 'credentials', label: 'Credentials',       icon: <Award size={15} /> },
+  { id: 'expertise',   label: 'Expertise',         icon: <Zap size={15} /> },
+  { id: 'projects',    label: 'Projects',          icon: <FolderOpen size={15} /> },
+  { id: 'services',    label: 'Services',          icon: <Briefcase size={15} /> },
+  { id: 'education',   label: 'Education',         icon: <GraduationCap size={15} /> },
+  { id: 'settings',    label: 'SEO & Analytics',   icon: <Settings2 size={15} /> },
+  { id: 'messages',    label: 'Messages Inbox',    icon: <Inbox size={15} /> },
 ]
 
 // ── Section editors ──────────────────────────────────────────────────────────
@@ -497,12 +499,14 @@ function OverviewPanel({ onNavigate }: { onNavigate: (s: SectionId) => void }) {
   const { engineer: E } = data
 
   const sections = [
-    { id: 'profile' as SectionId,     label: 'Profile',     ok: !!(E.name && E.email && E.tagline) },
-    { id: 'credentials' as SectionId, label: 'Credentials', ok: data.credentials.length > 0 },
-    { id: 'expertise' as SectionId,   label: 'Expertise',   ok: data.expertise.length > 0 },
-    { id: 'projects' as SectionId,    label: 'Projects',    ok: data.projects.length > 0 },
-    { id: 'services' as SectionId,    label: 'Services',    ok: data.services.length > 0 },
-    { id: 'education' as SectionId,   label: 'Education',   ok: data.education.length > 0 },
+    { id: 'branding' as SectionId,    label: 'Logo & Visual Identity', ok: true },
+    { id: 'profile' as SectionId,     label: 'Profile & Bio',          ok: !!(E.name && E.email && E.tagline) },
+    { id: 'credentials' as SectionId, label: 'Credentials & Licenses', ok: data.credentials.length > 0 },
+    { id: 'expertise' as SectionId,   label: 'Core Expertise',         ok: data.expertise.length > 0 },
+    { id: 'projects' as SectionId,    label: 'Projects Portfolio',     ok: data.projects.length > 0 },
+    { id: 'services' as SectionId,    label: 'Services',               ok: data.services.length > 0 },
+    { id: 'education' as SectionId,   label: 'Education & Career',     ok: data.education.length > 0 },
+    { id: 'settings' as SectionId,    label: 'SEO & Web Analytics',    ok: !!data.settings.siteTitle },
   ]
   const score = Math.round(sections.filter(s => s.ok).length / sections.length * 100)
 
@@ -562,6 +566,257 @@ function OverviewPanel({ onNavigate }: { onNavigate: (s: SectionId) => void }) {
           </div>
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+function BrandingPanel() {
+  const { data: { settings, engineer: E }, updateSettings } = useSite()
+  const [compressingLogo, setCompressingLogo] = useState(false)
+  const [compressingFavicon, setCompressingFavicon] = useState(false)
+  const [logoStatus, setLogoStatus] = useState<string | null>(null)
+  const [favStatus, setFavStatus] = useState<string | null>(null)
+
+  const logoInputRef = useRef<HTMLInputElement>(null)
+  const favInputRef = useRef<HTMLInputElement>(null)
+
+  const handleLogoUpload = async (file: File) => {
+    try {
+      setCompressingLogo(true)
+      setLogoStatus('Processing logo...')
+      const { base64, originalSize, compressedSize } = await compressAndConvertToBase64(file, {
+        maxWidth: 600,
+        maxHeight: 200,
+        quality: 0.9,
+        mimeType: file.type === 'image/png' ? 'image/png' : 'image/jpeg',
+      })
+      updateSettings({
+        branding: {
+          ...settings.branding,
+          logo: base64,
+          logoType: 'custom_image',
+        }
+      })
+      setLogoStatus(`Logo saved (${formatBytes(originalSize)} → ${formatBytes(compressedSize)})`)
+      setTimeout(() => setLogoStatus(null), 3500)
+    } catch (err: any) {
+      setLogoStatus('Error: ' + (err?.message || 'Failed to upload logo'))
+    } finally {
+      setCompressingLogo(false)
+    }
+  }
+
+  const handleFaviconUpload = async (file: File) => {
+    try {
+      setCompressingFavicon(true)
+      setFavStatus('Processing favicon...')
+      const { base64 } = await compressAndConvertToBase64(file, {
+        maxWidth: 128,
+        maxHeight: 128,
+        quality: 0.95,
+        mimeType: 'image/png',
+      })
+      updateSettings({
+        branding: {
+          ...settings.branding,
+          favicon: base64,
+        }
+      })
+      setFavStatus('Favicon saved & applied!')
+      setTimeout(() => setFavStatus(null), 3500)
+    } catch (err: any) {
+      setFavStatus('Error: ' + (err?.message || 'Failed to upload favicon'))
+    } finally {
+      setCompressingFavicon(false)
+    }
+  }
+
+  return (
+    <div>
+      {/* 1. Header Logo Configuration */}
+      <Section title="Header Logo & Brand Emblem" description="Configure the website navigation logo or upload a custom company/personal logo image.">
+        <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 16 }}>
+          {/* Live Logo Preview Box */}
+          <div style={{ padding: '16px 20px', background: '#F7F5F0', border: '1px solid #DDD9D0', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <HeaderLogo />
+          </div>
+
+          <div style={{ flex: 1, minWidth: 260 }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/*,.svg"
+                style={{ display: 'none' }}
+                onChange={e => {
+                  const f = e.target.files?.[0]
+                  if (f) handleLogoUpload(f)
+                  e.target.value = ''
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => logoInputRef.current?.click()}
+                disabled={compressingLogo}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '7px 14px', borderRadius: 6,
+                  background: '#C47D0E', color: '#FFFFFF',
+                  fontFamily: 'Outfit,sans-serif', fontWeight: 600, fontSize: 12,
+                  cursor: compressingLogo ? 'not-allowed' : 'pointer',
+                  border: 'none',
+                }}
+              >
+                {compressingLogo ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> : <Upload size={13} />}
+                Upload Custom Logo Image
+              </button>
+
+              {settings.branding?.logo && (
+                <button
+                  type="button"
+                  onClick={() => updateSettings({
+                    branding: { ...settings.branding, logo: '', logoType: 'default_emblem' }
+                  })}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    padding: '7px 12px', borderRadius: 6,
+                    background: '#F8FAFC', border: '1px solid #E2E8F0',
+                    color: '#475569', fontSize: 12, fontFamily: 'Outfit,sans-serif',
+                    fontWeight: 500, cursor: 'pointer',
+                  }}
+                >
+                  ↺ Reset to Vector CAD Emblem
+                </button>
+              )}
+            </div>
+
+            {logoStatus && (
+              <div style={{ fontSize: 11, color: logoStatus.includes('Error') ? '#EF4444' : '#16A34A', fontWeight: 500, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Check size={12} /> {logoStatus}
+              </div>
+            )}
+
+            <Input
+              label="Or Custom Logo URL / SVG Data"
+              value={settings.branding?.logo || ''}
+              onChange={v => updateSettings({
+                branding: { ...settings.branding, logo: v, logoType: v ? 'custom_image' : 'default_emblem' }
+              })}
+              placeholder="https://... or data:image/..."
+            />
+          </div>
+        </div>
+      </Section>
+
+      {/* 2. Browser Tab Favicon */}
+      <Section title="Browser Tab Favicon" description="Upload a favicon icon (.png, .ico, .svg) to display in the browser tab and bookmarks.">
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
+          {/* Favicon Browser Tab Mockup */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '8px 14px', background: '#E2E8F0', borderRadius: '8px 8px 0 0',
+            border: '1px solid #CBD5E1', borderBottom: 'none', minWidth: 200,
+          }}>
+            <div style={{ width: 18, height: 18, borderRadius: 3, overflow: 'hidden', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {settings.branding?.favicon ? (
+                <img src={settings.branding.favicon} alt="Favicon" style={{ width: 16, height: 16, objectFit: 'contain' }} />
+              ) : (
+                <Zap size={14} style={{ color: '#C47D0E' }} />
+              )}
+            </div>
+            <span style={{ fontSize: 12, fontWeight: 500, color: '#334155', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {settings.siteTitle || 'Md Sahin Alom'}
+            </span>
+          </div>
+
+          <div style={{ flex: 1, minWidth: 240 }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
+              <input
+                ref={favInputRef}
+                type="file"
+                accept="image/*,.ico,.svg"
+                style={{ display: 'none' }}
+                onChange={e => {
+                  const f = e.target.files?.[0]
+                  if (f) handleFaviconUpload(f)
+                  e.target.value = ''
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => favInputRef.current?.click()}
+                disabled={compressingFavicon}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '7px 14px', borderRadius: 6,
+                  background: '#C47D0E', color: '#FFFFFF',
+                  fontFamily: 'Outfit,sans-serif', fontWeight: 600, fontSize: 12,
+                  cursor: compressingFavicon ? 'not-allowed' : 'pointer',
+                  border: 'none',
+                }}
+              >
+                {compressingFavicon ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> : <Upload size={13} />}
+                Upload Favicon Image (.png / .ico)
+              </button>
+
+              {settings.branding?.favicon && (
+                <button
+                  type="button"
+                  onClick={() => updateSettings({
+                    branding: { ...settings.branding, favicon: '' }
+                  })}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    padding: '7px 12px', borderRadius: 6,
+                    background: '#F8FAFC', border: '1px solid #E2E8F0',
+                    color: '#475569', fontSize: 12, fontFamily: 'Outfit,sans-serif',
+                    fontWeight: 500, cursor: 'pointer',
+                  }}
+                >
+                  ↺ Reset Default Favicon
+                </button>
+              )}
+            </div>
+
+            {favStatus && (
+              <div style={{ fontSize: 11, color: favStatus.includes('Error') ? '#EF4444' : '#16A34A', fontWeight: 500, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Check size={12} /> {favStatus}
+              </div>
+            )}
+
+            <Input
+              label="Or Favicon URL / Base64 Data"
+              value={settings.branding?.favicon || ''}
+              onChange={v => updateSettings({
+                branding: { ...settings.branding, favicon: v }
+              })}
+              placeholder="data:image/svg+xml,... or https://..."
+            />
+          </div>
+        </div>
+      </Section>
+
+      {/* 3. Social Share Cover (OpenGraph Image) */}
+      <Section title="Social Share Cover (OpenGraph Image)" description="Image shown when your website is shared on LinkedIn, WhatsApp, Facebook, or Twitter.">
+        <ImagePicker
+          value={settings.branding?.ogImage || ''}
+          onChange={url => updateSettings({
+            branding: { ...settings.branding, ogImage: url }
+          })}
+        />
+      </Section>
+
+      {/* 4. Curriculum Vitae (PDF Resume) */}
+      <Section title="Curriculum Vitae (PDF Document)" description="File path or URL for the downloadable CV button in the header and hero.">
+        <Input
+          label="CV Document URL or Local Path"
+          value={settings.branding?.resumeUrl || '/CV.pdf'}
+          onChange={v => updateSettings({
+            branding: { ...settings.branding, resumeUrl: v }
+          })}
+          placeholder="/CV.pdf or https://..."
+        />
+      </Section>
     </div>
   )
 }
@@ -671,14 +926,16 @@ function ProfilePanel() {
 
       <Section title="Personal Information" description="Name, contact, and role details">
         <Grid2>
-          <Input label="Full Name"    value={E.name}     onChange={u('name') as (v: string) => void} />
-          <Input label="Initials"     value={E.initials} onChange={u('initials') as (v: string) => void} />
-          <Input label="Job Title"    value={E.title}    onChange={u('title') as (v: string) => void} />
-          <Input label="Subtitle"     value={E.subtitle} onChange={u('subtitle') as (v: string) => void} />
-          <Input label="Location"     value={E.location} onChange={u('location') as (v: string) => void} />
-          <Input label="Email"        value={E.email}    onChange={u('email') as (v: string) => void}    type="email" />
-          <Input label="Phone"        value={E.phone}    onChange={u('phone') as (v: string) => void}    type="tel" />
-          <Input label="LinkedIn URL" value={E.linkedin} onChange={u('linkedin') as (v: string) => void} />
+          <Input label="Full Name"           value={E.name}                       onChange={u('name') as (v: string) => void} />
+          <Input label="Initials (Brand)"    value={E.initials}                   onChange={u('initials') as (v: string) => void} />
+          <Input label="Credential Badge"   value={E.credentialsTag || 'PE'}     onChange={u('credentialsTag') as (v: string) => void} placeholder="PE / ABC Licensed" />
+          <Input label="Job Title"           value={E.title}                      onChange={u('title') as (v: string) => void} />
+          <Input label="Subtitle"            value={E.subtitle}                   onChange={u('subtitle') as (v: string) => void} />
+          <Input label="Location"            value={E.location}                   onChange={u('location') as (v: string) => void} />
+          <Input label="Email"               value={E.email}                      onChange={u('email') as (v: string) => void}    type="email" />
+          <Input label="Phone Number"        value={E.phone}                      onChange={u('phone') as (v: string) => void}    type="tel" />
+          <Input label="WhatsApp Number"     value={E.whatsapp || ''}             onChange={u('whatsapp') as (v: string) => void} placeholder="01760816120" />
+          <Input label="LinkedIn URL"        value={E.linkedin}                   onChange={u('linkedin') as (v: string) => void} />
         </Grid2>
         <Textarea label="Tagline" hint="one sentence, shown in hero" value={E.tagline} onChange={u('tagline') as (v: string) => void} rows={2} />
       </Section>
@@ -1182,6 +1439,7 @@ function MessagesPanel() {
 
 const PANELS: Record<SectionId, (props: { onNavigate: (s: SectionId) => void }) => ReactNode> = {
   overview:    ({ onNavigate }) => <OverviewPanel onNavigate={onNavigate} />,
+  branding:    () => <BrandingPanel />,
   articles:    () => <ArticlesList />,
   profile:     () => <ProfilePanel />,
   credentials: () => <CredentialsPanel />,
