@@ -1,16 +1,17 @@
 import { type ReactNode, useState } from 'react'
-import { useNavigate } from 'react-router'
 import {
   ChevronLeft, Eye, RotateCcw, Monitor, Tablet, Smartphone,
   Check, Loader2, MoreHorizontal, Copy, Download, History, Archive, Trash2, FileInput,
-  Settings2,
+  Settings2, Save, CloudCheck, AlertCircle
 } from 'lucide-react'
 
 interface EditorTopBarProps {
   status: 'draft' | 'published' | 'scheduled'
   saved: boolean
+  isSaving: boolean
   lastSaved: string
   onBack: () => void
+  onSaveDraft: () => void
   onUndo: () => void
   onRedo: () => void
   onPreview: () => void
@@ -66,7 +67,7 @@ function Divider() {
 }
 
 export default function EditorTopBar({
-  status, saved, lastSaved, onBack, onUndo, onRedo, onPreview,
+  status, saved, isSaving, lastSaved, onBack, onSaveDraft, onUndo, onRedo, onPreview,
   onPublish, onHistory, onShortcuts, previewMode, onPreviewMode,
   canUndo, canRedo, onToggleSettings, settingsOpen,
 }: EditorTopBarProps) {
@@ -75,43 +76,61 @@ export default function EditorTopBar({
 
   return (
     <header style={{
-      height: 48, display: 'flex', alignItems: 'center', padding: '0 14px',
+      height: 50, display: 'flex', alignItems: 'center', padding: '0 14px',
       background: '#FFFFFF', borderBottom: '1px solid #E2E8F0',
       gap: 8, flexShrink: 0, position: 'relative', zIndex: 50,
     }}>
-      {/* Back */}
+      {/* Back to Articles list */}
       <button
         onClick={onBack}
         style={{
           display: 'flex', alignItems: 'center', gap: 4,
           background: 'none', border: 'none', cursor: 'pointer',
           color: '#64748B', fontSize: 12, fontFamily: 'Outfit,sans-serif',
-          padding: '4px 6px', borderRadius: 5, transition: 'all 0.15s',
-          whiteSpace: 'nowrap',
+          padding: '5px 8px', borderRadius: 5, transition: 'all 0.15s',
+          whiteSpace: 'nowrap', fontWeight: 500,
         }}
         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#0F172A'; (e.currentTarget as HTMLElement).style.background = '#F1F5F9' }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#64748B'; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
       >
-        <ChevronLeft size={15} /> <span className="editor-back-text">Articles</span>
+        <ChevronLeft size={16} /> <span className="editor-back-text">Articles</span>
       </button>
 
       <Divider />
 
       {/* Status badge */}
       <span style={{
-        fontFamily: 'JetBrains Mono,monospace', fontSize: 9, letterSpacing: '0.18em',
-        padding: '3px 7px', borderRadius: 4, border: `1px solid ${s.border}`,
-        background: s.bg, color: s.color, whiteSpace: 'nowrap',
+        fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, letterSpacing: '0.15em',
+        padding: '3px 8px', borderRadius: 4, border: `1px solid ${s.border}`,
+        background: s.bg, color: s.color, whiteSpace: 'nowrap', fontWeight: 600,
       }}>
         {s.label}
       </span>
 
-      {/* Autosave */}
-      <div className="editor-autosave-box" style={{ display: 'flex', alignItems: 'center', gap: 5, marginLeft: 2 }}>
-        {saved
-          ? <><Check size={11} style={{ color: '#16A34A' }} /><span className="editor-autosave-text" style={{ fontSize: 11, color: '#16A34A', fontFamily: 'Outfit,sans-serif' }}>{lastSaved}</span></>
-          : <><Loader2 size={11} style={{ color: '#C47D0E', animation: 'spin 1s linear infinite' }} /><span className="editor-autosave-text" style={{ fontSize: 11, color: '#C47D0E', fontFamily: 'Outfit,sans-serif' }}>Saving…</span></>
-        }
+      {/* Database Sync Status */}
+      <div className="editor-autosave-box" style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 4 }}>
+        {isSaving ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#C47D0E' }}>
+            <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} />
+            <span className="editor-autosave-text" style={{ fontSize: 11.5, fontFamily: 'Outfit,sans-serif', fontWeight: 500 }}>
+              Syncing with database…
+            </span>
+          </div>
+        ) : saved ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#16A34A' }}>
+            <Check size={13} strokeWidth={2.5} />
+            <span className="editor-autosave-text" style={{ fontSize: 11.5, fontFamily: 'Outfit,sans-serif', color: '#16A34A', fontWeight: 500 }}>
+              Synced with database ({lastSaved})
+            </span>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#D97706' }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#F59E0B', display: 'inline-block' }} />
+            <span className="editor-autosave-text" style={{ fontSize: 11.5, fontFamily: 'Outfit,sans-serif', fontWeight: 500 }}>
+              Unsaved changes
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Spacer */}
@@ -166,18 +185,51 @@ export default function EditorTopBar({
         </IconBtn>
       )}
 
-      {/* Publish */}
+      {/* MANUAL SAVE DRAFT BUTTON */}
+      <button
+        onClick={onSaveDraft}
+        disabled={isSaving}
+        title="Save to database (Ctrl+S)"
+        style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          height: 32, padding: '0 12px',
+          border: '1px solid #CBD5E1', borderRadius: 5,
+          background: '#FFFFFF', cursor: isSaving ? 'not-allowed' : 'pointer',
+          fontFamily: 'Outfit,sans-serif', fontSize: 12, fontWeight: 600,
+          letterSpacing: '0.02em', color: '#1E293B',
+          transition: 'all 0.15s ease', flexShrink: 0,
+        }}
+        onMouseEnter={e => {
+          if (!isSaving) {
+            (e.currentTarget as HTMLElement).style.borderColor = '#C47D0E';
+            (e.currentTarget as HTMLElement).style.color = '#C47D0E';
+            (e.currentTarget as HTMLElement).style.background = '#FFFBEB';
+          }
+        }}
+        onMouseLeave={e => {
+          (e.currentTarget as HTMLElement).style.borderColor = '#CBD5E1';
+          (e.currentTarget as HTMLElement).style.color = '#1E293B';
+          (e.currentTarget as HTMLElement).style.background = '#FFFFFF';
+        }}
+      >
+        <Save size={13} />
+        <span>Save Draft</span>
+      </button>
+
+      {/* PUBLISH / UPDATE BUTTON */}
       <button
         onClick={onPublish}
+        disabled={isSaving}
         style={{
           display: 'flex', alignItems: 'center', gap: 5,
           height: 32, padding: '0 14px', border: 'none',
-          borderRadius: 5, background: '#C47D0E', cursor: 'pointer',
-          fontFamily: 'Outfit,sans-serif', fontSize: 12, fontWeight: 600,
+          borderRadius: 5, background: '#C47D0E', cursor: isSaving ? 'not-allowed' : 'pointer',
+          fontFamily: 'Outfit,sans-serif', fontSize: 12, fontWeight: 700,
           letterSpacing: '0.04em', textTransform: 'uppercase', color: '#FFFFFF',
           transition: 'opacity 0.15s', flexShrink: 0,
+          boxShadow: '0 2px 6px rgba(196,125,14,0.25)',
         }}
-        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.85' }}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.88' }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
       >
         {status === 'published' ? 'Update' : 'Publish'}

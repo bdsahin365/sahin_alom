@@ -3,7 +3,7 @@ import {
   Type, Heading1, Heading2, Heading3, Heading4,
   List, ListOrdered, ListChecks, Quote, Minus, Image, Table2,
   Code2, Video, AlertCircle, Sigma, Calculator, GitBranch, Zap,
-  BookOpen, Link, Files,
+  BookOpen, Link, Files, Trash2,
 } from 'lucide-react'
 
 export type SlashItem = {
@@ -78,9 +78,14 @@ export function buildSlashItems(editor: any): SlashItem[] {
       command: (ed: any) => { ed.__openImageModal?.() },
     },
     {
-      id: 'table', title: 'Table', description: '3×3 table', category: 'RICH CONTENT',
+      id: 'table', title: 'Table', description: 'Insert a 3×3 table', category: 'RICH CONTENT',
       icon: <Table2 size={14} />,
       command: () => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
+    },
+    {
+      id: 'delete-table', title: 'Delete Table', description: 'Delete current table', category: 'RICH CONTENT',
+      icon: <Trash2 size={14} />,
+      command: () => editor.chain().focus().deleteTable().run(),
     },
     {
       id: 'youtube', title: 'YouTube Video', description: 'Paste a YouTube URL', category: 'RICH CONTENT',

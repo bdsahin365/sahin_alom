@@ -21,7 +21,6 @@ import python from 'highlight.js/lib/languages/python'
 import javascript from 'highlight.js/lib/languages/javascript'
 import typescript from 'highlight.js/lib/languages/typescript'
 import bash from 'highlight.js/lib/languages/bash'
-import { supabase } from '../../lib/supabase'
 import { fetchArticleById, saveArticle as persistArticle } from '../../lib/articlesService'
 import { isBengali } from '../../lib/langUtils'
 import { CalcBlock } from './extensions/CalcBlock'
@@ -29,6 +28,7 @@ import { MermaidBlock } from './extensions/MermaidBlock'
 import { FileAttachment } from './extensions/FileAttachment'
 import EditorTopBar from './components/EditorTopBar'
 import FloatingToolbar from './components/FloatingToolbar'
+import TableToolbar from './components/TableToolbar'
 import SettingsPanel from './components/SettingsPanel'
 import SlashMenu from './components/SlashMenu'
 import PublishDialog from './components/PublishDialog'
@@ -108,7 +108,9 @@ export default function ArticleEditor() {
   const [excerpt, setExcerpt] = useState('')
   const [meta, setMeta] = useState<ArticleMeta>(DEFAULT_META)
   const [saved, setSaved] = useState(true)
-  const [lastSaved, setLastSaved] = useState('Saved just now')
+  const [isSaving, setIsSaving] = useState(false)
+  const [lastSaved, setLastSaved] = useState('Synced')
+  const [syncToast, setSyncToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [loading, setLoading] = useState(!isNew)
   const [panelOpen, setPanelOpen] = useState(true)
   const [previewMode, setPreviewMode] = useState<'desktop' | 'tablet' | 'mobile' | null>(null)
@@ -122,7 +124,6 @@ export default function ArticleEditor() {
   const [showMermaid, setShowMermaid] = useState(false)
   const [showImageUpload, setShowImageUpload] = useState(false)
   const [showFileAttach, setShowFileAttach] = useState(false)
-  // For featured-image upload triggered from SettingsPanel
   const [showFeaturedImageUpload, setShowFeaturedImageUpload] = useState(false)
 
   // Slash menu state
@@ -130,7 +131,6 @@ export default function ArticleEditor() {
   const [slashQuery, setSlashQuery] = useState('')
   const [slashRange, setSlashRange] = useState<any>(null)
 
-  const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const titleRef = useRef<HTMLDivElement>(null)
   const editorContainerRef = useRef<HTMLDivElement>(null)
 
@@ -151,7 +151,10 @@ export default function ArticleEditor() {
       TaskList,
       TaskItem.configure({ nested: true }),
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
-      Table.configure({ resizable: true }),
+      Table.configure({
+        resizable: true,
+        allowTableNodeSelection: true,
+      }),
       TableRow,
       TableHeader,
       TableCell,
@@ -162,6 +165,7 @@ export default function ArticleEditor() {
       FileAttachment,
     ],
     onUpdate: ({ editor: ed }) => {
+      // Mark as unsaved without auto-saving
       setSaved(false)
       // Math re-render
       if (editorContainerRef.current) renderMathInElement(editorContainerRef.current)
@@ -211,18 +215,78 @@ export default function ArticleEditor() {
     }
   }, [])
 
+  // ── Manual Save & Sync with Database ─────────────────────────────────────────
+  const saveArticle = useCallback(async (targetStatus?: 'draft' | 'published' | 'scheduled') => {
+    if (!editor) return
+    setIsSaving(true)
+    const content = editor.getJSON()
+    const text = editor.getText()
+    const readTime = Math.max(1, Math.ceil(text.split(/\s+/).length / 200))
+    const currentStatus = targetStatus || meta.status || 'draft'
+    
+    try {
+      const res = await persistArticle({
+        id: articleId || undefined,
+        title: title.trim() || 'Untitled Article',
+        excerpt,
+        content,
+        status: currentStatus,
+        category: meta.category,
+        tags: meta.tags,
+        featured_image: meta.featuredImage,
+        author: meta.author,
+        meta_title: meta.metaTitle,
+        meta_desc: meta.metaDesc,
+        slug: meta.slug || slugify(title) || `article-${Date.now()}`,
+        read_time: readTime,
+      })
+
+      if (!articleId && res?.article?.id) {
+        setArticleId(res.article.id)
+        navigate(`/admin/articles/${res.article.id}`, { replace: true })
+      }
+
+      setSaved(true)
+      const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      setLastSaved(nowStr)
+
+      if (res.synced) {
+        setSyncToast({
+          type: 'success',
+          message: `Article successfully saved and synced with database at ${nowStr}`,
+        })
+      } else {
+        setSyncToast({
+          type: 'error',
+          message: `Saved locally. Database sync: ${res.error || 'Network error'}`,
+        })
+      }
+    } catch (err: any) {
+      setSyncToast({
+        type: 'error',
+        message: `Database sync error: ${err?.message || 'Failed to sync with database'}`,
+      })
+    } finally {
+      setIsSaving(false)
+      setTimeout(() => setSyncToast(null), 4500)
+    }
+  }, [editor, title, excerpt, meta, articleId, navigate])
+
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === '?') { setShowShortcuts(true); return }
+      if (e.key === '?' && !editor?.isFocused) { setShowShortcuts(true); return }
       const ctrl = e.ctrlKey || e.metaKey
-      if (ctrl && e.key === 's') { e.preventDefault(); saveArticle() }
+      if (ctrl && e.key === 's') {
+        e.preventDefault()
+        void saveArticle()
+      }
       if (ctrl && e.key === '\\') { e.preventDefault(); setPanelOpen(o => !o) }
-      if (ctrl && e.shiftKey && e.key === 'P') { e.preventDefault(); setShowPublish(true) }
+      if (ctrl && e.shiftKey && (e.key === 'P' || e.key === 'p')) { e.preventDefault(); setShowPublish(true) }
     }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  })
+  }, [saveArticle, editor])
 
   // Load existing article
   useEffect(() => {
@@ -249,42 +313,6 @@ export default function ArticleEditor() {
       setLoading(false)
     })
   }, [id, isNew, editor])
-
-  // Autosave debounce
-  const saveArticle = useCallback(async () => {
-    if (!editor) return
-    const content = editor.getJSON()
-    const text = editor.getText()
-    const readTime = Math.max(1, Math.ceil(text.split(/\s+/).length / 200))
-    const savedArt = await persistArticle({
-      id: articleId || undefined,
-      title,
-      excerpt,
-      content,
-      status: meta.status,
-      category: meta.category,
-      tags: meta.tags,
-      featured_image: meta.featuredImage,
-      author: meta.author,
-      meta_title: meta.metaTitle,
-      meta_desc: meta.metaDesc,
-      slug: meta.slug || slugify(title),
-      read_time: readTime,
-    })
-    if (!articleId && savedArt?.id) {
-      setArticleId(savedArt.id)
-      navigate(`/admin/articles/${savedArt.id}`, { replace: true })
-    }
-    setSaved(true)
-    setLastSaved('Saved just now')
-  }, [editor, title, excerpt, meta, articleId, navigate])
-
-  useEffect(() => {
-    if (saved) return
-    if (saveTimeout.current) clearTimeout(saveTimeout.current)
-    saveTimeout.current = setTimeout(saveArticle, 1500)
-    return () => { if (saveTimeout.current) clearTimeout(saveTimeout.current) }
-  }, [saved, saveArticle])
 
   // Update slug from title if not manually set
   useEffect(() => {
@@ -341,7 +369,7 @@ export default function ArticleEditor() {
   const handlePublish = async () => {
     setShowPublish(false)
     setMeta(m => ({ ...m, status: 'published' }))
-    await saveArticle()
+    await saveArticle('published')
   }
 
   const readTime = editor ? Math.max(1, Math.ceil(editor.getText().split(/\s+/).length / 200)) : 0
@@ -358,12 +386,14 @@ export default function ArticleEditor() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#F7F5F0', fontFamily: 'Outfit,sans-serif', overflow: 'hidden' }}>
 
-      {/* Top bar */}
+      {/* Top bar with Save Draft and database sync state */}
       <EditorTopBar
         status={meta.status}
         saved={saved}
+        isSaving={isSaving}
         lastSaved={lastSaved}
         onBack={() => navigate('/admin')}
+        onSaveDraft={() => void saveArticle('draft')}
         onUndo={() => editor?.chain().focus().undo().run()}
         onRedo={() => editor?.chain().focus().redo().run()}
         onPreview={() => window.open(`/blog/${meta.slug || slugify(title)}`, '_blank')}
@@ -506,8 +536,11 @@ export default function ArticleEditor() {
         />
       </div>
 
-      {/* Floating text toolbar */}
+      {/* Floating text toolbar for inline formatting */}
       <FloatingToolbar editor={editor} />
+
+      {/* Dedicated Floating Table toolbar for row/col and complete table deletion */}
+      <TableToolbar editor={editor} />
 
       {/* Slash command menu */}
       {slashPos && (
@@ -520,12 +553,39 @@ export default function ArticleEditor() {
         />
       )}
 
+      {/* Database Sync Toast Banner */}
+      {syncToast && (
+        <div style={{
+          position: 'fixed',
+          bottom: 24,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '10px 18px',
+          borderRadius: 8,
+          background: syncToast.type === 'success' ? '#0F172A' : '#7F1D1D',
+          color: '#FFFFFF',
+          fontSize: 13,
+          fontFamily: 'Outfit, sans-serif',
+          fontWeight: 500,
+          boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+          border: syncToast.type === 'success' ? '1px solid #334155' : '1px solid #991B1B',
+          animation: 'fadeIn 0.2s ease',
+        }}>
+          <span>{syncToast.type === 'success' ? '✓' : '⚠️'}</span>
+          <span>{syncToast.message}</span>
+        </div>
+      )}
+
       {/* Modals */}
       {showPublish && (
         <PublishDialog
           onClose={() => setShowPublish(false)}
           onPublish={handlePublish}
-          onSaveDraft={() => { setShowPublish(false); saveArticle() }}
+          onSaveDraft={() => { setShowPublish(false); void saveArticle('draft') }}
           article={{ title, slug: meta.slug, featuredImage: meta.featuredImage, category: meta.category, metaTitle: meta.metaTitle, metaDesc: meta.metaDesc, author: meta.author, status: meta.status }}
         />
       )}
@@ -553,6 +613,11 @@ export default function ArticleEditor() {
 
       {/* Editor styles */}
       <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translate(-50%, 8px); }
+          to { opacity: 1; transform: translate(-50%, 0); }
+        }
+
         /* Placeholder */
         .tiptap p.is-editor-empty:first-child::before,
         .tiptap .is-empty::before {
@@ -584,10 +649,27 @@ export default function ArticleEditor() {
         .tiptap img { max-width: 100%; border-radius: 8px; margin: 1em 0; }
 
         /* Tables */
-        .tiptap table { width: 100%; border-collapse: collapse; margin: 1.5em 0; border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden; }
-        .tiptap th { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px 14px; text-align: left; font-family: 'Outfit',sans-serif; font-size: 12px; font-weight: 600; color: #0F172A; }
-        .tiptap td { border: 1px solid #E2E8F0; padding: 10px 14px; font-family: 'Outfit',sans-serif; font-size: 13px; color: #374151; }
-        .tiptap tr:hover td { background: #FAFAFA; }
+        .tiptap table { width: 100%; border-collapse: collapse; margin: 1.5em 0; border: 1px solid #CBD5E1; border-radius: 8px; overflow: hidden; position: relative; }
+        .tiptap th { background: #F1F5F9; border: 1px solid #CBD5E1; padding: 10px 14px; text-align: left; font-family: 'Outfit',sans-serif; font-size: 13px; font-weight: 700; color: #0F172A; }
+        .tiptap td { border: 1px solid #CBD5E1; padding: 10px 14px; font-family: 'Outfit',sans-serif; font-size: 14px; color: #334155; min-width: 80px; position: relative; }
+        .tiptap tr:hover td { background: #F8FAFC; }
+        .tiptap .selectedCell:after {
+          z-index: 2;
+          position: absolute;
+          content: "";
+          left: 0; right: 0; top: 0; bottom: 0;
+          background: rgba(196, 125, 14, 0.15);
+          pointer-events: none;
+        }
+        .tiptap .column-resize-handle {
+          position: absolute;
+          right: -2px;
+          top: 0;
+          bottom: -2px;
+          width: 4px;
+          background-color: #C47D0E;
+          pointer-events: none;
+        }
 
         /* Task list */
         .tiptap ul[data-type="taskList"] { padding: 0; list-style: none; }

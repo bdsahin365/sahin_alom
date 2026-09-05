@@ -373,10 +373,16 @@ export async function fetchArticleById(id: string): Promise<Article | null> {
   return local || null
 }
 
+export interface SaveArticleResult {
+  article: Article
+  synced: boolean
+  error?: string
+}
+
 /**
- * Save or update article in local cache and attempt Supabase upsert
+ * Save or update article in local cache and reliably sync to Supabase database
  */
-export async function saveArticle(article: Partial<Article> & { title: string }): Promise<Article> {
+export async function saveArticle(article: Partial<Article> & { title: string }): Promise<SaveArticleResult> {
   const all = getStoredArticles()
   const now = new Date().toISOString()
   
@@ -410,25 +416,41 @@ export async function saveArticle(article: Partial<Article> & { title: string })
   }
   saveStoredArticles(all)
 
-  // Sync to Supabase in background
+  // Direct sync to Supabase database
+  let synced = false
+  let errorMsg: string | undefined = undefined
+
   try {
-    await supabase.from('articles').upsert(fullArticle)
-  } catch (e) {
-    console.warn('Supabase upsert failed, stored in local cache:', e)
+    const { error } = await supabase.from('articles').upsert(fullArticle)
+    if (error) {
+      console.error('Supabase database sync error:', error)
+      errorMsg = error.message
+    } else {
+      synced = true
+    }
+  } catch (e: any) {
+    console.warn('Supabase database exception:', e)
+    errorMsg = e?.message || 'Database connection error'
   }
 
-  return fullArticle
+  return { article: fullArticle, synced, error: errorMsg }
 }
 
 /**
- * Delete article from local cache and attempt Supabase delete
+ * Delete article from local cache and sync delete with Supabase
  */
-export async function deleteArticle(id: string): Promise<void> {
+export async function deleteArticle(id: string): Promise<{ success: boolean; error?: string }> {
   const all = getStoredArticles().filter(a => a.id !== id)
   saveStoredArticles(all)
   try {
-    await supabase.from('articles').delete().eq('id', id)
-  } catch (e) {
+    const { error } = await supabase.from('articles').delete().eq('id', id)
+    if (error) {
+      console.warn('Supabase delete error:', error)
+      return { success: false, error: error.message }
+    }
+    return { success: true }
+  } catch (e: any) {
     console.warn('Supabase delete failed:', e)
+    return { success: false, error: e?.message }
   }
 }
