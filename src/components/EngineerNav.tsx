@@ -33,9 +33,7 @@ export default function EngineerNav({
   const [localMenuOpen, setLocalMenuOpen] = useState(false)
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
   const [toolsDropdownOpen, setToolsDropdownOpen] = useState(false)
-  const [availabilityPopoverOpen, setAvailabilityPopoverOpen] = useState(false)
   const toolsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const popoverRef = useRef<HTMLDivElement>(null)
 
   const menuOpen = controlledMenuOpen !== undefined ? controlledMenuOpen : localMenuOpen
   const setMenuOpen = controlledSetMenuOpen ?? setLocalMenuOpen
@@ -80,17 +78,6 @@ export default function EngineerNav({
     document.body.style.overflow = menuOpen ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
   }, [menuOpen])
-
-  // Close popovers on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
-        setAvailabilityPopoverOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   const navItems: { label: string; href?: string; to?: string; badge?: string; hasDropdown?: boolean }[] = [
     { label: 'About', href: '#about' },
@@ -170,7 +157,7 @@ export default function EngineerNav({
             gap: 16,
           }}
         >
-          {/* 1. Left Brand Logo & Story Video Shorts Trigger */}
+          {/* 1. Left Brand Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
             {/* Custom High-Definition Vector SVG Engineering Logo */}
             <HeaderLogo
@@ -179,86 +166,6 @@ export default function EngineerNav({
                 navigate('/')
               }}
             />
-
-            {/* Video Shorts & Stories Trigger Pill */}
-            <button
-              onClick={() => handleOpenStory(0)}
-              title="Watch Video Shorts & Engineering Demonstrations"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                background: 'rgba(255, 255, 255, 0.9)',
-                border: '1px solid rgba(196, 125, 14, 0.35)',
-                borderRadius: 99,
-                padding: '3px 9px 3px 3px',
-                cursor: 'pointer',
-                transition: 'all 0.2s cubic-bezier(0.16,1,0.3,1)',
-                boxShadow: '0 2px 8px rgba(196, 125, 14, 0.12)',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.transform = 'translateY(-1px) scale(1.04)'
-                e.currentTarget.style.boxShadow = '0 4px 14px rgba(196, 125, 14, 0.25)'
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.transform = 'none'
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(196, 125, 14, 0.12)'
-              }}
-            >
-              <div
-                style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: '50%',
-                  padding: 1.5,
-                  background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <img
-                  src={E.photo || sahinAvatar}
-                  alt="Story"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                    border: '1px solid #FFFFFF',
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span
-                  style={{
-                    fontFamily: 'Outfit, sans-serif',
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: '#0D1218',
-                    letterSpacing: '0.02em',
-                  }}
-                >
-                  Shorts
-                </span>
-                <span
-                  style={{
-                    background: '#C47D0E',
-                    color: '#FFFFFF',
-                    fontFamily: 'JetBrains Mono, monospace',
-                    fontSize: 8,
-                    fontWeight: 700,
-                    padding: '1px 4px',
-                    borderRadius: 6,
-                    lineHeight: 1.1,
-                  }}
-                >
-                  2
-                </span>
-              </div>
-            </button>
           </div>
 
           {/* 2. Center Desktop Navigation Links with Flyout Mega-Menus */}
@@ -553,173 +460,6 @@ export default function EngineerNav({
                 ⌘K
               </span>
             </button>
-
-            {/* Interactive Live Availability Radar Pill */}
-            <div style={{ position: 'relative' }} ref={popoverRef}>
-              <button
-                onClick={() => setAvailabilityPopoverOpen(prev => !prev)}
-                className="desktop-only"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  background: 'rgba(22, 163, 74, 0.08)',
-                  border: '1px solid rgba(22, 163, 74, 0.25)',
-                  borderRadius: 99,
-                  padding: '4px 10px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.background = 'rgba(22, 163, 74, 0.15)'
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.background = 'rgba(22, 163, 74, 0.08)'
-                }}
-              >
-                <div
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: '50%',
-                    background: '#16A34A',
-                    boxShadow: '0 0 8px #16A34A',
-                    animation: 'pulse 2s infinite',
-                  }}
-                />
-                <span
-                  style={{
-                    fontFamily: 'JetBrains Mono, monospace',
-                    fontSize: 9,
-                    color: '#16A34A',
-                    letterSpacing: '0.14em',
-                    textTransform: 'uppercase',
-                    fontWeight: 700,
-                  }}
-                >
-                  Available
-                </span>
-              </button>
-
-              {/* Live Status Popover Card */}
-              {availabilityPopoverOpen && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 'calc(100% + 12px)',
-                    right: 0,
-                    width: 280,
-                    background: '#FFFFFF',
-                    border: '1px solid #ECE7DE',
-                    borderRadius: 10,
-                    boxShadow: '0 16px 36px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(22, 163, 74, 0.15)',
-                    padding: 16,
-                    zIndex: 350,
-                    animation: 'fadeIn 0.15s ease-out',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                    <div
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: '50%',
-                        background: '#16A34A',
-                        boxShadow: '0 0 8px #16A34A',
-                      }}
-                    />
-                    <span
-                      style={{
-                        fontFamily: 'Barlow Condensed, sans-serif',
-                        fontWeight: 800,
-                        fontSize: 16,
-                        color: '#0D1218',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      Consultation Status
-                    </span>
-                  </div>
-
-                  <p
-                    style={{
-                      fontFamily: 'Outfit, sans-serif',
-                      fontSize: 12,
-                      color: '#4A5568',
-                      lineHeight: 1.5,
-                      marginBottom: 12,
-                    }}
-                  >
-                    Taking Q3/Q4 2026 electrical engineering projects, substation design, solar PV, and BNBC compliance audits.
-                  </p>
-
-                  <div
-                    style={{
-                      fontFamily: 'JetBrains Mono, monospace',
-                      fontSize: 9.5,
-                      color: '#16A34A',
-                      background: 'rgba(22, 163, 74, 0.1)',
-                      padding: '4px 8px',
-                      borderRadius: 4,
-                      marginBottom: 12,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 4,
-                    }}
-                  >
-                    <span>⚡ Average Response: &lt; 4 Hours</span>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <button
-                      onClick={() => {
-                        window.open(`https://wa.me/8801700000000?text=${encodeURIComponent('Hello Engr. Sahin Alom, I would like to book an electrical consultation.')}`, '_blank')
-                        setAvailabilityPopoverOpen(false)
-                      }}
-                      style={{
-                        width: '100%',
-                        padding: '7px',
-                        background: '#16A34A',
-                        color: '#FFFFFF',
-                        border: 'none',
-                        borderRadius: 4,
-                        fontFamily: 'Outfit, sans-serif',
-                        fontSize: 11.5,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 6,
-                      }}
-                    >
-                      <MessageSquare size={13} /> Chat on WhatsApp
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        handleAnchorClick({ preventDefault: () => {} } as any, '#contact')
-                        setAvailabilityPopoverOpen(false)
-                      }}
-                      style={{
-                        width: '100%',
-                        padding: '7px',
-                        background: 'transparent',
-                        color: '#0D1218',
-                        border: '1px solid #DDD9D0',
-                        borderRadius: 4,
-                        fontFamily: 'Outfit, sans-serif',
-                        fontSize: 11.5,
-                        fontWeight: 500,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Open Contact Form
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
 
             <button onClick={handleCV} className="btn-outline-sm desktop-only" style={{ display: 'flex' }}>
               CV
