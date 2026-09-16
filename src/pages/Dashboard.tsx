@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type ReactNode, type ChangeEvent } from 'react'
+import { useState, useRef, useEffect, useCallback, type ReactNode, type ChangeEvent } from 'react'
 import { useNavigate } from 'react-router'
 import {
   LayoutDashboard, User, Award, Zap, FolderOpen,
