@@ -13,9 +13,20 @@ import BlogIndex from './pages/BlogIndex'
 import BlogPost from './pages/BlogPost'
 import ContactPage from './pages/ContactPage'
 import NotFound from './pages/NotFound'
+// Wedding — fully isolated; registered outside Root to prevent global style/cursor bleed
+import WeddingPage from './wedding/WeddingPage'
 
 export const router = createBrowserRouter(
   [
+    // ── Wedding invitation — standalone, no Root wrapper ─────────────────────
+    // This ensures the global Cursor, SiteProvider, and AnalyticsTracker
+    // do NOT mount when visiting /wedding.
+    {
+      path: '/wedding',
+      Component: WeddingPage,
+    },
+
+    // ── Main site ─────────────────────────────────────────────────────────────
     {
       path: '/',
       Component: Root,

@@ -11,7 +11,7 @@ import {
   AlertTriangle, Globe, Pencil,
   Inbox, LogOut, Mail, Clock, BookOpen, Menu, Upload,
   BarChart2, ShieldCheck, ExternalLink, Sparkles, Palette,
-  Play, Video, Film,
+  Play, Video, Film, Heart,
 } from 'lucide-react'
 import ArticlesList from './blog/ArticlesList'
 import HeaderLogo from '../components/HeaderLogo'
@@ -24,6 +24,7 @@ import {
   type Credential, type ExpertiseItem, type ServiceItem,
   type EducationItem, type Project, type StoryItem,
 } from '../context/SiteContext'
+import { DEFAULT_WEDDING_CONFIG } from '../wedding/weddingConfig'
 import sahinPhoto from '../img/sahin.png'
 
 // ── shadcn-style primitives ──────────────────────────────────────────────────
@@ -478,12 +479,16 @@ function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
 }
 
 // ── Nav items ────────────────────────────────────────────────────────────────
-type SectionId = 'overview' | 'branding' | 'shorts' | 'articles' | 'profile' | 'credentials' | 'expertise' | 'projects' | 'services' | 'education' | 'settings' | 'messages'
+type SectionId = 'overview' | 'branding' | 'shorts' | 'articles' | 'profile' | 'credentials' | 'expertise' | 'projects' | 'services' | 'education' | 'settings' | 'messages' | 'wedding'
 
-const NAV_ITEMS: { id: SectionId; label: string; icon: ReactNode }[] = [
+type NavItem = { type?: 'item'; id: SectionId; label: string; icon: ReactNode }
+type NavGroup = { type: 'group'; label: string; id: string; items: NavItem[] }
+type NavEntry = NavItem | NavGroup
+
+const NAV_ENTRIES: NavEntry[] = [
   { id: 'overview',    label: 'Overview',               icon: <LayoutDashboard size={15} /> },
   { id: 'branding',    label: 'Logo & Branding',        icon: <Sparkles size={15} /> },
-  { id: 'shorts',      label: 'Video Shorts & Stories', icon: <Play size={15} /> },
+  { id: 'shorts',      label: 'Video Shorts',           icon: <Play size={15} /> },
   { id: 'articles',    label: 'Articles',               icon: <BookOpen size={15} /> },
   { id: 'profile',     label: 'Profile & Bio',          icon: <User size={15} /> },
   { id: 'credentials', label: 'Credentials',            icon: <Award size={15} /> },
@@ -491,9 +496,22 @@ const NAV_ITEMS: { id: SectionId; label: string; icon: ReactNode }[] = [
   { id: 'projects',    label: 'Projects',               icon: <FolderOpen size={15} /> },
   { id: 'services',    label: 'Services',               icon: <Briefcase size={15} /> },
   { id: 'education',   label: 'Education',              icon: <GraduationCap size={15} /> },
-  { id: 'settings',    label: 'SEO & Analytics',        icon: <Settings2 size={15} /> },
+  {
+    type: 'group',
+    label: 'Settings',
+    id: 'settings-group',
+    items: [
+      { id: 'settings', label: 'SEO & Analytics',       icon: <Settings2 size={14} /> },
+      { id: 'wedding',  label: 'Marriage Invitation',   icon: <Heart size={14} /> },
+    ],
+  },
   { id: 'messages',    label: 'Messages Inbox',         icon: <Inbox size={15} /> },
 ]
+
+// Flat list for contexts that need all items
+const NAV_ITEMS: NavItem[] = NAV_ENTRIES.flatMap(e =>
+  (e as NavGroup).items ? (e as NavGroup).items : [e as NavItem]
+)
 
 // ── Section editors ──────────────────────────────────────────────────────────
 
@@ -2314,6 +2332,208 @@ function MessagesPanel() {
   )
 }
 
+
+// ── Wedding Settings Panel ────────────────────────────────────────────────────
+function WeddingSettingsPanel() {
+  const { data, updateWedding } = useSite()
+  const W = { ...DEFAULT_WEDDING_CONFIG, ...(data.wedding || {}) }
+  const [heroUploading, setHeroUploading] = useState(false)
+  const [groomUploading, setGroomUploading] = useState(false)
+  const [brideUploading, setBrideUploading] = useState(false)
+  const [heroMsg, setHeroMsg] = useState<string | null>(null)
+  const [groomMsg, setGroomMsg] = useState<string | null>(null)
+  const [brideMsg, setBrideMsg] = useState<string | null>(null)
+  const heroInputRef  = useRef<HTMLInputElement>(null)
+  const groomInputRef = useRef<HTMLInputElement>(null)
+  const brideInputRef = useRef<HTMLInputElement>(null)
+
+  const makeFileHandler = (
+    field: 'heroImage' | 'groomPhoto' | 'bridePhoto',
+    setUploading: (v: boolean) => void,
+    setMsg: (v: string | null) => void,
+  ) => async (file: File) => {
+    setUploading(true)
+    try {
+      const { base64, originalSize, compressedSize } = await compressAndConvertToBase64(file, {
+        maxWidth: field === 'heroImage' ? 1400 : 600,
+        maxHeight: field === 'heroImage' ? 900 : 800,
+        quality: 0.82,
+        mimeType: 'image/jpeg',
+      })
+      updateWedding({ [field]: base64 })
+      setMsg(`Saved (${formatBytes(originalSize)} → ${formatBytes(compressedSize)})`)
+      setTimeout(() => setMsg(null), 3500)
+    } catch { setMsg('Upload failed') }
+    finally { setUploading(false) }
+  }
+
+  const heroHandler  = makeFileHandler('heroImage',  setHeroUploading,  setHeroMsg)
+  const groomHandler = makeFileHandler('groomPhoto', setGroomUploading, setGroomMsg)
+  const brideHandler = makeFileHandler('bridePhoto', setBrideUploading, setBrideMsg)
+
+  function ImageUploadRow({
+    field, label, uploading, msg, inputRef, onFile, aspect,
+  }: {
+    field: 'heroImage' | 'groomPhoto' | 'bridePhoto'
+    label: string; uploading: boolean; msg: string | null
+    inputRef: React.RefObject<HTMLInputElement>
+    onFile: (f: File) => void
+    aspect?: 'wide' | 'portrait'
+  }) {
+    return (
+      <div style={{ marginBottom: 20 }}>
+        <label style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12, fontWeight: 500, color: '#374151', display: 'block', marginBottom: 8 }}>{label}</label>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+          {W[field] && (
+            <div style={{ width: aspect === 'portrait' ? 60 : 100, height: aspect === 'portrait' ? 80 : 62, borderRadius: 6, overflow: 'hidden', border: '1px solid #E2E8F0', flexShrink: 0 }}>
+              <img src={W[field]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }} />
+            </div>
+          )}
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }}
+              onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = '' }} />
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>
+              <button type="button" onClick={() => inputRef.current?.click()} disabled={uploading}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 5, background: '#C47D0E', color: '#fff', fontFamily: 'Outfit,sans-serif', fontSize: 11, fontWeight: 600, border: 'none', cursor: uploading ? 'not-allowed' : 'pointer' }}>
+                {uploading ? <Loader2 size={11} style={{ animation: 'spin 1s linear infinite' }} /> : <Upload size={11} />}
+                {uploading ? 'Processing…' : 'Upload from device'}
+              </button>
+              {W[field] && (
+                <button type="button" onClick={() => updateWedding({ [field]: '' })}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', fontSize: 11, fontFamily: 'Outfit,sans-serif', fontWeight: 500 }}>× Clear</button>
+              )}
+            </div>
+            <input value={W[field]} onChange={e => updateWedding({ [field]: e.target.value })}
+              placeholder="Paste image URL…"
+              style={{ width: '100%', height: 32, padding: '0 10px', border: '1px solid #E2E8F0', borderRadius: 6, fontFamily: 'Outfit,sans-serif', fontSize: 11, outline: 'none', color: '#374151', boxSizing: 'border-box' }} />
+            {msg && <span style={{ fontSize: 11, color: '#16A34A', fontFamily: 'Outfit,sans-serif', display: 'flex', alignItems: 'center', gap: 3, marginTop: 4 }}><Check size={11} /> {msg}</span>}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      {/* Kill Switch Banner */}
+      <div style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 10, padding: '18px 20px', marginBottom: 20, display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+        <div style={{ width: 36, height: 36, background: '#FFEDD5', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Heart size={18} style={{ color: '#EA580C' }} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 700, fontSize: 14, color: '#9A3412', marginBottom: 4 }}>Marriage Invitation Page</div>
+          <div style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12, color: '#C2410C', marginBottom: 16 }}>
+            Toggle the /wedding page live or offline. When disabled, visitors see a graceful "Invitation Closed" screen.
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Switch checked={W.enabled} onChange={v => updateWedding({ enabled: v })} />
+              <span style={{ fontFamily: 'Outfit,sans-serif', fontSize: 13, fontWeight: 600, color: W.enabled ? '#16A34A' : '#64748B' }}>
+                {W.enabled ? '🟢 Invitation is LIVE' : '⚫ Invitation is CLOSED'}
+              </span>
+            </div>
+            <a href="/wedding" target="_blank" rel="noopener noreferrer"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 6, background: '#0F172A', color: '#FFFFFF', fontFamily: 'Outfit,sans-serif', fontSize: 11, fontWeight: 600, textDecoration: 'none' }}>
+              <Eye size={12} /> Preview page →
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Visual Assets */}
+      <Section title="🖼  Visual Assets" description="Hero background, groom and bride portrait photos.">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <label style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12, fontWeight: 500, color: '#374151' }}>Show couple portrait section on /wedding</label>
+          <Switch checked={W.showCouplePhotos} onChange={v => updateWedding({ showCouplePhotos: v })} />
+        </div>
+        <Separator />
+        <ImageUploadRow field="heroImage" label="Hero Background Image (16:9 recommended)" uploading={heroUploading} msg={heroMsg} inputRef={heroInputRef} onFile={heroHandler} aspect="wide" />
+        <Separator />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <ImageUploadRow field="groomPhoto" label="Groom's Portrait (3:4)" uploading={groomUploading} msg={groomMsg} inputRef={groomInputRef} onFile={groomHandler} aspect="portrait" />
+          <ImageUploadRow field="bridePhoto" label="Bride's Portrait (3:4)" uploading={brideUploading} msg={brideMsg} inputRef={brideInputRef} onFile={brideHandler} aspect="portrait" />
+        </div>
+      </Section>
+
+      {/* Couple Details */}
+      <Section title="👫 Couple Details" description="Names and headline text shown across the page.">
+        <Grid2>
+          <Input label="Groom's Short Name" value={W.groomName} onChange={v => updateWedding({ groomName: v })} placeholder="Sahin" />
+          <Input label="Groom's Full Name" value={W.groomFullName} onChange={v => updateWedding({ groomFullName: v })} placeholder="Md. Sahin Alom" />
+          <Input label="Bride's Short Name" value={W.brideName} onChange={v => updateWedding({ brideName: v })} placeholder="Nusrat" />
+          <Input label="Bride's Full Name" value={W.brideFullName} onChange={v => updateWedding({ brideFullName: v })} placeholder="Nusrat Jahan" />
+        </Grid2>
+        <Input label="Display Name (shown on hero)" value={W.displayName} onChange={v => updateWedding({ displayName: v })} placeholder="Sahin & Nusrat" />
+        <Input label="Tagline" value={W.tagline} onChange={v => updateWedding({ tagline: v })} placeholder="A Destined Union" />
+        <Input label="Hero Subtitle" value={W.heroSubtitle} onChange={v => updateWedding({ heroSubtitle: v })} />
+        <Input label="Loader Tagline (cinematic intro)" value={W.loaderTagline} onChange={v => updateWedding({ loaderTagline: v })} />
+      </Section>
+
+      {/* Story / Timeline */}
+      <Section title="📜 Our Story — Timeline" description="3 story chapters in the timeline section." defaultOpen={false}>
+        {W.story.map((item, i) => (
+          <div key={i} style={{ border: '1px solid #E2E8F0', borderRadius: 8, padding: '14px 16px', marginBottom: 12 }}>
+            <div style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 600, fontSize: 12, color: '#0F172A', marginBottom: 12 }}>Chapter {i + 1}</div>
+            <Grid2>
+              <Input label="Day #" value={item.day} onChange={v => { const s = [...W.story]; s[i] = { ...s[i], day: v }; updateWedding({ story: s }) }} placeholder="08" />
+              <Input label="Full Date Text" value={item.fullDate} onChange={v => { const s = [...W.story]; s[i] = { ...s[i], fullDate: v }; updateWedding({ story: s }) }} placeholder="08 Feb 2026" />
+            </Grid2>
+            <Input label="Chapter Title" value={item.title} onChange={v => { const s = [...W.story]; s[i] = { ...s[i], title: v }; updateWedding({ story: s }) }} />
+            <Textarea label="Chapter Body" value={item.body} onChange={v => { const s = [...W.story]; s[i] = { ...s[i], body: v }; updateWedding({ story: s }) }} rows={3} />
+          </div>
+        ))}
+      </Section>
+
+      {/* Events */}
+      <Section title="🎊 Events" description="Gaye Holud, Nikah, Walima — dates, times, and descriptions." defaultOpen={false}>
+        {W.events.map((ev, i) => (
+          <div key={ev.id} style={{ border: '1px solid #E2E8F0', borderRadius: 8, padding: '14px 16px', marginBottom: 12 }}>
+            <div style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 600, fontSize: 12, color: '#0F172A', marginBottom: 12 }}>{ev.label}</div>
+            <Grid2>
+              <Input label="English Label" value={ev.label} onChange={v => { const e = [...W.events]; e[i] = { ...e[i], label: v }; updateWedding({ events: e }) }} />
+              <Input label="Bengali Label (বাংলা)" value={ev.arabic} onChange={v => { const e = [...W.events]; e[i] = { ...e[i], arabic: v }; updateWedding({ events: e }) }} />
+              <Input label="Date" value={ev.date} onChange={v => { const e = [...W.events]; e[i] = { ...e[i], date: v }; updateWedding({ events: e }) }} placeholder="12.02.26" />
+              <Input label="Day of Week" value={ev.day} onChange={v => { const e = [...W.events]; e[i] = { ...e[i], day: v }; updateWedding({ events: e }) }} placeholder="Thursday" />
+            </Grid2>
+            <Input label="Time" value={ev.time} onChange={v => { const e = [...W.events]; e[i] = { ...e[i], time: v }; updateWedding({ events: e }) }} placeholder="4:00 PM onwards" />
+            <Textarea label="Description" value={ev.description} onChange={v => { const e = [...W.events]; e[i] = { ...e[i], description: v }; updateWedding({ events: e }) }} rows={2} />
+          </div>
+        ))}
+      </Section>
+
+      {/* Venue */}
+      <Section title="📍 Venue" description="Location details and Google Maps link." defaultOpen={false}>
+        <Input label="Venue Name" value={W.venueName} onChange={v => updateWedding({ venueName: v })} />
+        <Input label="Area / District" value={W.venueArea} onChange={v => updateWedding({ venueArea: v })} placeholder="Gazipur, Bangladesh" />
+        <Textarea label="Full Address Detail" value={W.venueDetail} onChange={v => updateWedding({ venueDetail: v })} rows={2} />
+        <Input label="Google Maps URL" value={W.venueMapsUrl} onChange={v => updateWedding({ venueMapsUrl: v })} placeholder="https://maps.google.com/?q=..." />
+      </Section>
+
+      {/* RSVP */}
+      <Section title="📬 RSVP" description="Formspree connection, deadline, and confirmation note." defaultOpen={false}>
+        <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 6, padding: '10px 14px', marginBottom: 16 }}>
+          <div style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12, color: '#64748B' }}>
+            Sign up at{' '}
+            <a href="https://formspree.io" target="_blank" rel="noopener noreferrer" style={{ color: '#C47D0E' }}>formspree.io</a>,
+            {' '}create a form, and paste the Form ID below (e.g. <code style={{ fontFamily: 'monospace', fontSize: 11, background: '#E2E8F0', padding: '1px 5px', borderRadius: 3 }}>xpzgkwqr</code>).
+            Leave blank for test/dev mode.
+          </div>
+        </div>
+        <Input label="Formspree Form ID" value={W.rsvpFormspreeId} onChange={v => updateWedding({ rsvpFormspreeId: v })} placeholder="xpzgkwqr" />
+        <Input label="RSVP Deadline" value={W.rsvpDeadline} onChange={v => updateWedding({ rsvpDeadline: v })} placeholder="January 31, 2026" />
+        <Textarea label="Confirmation Note (shown after RSVP submit)" value={W.rsvpConfirmationNote} onChange={v => updateWedding({ rsvpConfirmationNote: v })} rows={2} />
+      </Section>
+
+      {/* Closing Dua */}
+      <Section title="🤲 Closing Dua" description="Arabic dua and translation shown at the page footer." defaultOpen={false}>
+        <Input label="Arabic Dua Text" value={W.closingDua} onChange={v => updateWedding({ closingDua: v })} />
+        <Input label="English Translation" value={W.closingDuaTranslation} onChange={v => updateWedding({ closingDuaTranslation: v })} />
+        <Input label="Source Reference" value={W.closingDuaSource} onChange={v => updateWedding({ closingDuaSource: v })} placeholder="— Quran 25:74" />
+      </Section>
+    </div>
+  )
+}
+
 const PANELS: Record<SectionId, (props: { onNavigate: (s: SectionId) => void }) => ReactNode> = {
   overview:    ({ onNavigate }) => <OverviewPanel onNavigate={onNavigate} />,
   branding:    () => <BrandingPanel />,
@@ -2327,18 +2547,56 @@ const PANELS: Record<SectionId, (props: { onNavigate: (s: SectionId) => void }) 
   education:   () => <EducationPanel />,
   settings:    () => <SettingsPanel />,
   messages:    () => <MessagesPanel />,
+  wedding:     () => <WeddingSettingsPanel />,
 }
+
 
 // ── Dashboard shell ──────────────────────────────────────────────────────────
 export default function Dashboard() {
   const navigate = useNavigate()
   const onViewSite = () => navigate('/')
-  const { data, saved, resetToDefaults, updateEngineer } = useSite()
+  const { data, saved, isSaving, lastSaved, saveSiteData, resetToDefaults, updateEngineer } = useSite()
   const [section, setSection] = useState<SectionId>('overview')
   const [collapsed, setCollapsed] = useState(false)
   const [showReset, setShowReset] = useState(false)
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
+  const [saveToast, setSaveToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const active = NAV_ITEMS.find(n => n.id === section)!
+
+  const handleSave = async () => {
+    if (isSaving) return
+    const res = await saveSiteData()
+    if (res.success) {
+      setSaveToast({ type: 'success', message: 'All changes saved to database!' })
+    } else {
+      setSaveToast({ type: 'error', message: res.error || 'Failed to save changes.' })
+    }
+    setTimeout(() => setSaveToast(null), 3500)
+  }
+
+  // Ctrl+S / Cmd+S shortcut to save
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault()
+        void handleSave()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleSave])
+
+  // Warn on tab close or refresh if there are unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!saved) {
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [saved])
 
   useEffect(() => {
     document.title = data.settings.siteTitle || 'Site Editor'
@@ -2379,7 +2637,88 @@ export default function Dashboard() {
 
         {/* Nav */}
         <nav style={{ flex: 1, padding: '8px 0', overflowY: 'auto', overflowX: 'hidden' }}>
-          {NAV_ITEMS.map(item => {
+          {NAV_ENTRIES.map(entry => {
+            if ((entry as any).type === 'group') {
+              const group = entry as { type: 'group'; label: string; id: string; items: NavItem[] }
+              const isGroupActive = group.items.some(it => it.id === section)
+              const [groupOpen, setGroupOpen] = useState(isGroupActive)
+              return (
+                <div key={group.id}>
+                  {/* Group header */}
+                  <button
+                    onClick={() => setGroupOpen(o => !o)}
+                    title={collapsed ? group.label : undefined}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      width: '100%', padding: collapsed ? '9px 0' : '9px 12px',
+                      justifyContent: collapsed ? 'center' : 'flex-start',
+                      background: 'transparent', border: 'none', borderRadius: 0,
+                      color: isGroupActive ? '#92400E' : '#64748B',
+                      cursor: 'pointer', fontSize: 13, fontWeight: isGroupActive ? 600 : 400,
+                      fontFamily: 'Outfit,sans-serif', transition: 'all 0.15s', whiteSpace: 'nowrap',
+                      borderLeft: isGroupActive ? '3px solid #C47D0E' : '3px solid transparent',
+                    }}
+                    onMouseEnter={e => { if (!isGroupActive) (e.currentTarget as HTMLElement).style.background = '#F8FAFC' }}
+                    onMouseLeave={e => { if (!isGroupActive) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                  >
+                    <Settings2 size={15} style={{ flexShrink: 0 }} />
+                    {!collapsed && <><span style={{ flex: 1 }}>{group.label}</span><ChevronDown size={12} style={{ color: '#CBD5E1', transform: groupOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} /></>}
+                  </button>
+
+                  {/* Sub-items */}
+                  {groupOpen && !collapsed && group.items.map(item => {
+                    const isActive = section === item.id
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => setSection(item.id)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 10,
+                          width: '100%', padding: '8px 12px 8px 28px',
+                          background: isActive ? '#FEF3C7' : 'transparent',
+                          border: 'none', borderRadius: 0,
+                          color: isActive ? '#92400E' : '#64748B',
+                          cursor: 'pointer', fontSize: 12, fontWeight: isActive ? 600 : 400,
+                          fontFamily: 'Outfit,sans-serif', transition: 'all 0.15s', whiteSpace: 'nowrap',
+                          borderLeft: isActive ? '3px solid #C47D0E' : '3px solid transparent',
+                        }}
+                        onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = '#F8FAFC' }}
+                        onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                      >
+                        <span style={{ flexShrink: 0, color: isActive ? '#C47D0E' : '#94A3B8' }}>{item.icon}</span>
+                        {item.label}
+                      </button>
+                    )
+                  })}
+
+                  {/* Collapsed group: show individual item icons */}
+                  {collapsed && group.items.map(item => {
+                    const isActive = section === item.id
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => setSection(item.id)}
+                        title={item.label}
+                        style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          width: '100%', padding: '8px 0',
+                          background: isActive ? '#FEF3C7' : 'transparent',
+                          border: 'none', color: isActive ? '#92400E' : '#64748B',
+                          cursor: 'pointer', transition: 'all 0.15s',
+                          borderLeft: isActive ? '3px solid #C47D0E' : '3px solid transparent',
+                        }}
+                        onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = '#F8FAFC' }}
+                        onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                      >
+                        <span style={{ flexShrink: 0 }}>{item.icon}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )
+            }
+
+            const item = entry as NavItem
             const isActive = section === item.id
             return (
               <button
@@ -2407,6 +2746,7 @@ export default function Dashboard() {
             )
           })}
         </nav>
+
 
         {/* Bottom actions */}
         <div style={{ padding: collapsed ? '8px 0' : 12, borderTop: '1px solid #F1F5F9', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -2596,16 +2936,84 @@ export default function Dashboard() {
             </h1>
           </div>
 
-          {/* Live Save indicator */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
-            {saved
-              ? <><Check size={13} style={{ color: '#16A34A' }} /><span style={{ fontSize: 11, color: '#16A34A', fontWeight: 500 }}>Saved</span></>
-              : <><Loader2 size={13} style={{ color: '#C47D0E', animation: 'spin 1s linear infinite' }} /><span style={{ fontSize: 11, color: '#C47D0E', fontWeight: 500 }}>Saving…</span></>
-            }
+          {/* Status Indicator */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+            {isSaving ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#C47D0E' }}>
+                <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />
+                <span className="admin-status-text" style={{ fontSize: 11.5, color: '#C47D0E', fontWeight: 500 }}>
+                  Saving…
+                </span>
+              </div>
+            ) : saved ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#16A34A' }}>
+                <Check size={13} strokeWidth={2.5} />
+                <span className="admin-status-text" style={{ fontSize: 11.5, color: '#16A34A', fontWeight: 500 }}>
+                  Saved{lastSaved ? ` (${lastSaved})` : ''}
+                </span>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#D97706' }}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#F59E0B', display: 'inline-block' }} />
+                <span className="admin-status-text" style={{ fontSize: 11.5, color: '#D97706', fontWeight: 500 }}>
+                  Unsaved changes
+                </span>
+              </div>
+            )}
           </div>
 
+          {/* DEDICATED HEADER SAVE BUTTON */}
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={isSaving || saved}
+            title={saved ? 'All changes saved (Ctrl+S)' : 'Save changes to database (Ctrl+S)'}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              height: 32,
+              padding: '0 13px',
+              borderRadius: 6,
+              fontFamily: 'Outfit,sans-serif',
+              fontWeight: 600,
+              fontSize: 12,
+              cursor: isSaving || saved ? 'default' : 'pointer',
+              transition: 'all 0.18s ease',
+              border: saved ? '1px solid #E2E8F0' : 'none',
+              background: saved ? '#F8FAFC' : '#C47D0E',
+              color: saved ? '#94A3B8' : '#FFFFFF',
+              boxShadow: saved ? 'none' : '0 2px 6px rgba(196, 125, 14, 0.28)',
+              opacity: isSaving ? 0.75 : 1,
+              flexShrink: 0,
+            }}
+            onMouseEnter={e => {
+              if (!saved && !isSaving) {
+                (e.currentTarget as HTMLElement).style.background = '#A86C0C'
+              }
+            }}
+            onMouseLeave={e => {
+              if (!saved && !isSaving) {
+                (e.currentTarget as HTMLElement).style.background = '#C47D0E'
+              }
+            }}
+          >
+            {isSaving ? (
+              <>
+                <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />
+                <span className="btn-save-text">Saving…</span>
+              </>
+            ) : (
+              <>
+                <Save size={13} />
+                <span className="btn-save-text">{saved ? 'Saved' : 'Save Changes'}</span>
+              </>
+            )}
+          </button>
+
           {/* Preview button */}
-          <Button onClick={onViewSite} size="sm">
+          <Button onClick={onViewSite} size="sm" variant="outline">
             <Eye size={12} /> <span className="btn-preview-text">Preview</span>
           </Button>
         </header>
@@ -2762,10 +3170,36 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Save feedback toast */}
+      {saveToast && (
+        <div style={{
+          position: 'fixed',
+          bottom: 24,
+          right: 24,
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '10px 16px',
+          borderRadius: 8,
+          background: saveToast.type === 'success' ? '#15803D' : '#DC2626',
+          color: '#FFFFFF',
+          fontSize: 13,
+          fontFamily: 'Outfit,sans-serif',
+          fontWeight: 600,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+          animation: 'slideUpToast 0.25s cubic-bezier(0.16,1,0.3,1)',
+        }}>
+          {saveToast.type === 'success' ? <Check size={16} strokeWidth={2.5} /> : <AlertTriangle size={16} />}
+          <span>{saveToast.message}</span>
+        </div>
+      )}
+
       {/* Global CSS Styles for Mobile Responsive App Shell */}
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUpToast { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes resetDialogPop { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 
         /* Desktop defaults */
@@ -2783,6 +3217,7 @@ export default function Dashboard() {
           .admin-mobile-drawer { display: flex !important; }
           .admin-mobile-backdrop { display: block !important; }
           .admin-content-main { padding: 14px 12px 88px !important; }
+          .admin-status-text { display: none !important; }
 
           .admin-bottom-bar {
             display: flex !important;
@@ -2800,9 +3235,12 @@ export default function Dashboard() {
             padding-bottom: env(safe-area-inset-bottom, 0);
           }
 
-          /* Compact preview text on narrow phone screens */
-          @media (max-width: 400px) {
+          /* Compact preview and save text on narrow phone screens */
+          @media (max-width: 480px) {
             .btn-preview-text { display: none; }
+          }
+          @media (max-width: 360px) {
+            .btn-save-text { display: none; }
           }
         }
       `}</style>
