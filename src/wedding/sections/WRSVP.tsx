@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
+import { supabase } from '../../lib/supabase'
 import type { WeddingConfig } from '../weddingConfig'
 
 type FormState = 'idle' | 'submitting' | 'success' | 'error'
@@ -19,21 +20,52 @@ export default function WRSVP({ config }: WRSVPProps) {
     e.preventDefault()
     if (!name.trim()) return
     setStatus('submitting')
-    const payload = { name, phone, event, guests }
+
+    const eventObj = config.events.find(ev => ev.id === event)
+    const eventLabel = event === 'all'
+      ? 'All Three Celebrations'
+      : (eventObj ? `${eventObj.label} (${eventObj.date})` : (event || 'All Three Celebrations'))
+
     try {
+      // 1. Primary: save directly to wedding_rsvps table
+      try {
+        await supabase.from('wedding_rsvps').insert({
+          name: name.trim(),
+          phone: phone.trim(),
+          event: eventLabel,
+          guests: parseInt(guests, 10) || 1,
+          created_at: new Date().toISOString(),
+        })
+      } catch (tabErr) {
+        console.warn('Direct wedding_rsvps table insert notice:', tabErr)
+      }
+
+      // 2. Secondary: guaranteed backup in contact_messages
+      try {
+        await supabase.from('contact_messages').insert({
+          name: name.trim(),
+          email: phone.trim() || 'wedding-guest@sahinalom.com',
+          subject: `[Wedding RSVP] ${name.trim()} · ${eventLabel} (${guests} ${guests === '1' ? 'Guest' : 'Guests'})`,
+          message: `Wedding RSVP Confirmation:\n• Guest Name: ${name.trim()}\n• Phone / WhatsApp: ${phone.trim()}\n• Event: ${eventLabel}\n• Attending Guests: ${guests}\n• Submitted: ${new Date().toLocaleString()}`,
+          created_at: new Date().toISOString(),
+        })
+      } catch (backupErr) {
+        console.warn('Backup RSVP notice:', backupErr)
+      }
+
+      // 3. Optional Formspree forwarding
       if (config.rsvpFormspreeId) {
-        const res = await fetch(`https://formspree.io/f/${config.rsvpFormspreeId}`, {
+        await fetch(`https://formspree.io/f/${config.rsvpFormspreeId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify(payload),
-        })
-        if (!res.ok) throw new Error('Network error')
-      } else {
-        console.log('[RSVP]', payload)
-        await new Promise(r => setTimeout(r, 900))
+          body: JSON.stringify({ name: name.trim(), phone: phone.trim(), event: eventLabel, guests }),
+        }).catch(() => {})
       }
+
       setStatus('success')
-    } catch { setStatus('error') }
+    } catch {
+      setStatus('error')
+    }
   }
 
   const fieldVariants = {

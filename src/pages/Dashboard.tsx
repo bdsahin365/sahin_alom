@@ -12,6 +12,8 @@ import {
   Inbox, LogOut, Mail, Clock, BookOpen, Menu, Upload,
   BarChart2, ShieldCheck, ExternalLink, Sparkles, Palette,
   Play, Video, Film, Heart,
+  Calendar, MapPin, Users, Download, RefreshCw, Phone,
+  MessageSquare, Send, CheckCircle2, HeartHandshake, FileText, Image,
 } from 'lucide-react'
 import ArticlesList from './blog/ArticlesList'
 import HeaderLogo from '../components/HeaderLogo'
@@ -418,15 +420,34 @@ function ImagePicker({ value, onChange }: { value: string; onChange: (url: strin
 }
 
 // Collapsible section
-function Section({ title, description, defaultOpen = true, children }: { title: string; description?: string; defaultOpen?: boolean; children: ReactNode }) {
+function Section({
+  title, description, icon, badge, defaultOpen = true, children,
+}: {
+  title: string
+  description?: string
+  icon?: ReactNode
+  badge?: ReactNode
+  defaultOpen?: boolean
+  children: ReactNode
+}) {
   const [open, setOpen] = useState(defaultOpen)
   return (
     <Card style={{ marginBottom: 16 } as any}>
       <button onClick={() => setOpen(o => !o)}
-        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px clamp(14px, 3vw, 24px)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-        <div>
-          <div style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 600, fontSize: 14, color: '#0F172A' }}>{title}</div>
-          {description && <div style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12, color: '#64748B', marginTop: 2 }}>{description}</div>}
+        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px clamp(14px, 3vw, 24px)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
+          {icon && (
+            <div style={{ width: 34, height: 34, borderRadius: 8, background: '#FEF3C7', color: '#B45309', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              {icon}
+            </div>
+          )}
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 600, fontSize: 14, color: '#0F172A' }}>{title}</span>
+              {badge}
+            </div>
+            {description && <div style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12, color: '#64748B', marginTop: 2 }}>{description}</div>}
+          </div>
         </div>
         <ChevronDown size={15} style={{ color: '#94A3B8', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }} />
       </button>
@@ -501,7 +522,7 @@ const NAV_ENTRIES: NavEntry[] = [
     label: 'Settings',
     id: 'settings-group',
     items: [
-      { id: 'settings', label: 'SEO & Analytics',       icon: <Settings2 size={14} /> },
+      { id: 'settings', label: 'SEO & Analytics',       icon: <Globe size={14} /> },
       { id: 'wedding',  label: 'Marriage Invitation',   icon: <Heart size={14} /> },
     ],
   },
@@ -2334,6 +2355,16 @@ function MessagesPanel() {
 
 
 // ── Wedding Settings Panel ────────────────────────────────────────────────────
+
+type WeddingRSVP = {
+  id: string
+  name: string
+  phone: string
+  event: string
+  guests: number
+  created_at: string
+}
+
 function WeddingSettingsPanel() {
   const { data, updateWedding } = useSite()
   const W = { ...DEFAULT_WEDDING_CONFIG, ...(data.wedding || {}) }
@@ -2346,6 +2377,128 @@ function WeddingSettingsPanel() {
   const heroInputRef  = useRef<HTMLInputElement>(null)
   const groomInputRef = useRef<HTMLInputElement>(null)
   const brideInputRef = useRef<HTMLInputElement>(null)
+
+  // ── RSVP Database State ────────────────────────────────────────────────────
+  const [rsvps, setRsvps] = useState<WeddingRSVP[]>([])
+  const [loadingRsvps, setLoadingRsvps] = useState(true)
+  const [rsvpQuery, setRsvpQuery] = useState('')
+  const [rsvpFilter, setRsvpFilter] = useState('all')
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  const fetchRSVPs = useCallback(async () => {
+    setLoadingRsvps(true)
+    try {
+      const records: WeddingRSVP[] = []
+
+      // 1. Try wedding_rsvps table
+      try {
+        const { data: tableData, error } = await supabase
+          .from('wedding_rsvps')
+          .select('*')
+          .order('created_at', { ascending: false })
+        if (!error && tableData) {
+          records.push(...tableData.map(r => ({
+            id: r.id,
+            name: r.name || 'Guest',
+            phone: r.phone || '',
+            event: r.event || 'All Celebrations',
+            guests: Number(r.guests) || 1,
+            created_at: r.created_at,
+          })))
+        }
+      } catch {}
+
+      // 2. Also fetch from contact_messages where subject contains [Wedding RSVP]
+      try {
+        const { data: msgs } = await supabase
+          .from('contact_messages')
+          .select('*')
+          .ilike('subject', '%[Wedding RSVP]%')
+          .order('created_at', { ascending: false })
+
+        if (msgs) {
+          for (const m of msgs) {
+            const phoneMatch = m.message?.match(/Phone \/ WhatsApp: (.*)/)?.[1] || (m.email !== 'wedding-guest@sahinalom.com' ? m.email : '') || ''
+            const eventMatch = m.message?.match(/Event: (.*)/)?.[1] || 'All Three Celebrations'
+            const guestsMatch = m.message?.match(/Attending Guests: (.*)/)?.[1] || '1'
+            const isDuplicate = records.some(r => r.name.toLowerCase() === m.name?.toLowerCase() && (r.phone === phoneMatch || !phoneMatch))
+            if (!isDuplicate) {
+              records.push({
+                id: m.id,
+                name: m.name || 'Guest',
+                phone: phoneMatch.trim(),
+                event: eventMatch.trim(),
+                guests: parseInt(guestsMatch, 10) || 1,
+                created_at: m.created_at,
+              })
+            }
+          }
+        }
+      } catch {}
+
+      setRsvps(records)
+    } catch (err) {
+      console.warn('RSVP fetch error:', err)
+    } finally {
+      setLoadingRsvps(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchRSVPs()
+  }, [fetchRSVPs])
+
+  const handleDeleteRSVP = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this RSVP?')) return
+    setDeletingId(id)
+    try {
+      await supabase.from('wedding_rsvps').delete().eq('id', id)
+      await supabase.from('contact_messages').delete().eq('id', id)
+      setRsvps(prev => prev.filter(r => r.id !== id))
+    } catch {
+      alert('Failed to delete RSVP entry.')
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
+  const handleExportCSV = () => {
+    if (!rsvps.length) {
+      alert('No RSVP submissions to export.')
+      return
+    }
+    const headers = ['Guest Name', 'Phone / WhatsApp', 'Ceremony Event', 'Guests Count', 'Submission Date']
+    const rows = rsvps.map(r => [
+      `"${(r.name || '').replace(/"/g, '""')}"`,
+      `"${(r.phone || '').replace(/"/g, '""')}"`,
+      `"${(r.event || '').replace(/"/g, '""')}"`,
+      r.guests || 1,
+      `"${new Date(r.created_at).toLocaleString()}"`,
+    ])
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement('a')
+    link.setAttribute('href', encodedUri)
+    link.setAttribute('download', `wedding-guest-list-${new Date().toISOString().slice(0, 10)}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  // Filtered RSVPs
+  const filteredRSVPs = rsvps.filter(r => {
+    const matchesQuery = !rsvpQuery.trim() ||
+      r.name.toLowerCase().includes(rsvpQuery.toLowerCase()) ||
+      r.phone.toLowerCase().includes(rsvpQuery.toLowerCase())
+    const matchesEvent = rsvpFilter === 'all' ||
+      r.event.toLowerCase().includes(rsvpFilter.toLowerCase())
+    return matchesQuery && matchesEvent
+  })
+
+  const totalGuests = rsvps.reduce((sum, r) => sum + (r.guests || 1), 0)
+  const holudGuests = rsvps.filter(r => r.event.toLowerCase().includes('holud') || r.event.toLowerCase().includes('three') || r.event.toLowerCase().includes('all')).reduce((sum, r) => sum + (r.guests || 1), 0)
+  const nikahGuests = rsvps.filter(r => r.event.toLowerCase().includes('nikah') || r.event.toLowerCase().includes('three') || r.event.toLowerCase().includes('all')).reduce((sum, r) => sum + (r.guests || 1), 0)
+  const walimaGuests = rsvps.filter(r => r.event.toLowerCase().includes('walima') || r.event.toLowerCase().includes('three') || r.event.toLowerCase().includes('all')).reduce((sum, r) => sum + (r.guests || 1), 0)
 
   const makeFileHandler = (
     field: 'heroImage' | 'groomPhoto' | 'bridePhoto',
@@ -2416,32 +2569,196 @@ function WeddingSettingsPanel() {
   return (
     <div>
       {/* Kill Switch Banner */}
-      <div style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 10, padding: '18px 20px', marginBottom: 20, display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-        <div style={{ width: 36, height: 36, background: '#FFEDD5', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <Heart size={18} style={{ color: '#EA580C' }} />
+      <div style={{ background: '#FFFDF9', border: '1px solid #FED7AA', borderRadius: 10, padding: '18px 20px', marginBottom: 20, display: 'flex', gap: 16, alignItems: 'flex-start', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+        <div style={{ width: 40, height: 40, background: '#FEF3C7', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#B45309' }}>
+          <Heart size={20} />
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 700, fontSize: 14, color: '#9A3412', marginBottom: 4 }}>Marriage Invitation Page</div>
-          <div style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12, color: '#C2410C', marginBottom: 16 }}>
-            Toggle the /wedding page live or offline. When disabled, visitors see a graceful "Invitation Closed" screen.
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <span style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 700, fontSize: 15, color: '#0F172A' }}>Marriage Invitation Page</span>
+            <Badge variant={W.enabled ? 'success' : 'secondary'}>
+              {W.enabled ? 'Live & Accepting Guests' : 'Offline / Closed'}
+            </Badge>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12, color: '#64748B', marginBottom: 14 }}>
+            Manage your digital wedding invitation at <code style={{ fontFamily: 'monospace', fontSize: 11, background: '#F1F5F9', padding: '1px 6px', borderRadius: 4 }}>/wedding</code>. When disabled, visitors see a refined invitation closed banner.
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, paddingTop: 6, borderTop: '1px solid #F8FAFC' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <Switch checked={W.enabled} onChange={v => updateWedding({ enabled: v })} />
               <span style={{ fontFamily: 'Outfit,sans-serif', fontSize: 13, fontWeight: 600, color: W.enabled ? '#16A34A' : '#64748B' }}>
-                {W.enabled ? '🟢 Invitation is LIVE' : '⚫ Invitation is CLOSED'}
+                {W.enabled ? 'Invitation page is LIVE' : 'Invitation page is CLOSED'}
               </span>
             </div>
             <a href="/wedding" target="_blank" rel="noopener noreferrer"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 6, background: '#0F172A', color: '#FFFFFF', fontFamily: 'Outfit,sans-serif', fontSize: 11, fontWeight: 600, textDecoration: 'none' }}>
-              <Eye size={12} /> Preview page →
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 6, background: '#0F172A', color: '#FFFFFF', fontFamily: 'Outfit,sans-serif', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
+              <Eye size={13} /> View Invitation Page →
             </a>
           </div>
         </div>
       </div>
 
-      {/* Visual Assets */}
-      <Section title="🖼  Visual Assets" description="Hero background, groom and bride portrait photos.">
+      {/* ── 1. RSVP Submissions & Guest List ─────────────────────────────────── */}
+      <Section
+        title="Guest RSVPs & Attendance"
+        description="Live submissions received from the wedding invitation form."
+        icon={<Users size={16} />}
+        badge={
+          <Badge variant="success">
+            {rsvps.length} RSVPs · {totalGuests} Total Guests
+          </Badge>
+        }
+        defaultOpen={true}
+      >
+        {/* Quick Summary Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10, marginBottom: 16 }}>
+          <div style={{ padding: '12px 14px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8 }}>
+            <div style={{ fontSize: 11, color: '#64748B', fontFamily: 'Outfit,sans-serif' }}>Total Submissions</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#0F172A', marginTop: 2 }}>{rsvps.length}</div>
+          </div>
+          <div style={{ padding: '12px 14px', background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: 8 }}>
+            <div style={{ fontSize: 11, color: '#92400E', fontFamily: 'Outfit,sans-serif' }}>Attending Guests</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#B45309', marginTop: 2 }}>{totalGuests}</div>
+          </div>
+          <div style={{ padding: '12px 14px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8 }}>
+            <div style={{ fontSize: 11, color: '#64748B', fontFamily: 'Outfit,sans-serif' }}>Gaye Holud</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#0F172A', marginTop: 2 }}>{holudGuests}</div>
+          </div>
+          <div style={{ padding: '12px 14px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8 }}>
+            <div style={{ fontSize: 11, color: '#64748B', fontFamily: 'Outfit,sans-serif' }}>Nikah Ceremony</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#0F172A', marginTop: 2 }}>{nikahGuests}</div>
+          </div>
+          <div style={{ padding: '12px 14px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8 }}>
+            <div style={{ fontSize: 11, color: '#64748B', fontFamily: 'Outfit,sans-serif' }}>Walima Reception</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#0F172A', marginTop: 2 }}>{walimaGuests}</div>
+          </div>
+        </div>
+
+        {/* Action toolbar */}
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: 180 }}>
+            <input
+              value={rsvpQuery}
+              onChange={e => setRsvpQuery(e.target.value)}
+              placeholder="Search guest by name or phone…"
+              style={{ width: '100%', height: 34, padding: '0 10px 0 32px', border: '1px solid #E2E8F0', borderRadius: 6, fontSize: 12, outline: 'none', fontFamily: 'Outfit,sans-serif', boxSizing: 'border-box' }}
+            />
+            <Search size={13} style={{ position: 'absolute', left: 10, top: 11, color: '#94A3B8' }} />
+          </div>
+
+          <select
+            value={rsvpFilter}
+            onChange={e => setRsvpFilter(e.target.value)}
+            style={{ height: 34, padding: '0 10px', border: '1px solid #E2E8F0', borderRadius: 6, fontSize: 12, outline: 'none', background: '#FFFFFF', color: '#374151', fontFamily: 'Outfit,sans-serif' }}
+          >
+            <option value="all">All Ceremonies</option>
+            <option value="holud">Gaye Holud</option>
+            <option value="nikah">Nikah</option>
+            <option value="walima">Walima</option>
+          </select>
+
+          <button
+            type="button"
+            onClick={fetchRSVPs}
+            title="Refresh list"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 34, padding: '0 11px', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 6, fontSize: 12, cursor: 'pointer', color: '#475569', fontFamily: 'Outfit,sans-serif' }}
+          >
+            <RefreshCw size={12} style={{ animation: loadingRsvps ? 'spin 1s linear infinite' : 'none' }} /> Refresh
+          </button>
+
+          <button
+            type="button"
+            onClick={handleExportCSV}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 34, padding: '0 12px', background: '#C47D0E', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600, color: '#FFFFFF', cursor: 'pointer', fontFamily: 'Outfit,sans-serif' }}
+          >
+            <Download size={12} /> Export CSV
+          </button>
+        </div>
+
+        {/* RSVPs Table / List */}
+        {loadingRsvps && rsvps.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '36px 0', color: '#94A3B8', fontSize: 12 }}>
+            <Loader2 size={18} style={{ animation: 'spin 1s linear infinite', margin: '0 auto 8px', color: '#C47D0E' }} />
+            Loading guest list from database…
+          </div>
+        ) : filteredRSVPs.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '36px 20px', background: '#F8FAFC', borderRadius: 8, border: '1px dashed #E2E8F0' }}>
+            <Users size={32} style={{ color: '#CBD5E1', margin: '0 auto 8px' }} />
+            <div style={{ fontWeight: 600, fontSize: 13, color: '#0F172A', marginBottom: 2 }}>No RSVP submissions yet</div>
+            <div style={{ fontSize: 12, color: '#64748B' }}>When guests RSVP on the wedding page, their names, phone numbers, and attendance details will appear here.</div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {filteredRSVPs.map(r => {
+              const cleanPhone = (r.phone || '').replace(/[^0-9+]/g, '')
+              return (
+                <div
+                  key={r.id}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '12px 16px', background: '#FFFFFF', border: '1px solid #E2E8F0',
+                    borderRadius: 8, gap: 12, flexWrap: 'wrap',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 160 }}>
+                    <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#FEF3C7', color: '#B45309', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13 }}>
+                      {r.name.slice(0, 1).toUpperCase()}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 13, color: '#0F172A' }}>{r.name}</div>
+                      <div style={{ fontSize: 11, color: '#94A3B8', display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
+                        <Clock size={10} />
+                        {new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    {cleanPhone && (
+                      <a
+                        href={`https://wa.me/${cleanPhone.replace('+', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 9px',
+                          background: '#DCFCE7', color: '#15803D', borderRadius: 4,
+                          fontSize: 11, fontWeight: 600, textDecoration: 'none',
+                        }}
+                        title="Chat on WhatsApp"
+                      >
+                        <Phone size={10} /> {r.phone}
+                      </a>
+                    )}
+
+                    <span style={{ padding: '3px 8px', background: '#F1F5F9', color: '#475569', borderRadius: 4, fontSize: 11, fontWeight: 500 }}>
+                      {r.event}
+                    </span>
+
+                    <span style={{ padding: '3px 8px', background: '#FEF3C7', color: '#92400E', borderRadius: 4, fontSize: 11, fontWeight: 600 }}>
+                      {r.guests} {r.guests === 1 ? 'Guest' : 'Guests'}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteRSVP(r.id)}
+                      disabled={deletingId === r.id}
+                      title="Remove RSVP"
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#CBD5E1', borderRadius: 4 }}
+                      onMouseEnter={e => ((e.currentTarget as HTMLElement).style.color = '#EF4444')}
+                      onMouseLeave={e => ((e.currentTarget as HTMLElement).style.color = '#CBD5E1')}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </Section>
+
+      {/* ── 2. Visual Assets ─────────────────────────────────────────────────── */}
+      <Section title="Visual Assets" description="Hero background image, groom and bride portrait photos." icon={<Image size={16} />}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <label style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12, fontWeight: 500, color: '#374151' }}>Show couple portrait section on /wedding</label>
           <Switch checked={W.showCouplePhotos} onChange={v => updateWedding({ showCouplePhotos: v })} />
@@ -2455,8 +2772,8 @@ function WeddingSettingsPanel() {
         </div>
       </Section>
 
-      {/* Couple Details */}
-      <Section title="👫 Couple Details" description="Names and headline text shown across the page.">
+      {/* ── 3. Couple Details ────────────────────────────────────────────────── */}
+      <Section title="Couple Details" description="Names and headline text shown across the page." icon={<Heart size={16} />}>
         <Grid2>
           <Input label="Groom's Short Name" value={W.groomName} onChange={v => updateWedding({ groomName: v })} placeholder="Sahin" />
           <Input label="Groom's Full Name" value={W.groomFullName} onChange={v => updateWedding({ groomFullName: v })} placeholder="Md. Sahin Alom" />
@@ -2469,8 +2786,8 @@ function WeddingSettingsPanel() {
         <Input label="Loader Tagline (cinematic intro)" value={W.loaderTagline} onChange={v => updateWedding({ loaderTagline: v })} />
       </Section>
 
-      {/* Story / Timeline */}
-      <Section title="📜 Our Story — Timeline" description="3 story chapters in the timeline section." defaultOpen={false}>
+      {/* ── 4. Our Story Timeline ────────────────────────────────────────────── */}
+      <Section title="Our Story Timeline" description="3 story chapters in the interactive timeline section." icon={<Clock size={16} />} defaultOpen={false}>
         {W.story.map((item, i) => (
           <div key={i} style={{ border: '1px solid #E2E8F0', borderRadius: 8, padding: '14px 16px', marginBottom: 12 }}>
             <div style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 600, fontSize: 12, color: '#0F172A', marginBottom: 12 }}>Chapter {i + 1}</div>
@@ -2484,8 +2801,8 @@ function WeddingSettingsPanel() {
         ))}
       </Section>
 
-      {/* Events */}
-      <Section title="🎊 Events" description="Gaye Holud, Nikah, Walima — dates, times, and descriptions." defaultOpen={false}>
+      {/* ── 5. Events & Ceremonies ───────────────────────────────────────────── */}
+      <Section title="Events & Ceremonies" description="Gaye Holud, Nikah, Walima — dates, times, and descriptions." icon={<Calendar size={16} />} defaultOpen={false}>
         {W.events.map((ev, i) => (
           <div key={ev.id} style={{ border: '1px solid #E2E8F0', borderRadius: 8, padding: '14px 16px', marginBottom: 12 }}>
             <div style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 600, fontSize: 12, color: '#0F172A', marginBottom: 12 }}>{ev.label}</div>
@@ -2501,31 +2818,28 @@ function WeddingSettingsPanel() {
         ))}
       </Section>
 
-      {/* Venue */}
-      <Section title="📍 Venue" description="Location details and Google Maps link." defaultOpen={false}>
+      {/* ── 6. Venue & Location ──────────────────────────────────────────────── */}
+      <Section title="Venue & Directions" description="Location address and Google Maps integration." icon={<MapPin size={16} />} defaultOpen={false}>
         <Input label="Venue Name" value={W.venueName} onChange={v => updateWedding({ venueName: v })} />
         <Input label="Area / District" value={W.venueArea} onChange={v => updateWedding({ venueArea: v })} placeholder="Gazipur, Bangladesh" />
         <Textarea label="Full Address Detail" value={W.venueDetail} onChange={v => updateWedding({ venueDetail: v })} rows={2} />
         <Input label="Google Maps URL" value={W.venueMapsUrl} onChange={v => updateWedding({ venueMapsUrl: v })} placeholder="https://maps.google.com/?q=..." />
       </Section>
 
-      {/* RSVP */}
-      <Section title="📬 RSVP" description="Formspree connection, deadline, and confirmation note." defaultOpen={false}>
+      {/* ── 7. RSVP Configuration ────────────────────────────────────────────── */}
+      <Section title="RSVP Settings" description="Deadline date, post-RSVP confirmation note, and optional Formspree webhook." icon={<Mail size={16} />} defaultOpen={false}>
         <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 6, padding: '10px 14px', marginBottom: 16 }}>
           <div style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12, color: '#64748B' }}>
-            Sign up at{' '}
-            <a href="https://formspree.io" target="_blank" rel="noopener noreferrer" style={{ color: '#C47D0E' }}>formspree.io</a>,
-            {' '}create a form, and paste the Form ID below (e.g. <code style={{ fontFamily: 'monospace', fontSize: 11, background: '#E2E8F0', padding: '1px 5px', borderRadius: 3 }}>xpzgkwqr</code>).
-            Leave blank for test/dev mode.
+            RSVP submissions are automatically stored in your Supabase database and displayed in the <strong>Guest RSVPs & Attendance</strong> panel above. You can optionally paste a Formspree ID below to also forward alerts to your email.
           </div>
         </div>
-        <Input label="Formspree Form ID" value={W.rsvpFormspreeId} onChange={v => updateWedding({ rsvpFormspreeId: v })} placeholder="xpzgkwqr" />
+        <Input label="Formspree Form ID (Optional Email Forwarding)" value={W.rsvpFormspreeId} onChange={v => updateWedding({ rsvpFormspreeId: v })} placeholder="xpzgkwqr" />
         <Input label="RSVP Deadline" value={W.rsvpDeadline} onChange={v => updateWedding({ rsvpDeadline: v })} placeholder="January 31, 2026" />
-        <Textarea label="Confirmation Note (shown after RSVP submit)" value={W.rsvpConfirmationNote} onChange={v => updateWedding({ rsvpConfirmationNote: v })} rows={2} />
+        <Textarea label="Confirmation Note (shown to guest after RSVP submit)" value={W.rsvpConfirmationNote} onChange={v => updateWedding({ rsvpConfirmationNote: v })} rows={2} />
       </Section>
 
-      {/* Closing Dua */}
-      <Section title="🤲 Closing Dua" description="Arabic dua and translation shown at the page footer." defaultOpen={false}>
+      {/* ── 8. Closing Dua & Blessings ───────────────────────────────────────── */}
+      <Section title="Closing Dua & Blessings" description="Arabic dua, translation, and reference at the page footer." icon={<HeartHandshake size={16} />} defaultOpen={false}>
         <Input label="Arabic Dua Text" value={W.closingDua} onChange={v => updateWedding({ closingDua: v })} />
         <Input label="English Translation" value={W.closingDuaTranslation} onChange={v => updateWedding({ closingDuaTranslation: v })} />
         <Input label="Source Reference" value={W.closingDuaSource} onChange={v => updateWedding({ closingDuaSource: v })} placeholder="— Quran 25:74" />
@@ -2558,6 +2872,7 @@ export default function Dashboard() {
   const { data, saved, isSaving, lastSaved, saveSiteData, resetToDefaults, updateEngineer } = useSite()
   const [section, setSection] = useState<SectionId>('overview')
   const [collapsed, setCollapsed] = useState(false)
+  const [settingsGroupOpen, setSettingsGroupOpen] = useState(true)
   const [showReset, setShowReset] = useState(false)
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
   const [saveToast, setSaveToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
@@ -2641,55 +2956,82 @@ export default function Dashboard() {
             if ((entry as any).type === 'group') {
               const group = entry as { type: 'group'; label: string; id: string; items: NavItem[] }
               const isGroupActive = group.items.some(it => it.id === section)
-              const [groupOpen, setGroupOpen] = useState(isGroupActive)
               return (
-                <div key={group.id}>
+                <div key={group.id} style={{ marginBottom: 2 }}>
                   {/* Group header */}
                   <button
-                    onClick={() => setGroupOpen(o => !o)}
+                    onClick={() => setSettingsGroupOpen(o => !o)}
                     title={collapsed ? group.label : undefined}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 10,
                       width: '100%', padding: collapsed ? '9px 0' : '9px 12px',
                       justifyContent: collapsed ? 'center' : 'flex-start',
                       background: 'transparent', border: 'none', borderRadius: 0,
-                      color: isGroupActive ? '#92400E' : '#64748B',
-                      cursor: 'pointer', fontSize: 13, fontWeight: isGroupActive ? 600 : 400,
-                      fontFamily: 'Outfit,sans-serif', transition: 'all 0.15s', whiteSpace: 'nowrap',
-                      borderLeft: isGroupActive ? '3px solid #C47D0E' : '3px solid transparent',
+                      color: isGroupActive ? '#92400E' : '#475569',
+                      cursor: 'pointer', fontSize: 13, fontWeight: isGroupActive ? 600 : 500,
+                      fontFamily: 'Outfit,sans-serif', textAlign: 'left',
+                      transition: 'all 0.15s', whiteSpace: 'nowrap',
+                      borderLeft: '3px solid transparent',
                     }}
-                    onMouseEnter={e => { if (!isGroupActive) (e.currentTarget as HTMLElement).style.background = '#F8FAFC' }}
-                    onMouseLeave={e => { if (!isGroupActive) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F8FAFC' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                   >
-                    <Settings2 size={15} style={{ flexShrink: 0 }} />
-                    {!collapsed && <><span style={{ flex: 1 }}>{group.label}</span><ChevronDown size={12} style={{ color: '#CBD5E1', transform: groupOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} /></>}
+                    <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center', color: isGroupActive ? '#C47D0E' : '#64748B' }}>
+                      <Settings2 size={15} />
+                    </span>
+                    {!collapsed && (
+                      <>
+                        <span style={{ flex: 1, textAlign: 'left', lineHeight: 1.2 }}>{group.label}</span>
+                        <ChevronDown
+                          size={13}
+                          style={{
+                            color: '#94A3B8',
+                            transform: settingsGroupOpen ? 'rotate(180deg)' : 'none',
+                            transition: 'transform 0.2s cubic-bezier(0.16,1,0.3,1)',
+                            flexShrink: 0,
+                          }}
+                        />
+                      </>
+                    )}
                   </button>
 
                   {/* Sub-items */}
-                  {groupOpen && !collapsed && group.items.map(item => {
-                    const isActive = section === item.id
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => setSection(item.id)}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 10,
-                          width: '100%', padding: '8px 12px 8px 28px',
-                          background: isActive ? '#FEF3C7' : 'transparent',
-                          border: 'none', borderRadius: 0,
-                          color: isActive ? '#92400E' : '#64748B',
-                          cursor: 'pointer', fontSize: 12, fontWeight: isActive ? 600 : 400,
-                          fontFamily: 'Outfit,sans-serif', transition: 'all 0.15s', whiteSpace: 'nowrap',
-                          borderLeft: isActive ? '3px solid #C47D0E' : '3px solid transparent',
-                        }}
-                        onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = '#F8FAFC' }}
-                        onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-                      >
-                        <span style={{ flexShrink: 0, color: isActive ? '#C47D0E' : '#94A3B8' }}>{item.icon}</span>
-                        {item.label}
-                      </button>
-                    )
-                  })}
+                  {settingsGroupOpen && !collapsed && (
+                    <div style={{ padding: '2px 0 4px', position: 'relative' }}>
+                      {/* Subtle vertical tree guideline */}
+                      <div style={{ position: 'absolute', left: 19, top: 2, bottom: 6, width: 1, background: '#E2E8F0' }} />
+                      {group.items.map(item => {
+                        const isActive = section === item.id
+                        return (
+                          <button
+                            key={item.id}
+                            onClick={() => setSection(item.id)}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 9,
+                              width: 'calc(100% - 22px)', margin: '1px 11px',
+                              padding: '7px 9px 7px 16px',
+                              background: isActive ? '#FEF3C7' : 'transparent',
+                              border: 'none', borderRadius: 6,
+                              color: isActive ? '#92400E' : '#64748B',
+                              cursor: 'pointer', fontSize: 12, fontWeight: isActive ? 600 : 400,
+                              fontFamily: 'Outfit,sans-serif', textAlign: 'left',
+                              transition: 'all 0.15s', whiteSpace: 'nowrap',
+                            }}
+                            onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = '#F8FAFC' }}
+                            onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                          >
+                            <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center', color: isActive ? '#C47D0E' : '#94A3B8' }}>
+                              {item.icon}
+                            </span>
+                            <span style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>
+                            {isActive && (
+                              <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#C47D0E', flexShrink: 0 }} />
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
 
                   {/* Collapsed group: show individual item icons */}
                   {collapsed && group.items.map(item => {
@@ -2733,15 +3075,15 @@ export default function Dashboard() {
                   border: 'none', borderRadius: 0,
                   color: isActive ? '#92400E' : '#64748B',
                   cursor: 'pointer', fontSize: 13, fontWeight: isActive ? 600 : 400,
-                  fontFamily: 'Outfit,sans-serif',
+                  fontFamily: 'Outfit,sans-serif', textAlign: 'left',
                   transition: 'all 0.15s', whiteSpace: 'nowrap',
                   borderLeft: isActive ? '3px solid #C47D0E' : '3px solid transparent',
                 }}
                 onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = '#F8FAFC' }}
                 onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
               >
-                <span style={{ flexShrink: 0 }}>{item.icon}</span>
-                {!collapsed && item.label}
+                <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>{item.icon}</span>
+                {!collapsed && <span style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>}
               </button>
             )
           })}
