@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback, type ReactNode, type ChangeEvent } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, User, Award, Zap, FolderOpen,
   Briefcase, GraduationCap, Settings2,
@@ -14,6 +15,7 @@ import {
   Play, Video, Film, Heart,
   Calendar, MapPin, Users, Download, RefreshCw, Phone,
   MessageSquare, Send, CheckCircle2, HeartHandshake, FileText, Image,
+  Command, FileDown, FileUp, Copy, CheckCheck, Share2, SlidersHorizontal, ArrowUpRight,
 } from 'lucide-react'
 import ArticlesList from './blog/ArticlesList'
 import HeaderLogo from '../components/HeaderLogo'
@@ -2865,18 +2867,313 @@ const PANELS: Record<SectionId, (props: { onNavigate: (s: SectionId) => void }) 
 }
 
 
+// ── Persistent Navigation Constants & Helpers ─────────────────────────────────
+const VALID_SECTIONS: SectionId[] = [
+  'overview', 'branding', 'shorts', 'articles', 'profile',
+  'credentials', 'expertise', 'projects', 'services', 'education',
+  'settings', 'messages', 'wedding',
+]
+
+const TAB_STORAGE_KEY = 'sahin_admin_active_tab'
+
+const getInitialSection = (): SectionId => {
+  if (typeof window !== 'undefined') {
+    try {
+      const urlTab = new URLSearchParams(window.location.search).get('tab') as SectionId
+      if (urlTab && VALID_SECTIONS.includes(urlTab)) return urlTab
+      const savedTab = localStorage.getItem(TAB_STORAGE_KEY) as SectionId
+      if (savedTab && VALID_SECTIONS.includes(savedTab)) return savedTab
+    } catch {}
+  }
+  return 'overview'
+}
+
+// ── Command Palette (Pro Spotlight Launcher) ─────────────────────────────────
+type CommandItem = {
+  id: string
+  label: string
+  category: 'Pages & Sections' | 'Pro Actions'
+  icon: ReactNode
+  hint?: string
+  shortcut?: string
+  onSelect: () => void
+}
+
+function CommandPaletteModal({
+  open,
+  onClose,
+  items,
+}: {
+  open: boolean
+  onClose: () => void
+  items: CommandItem[]
+}) {
+  const [query, setQuery] = useState('')
+  const [activeIndex, setActiveIndex] = useState(0)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const filtered = items.filter(it =>
+    it.label.toLowerCase().includes(query.toLowerCase()) ||
+    (it.hint && it.hint.toLowerCase().includes(query.toLowerCase())) ||
+    it.category.toLowerCase().includes(query.toLowerCase())
+  )
+
+  useEffect(() => {
+    if (open) {
+      setQuery('')
+      setActiveIndex(0)
+      const t = setTimeout(() => inputRef.current?.focus(), 50)
+      return () => clearTimeout(t)
+    }
+  }, [open])
+
+  useEffect(() => {
+    setActiveIndex(0)
+  }, [query])
+
+  useEffect(() => {
+    if (!open) return
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        onClose()
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setActiveIndex(i => (filtered.length ? (i + 1) % filtered.length : 0))
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setActiveIndex(i => (filtered.length ? (i - 1 + filtered.length) % filtered.length : 0))
+      } else if (e.key === 'Enter') {
+        e.preventDefault()
+        if (filtered[activeIndex]) {
+          filtered[activeIndex].onSelect()
+          onClose()
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [open, filtered, activeIndex, onClose])
+
+  if (!open) return null
+
+  const categories = Array.from(new Set(filtered.map(f => f.category)))
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0,
+        background: 'rgba(15, 23, 42, 0.58)',
+        backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+        zIndex: 2100,
+        display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+        padding: 'clamp(28px, 9vh, 96px) 16px',
+        animation: 'fadeIn 0.15s ease-out',
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: '100%', maxWidth: 580,
+          background: '#FFFFFF',
+          borderRadius: 14,
+          boxShadow: '0 25px 60px -15px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,0,0,0.08)',
+          overflow: 'hidden',
+          display: 'flex', flexDirection: 'column',
+          maxHeight: '76vh',
+          animation: 'commandPalettePop 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+        }}
+      >
+        {/* Search Input Bar */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '14px 16px',
+          borderBottom: '1px solid #E2E8F0',
+          background: '#FAFAFA',
+        }}>
+          <Search size={18} style={{ color: '#C47D0E', flexShrink: 0 }} />
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Type a section, page, or action to jump..."
+            style={{
+              flex: 1, border: 'none', background: 'transparent',
+              outline: 'none', fontSize: 14, fontFamily: 'Outfit,sans-serif',
+              color: '#0F172A', fontWeight: 500,
+            }}
+          />
+          {query && (
+            <button
+              onClick={() => setQuery('')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#94A3B8', display: 'flex' }}
+            >
+              <X size={14} />
+            </button>
+          )}
+          <span style={{
+            fontSize: 10, fontFamily: 'JetBrains Mono,monospace',
+            padding: '2px 7px', borderRadius: 4, background: '#F1F5F9',
+            color: '#64748B', border: '1px solid #E2E8F0', letterSpacing: '0.04em',
+          }}>
+            ESC
+          </span>
+        </div>
+
+        {/* Results Stream */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '8px 6px' }}>
+          {filtered.length === 0 ? (
+            <div style={{ padding: '36px 20px', textAlign: 'center', color: '#94A3B8', fontSize: 13, fontFamily: 'Outfit,sans-serif' }}>
+              No matches found for "<span style={{ color: '#0F172A', fontWeight: 600 }}>{query}</span>"
+            </div>
+          ) : (
+            categories.map(cat => {
+              const catItems = filtered.filter(it => it.category === cat)
+              return (
+                <div key={cat} style={{ marginBottom: 6 }}>
+                  <div style={{
+                    padding: '6px 12px 4px',
+                    fontFamily: 'JetBrains Mono,monospace', fontSize: 10,
+                    letterSpacing: '0.12em', color: '#94A3B8', textTransform: 'uppercase',
+                  }}>
+                    {cat}
+                  </div>
+                  {catItems.map(item => {
+                    const itemGlobalIndex = filtered.indexOf(item)
+                    const isSelected = itemGlobalIndex === activeIndex
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => { item.onSelect(); onClose(); }}
+                        onMouseEnter={() => setActiveIndex(itemGlobalIndex)}
+                        style={{
+                          width: '100%', display: 'flex', alignItems: 'center', gap: 11,
+                          padding: '10px 12px', borderRadius: 8, border: 'none',
+                          background: isSelected ? '#FEF3C7' : 'transparent',
+                          color: isSelected ? '#92400E' : '#1E293B',
+                          cursor: 'pointer', textAlign: 'left',
+                          fontFamily: 'Outfit,sans-serif', fontSize: 13,
+                          transition: 'background 0.1s',
+                        }}
+                      >
+                        <span style={{ color: isSelected ? '#C47D0E' : '#64748B', display: 'flex', flexShrink: 0 }}>
+                          {item.icon}
+                        </span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: isSelected ? 600 : 500, lineHeight: 1.2 }}>{item.label}</div>
+                          {item.hint && (
+                            <div style={{ fontSize: 11, color: isSelected ? '#B45309' : '#94A3B8', marginTop: 2 }}>
+                              {item.hint}
+                            </div>
+                          )}
+                        </div>
+                        {item.shortcut && (
+                          <span style={{
+                            fontFamily: 'JetBrains Mono,monospace', fontSize: 10,
+                            padding: '2px 7px', borderRadius: 4,
+                            background: isSelected ? '#FDE68A' : '#F1F5F9',
+                            color: isSelected ? '#78350F' : '#64748B',
+                          }}>
+                            {item.shortcut}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              )
+            })
+          )}
+        </div>
+
+        {/* Footer Navigation Hints */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '9px 16px', borderTop: '1px solid #F1F5F9',
+          background: '#FAFAFA', fontSize: 11, color: '#94A3B8',
+          fontFamily: 'Outfit,sans-serif',
+        }}>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <span><kbd style={{ fontFamily: 'JetBrains Mono,monospace', background: '#E2E8F0', padding: '1px 5px', borderRadius: 3, color: '#475569' }}>↑↓</kbd> navigate</span>
+            <span><kbd style={{ fontFamily: 'JetBrains Mono,monospace', background: '#E2E8F0', padding: '1px 5px', borderRadius: 3, color: '#475569' }}>↵</kbd> select</span>
+          </div>
+          <span style={{ fontFamily: 'JetBrains Mono,monospace', color: '#C47D0E', fontSize: 10, letterSpacing: '0.08em' }}>COMMAND PALETTE</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
 // ── Dashboard shell ──────────────────────────────────────────────────────────
 export default function Dashboard() {
   const navigate = useNavigate()
-  const onViewSite = () => navigate('/')
-  const { data, saved, isSaving, lastSaved, saveSiteData, resetToDefaults, updateEngineer } = useSite()
-  const [section, setSection] = useState<SectionId>('overview')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const onViewSite = () => window.open('/', '_blank')
+  const {
+    data, saved, isSaving, lastSaved,
+    saveSiteData, resetToDefaults, updateEngineer,
+    importSiteData,
+  } = useSite()
+
+  // 1. Persistent Section State across refreshes and direct URL navigation
+  const [section, setSectionState] = useState<SectionId>(getInitialSection)
   const [collapsed, setCollapsed] = useState(false)
   const [settingsGroupOpen, setSettingsGroupOpen] = useState(true)
   const [showReset, setShowReset] = useState(false)
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
   const [saveToast, setSaveToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
-  const active = NAV_ITEMS.find(n => n.id === section)!
+
+  const mainScrollRef = useRef<HTMLElement>(null)
+  const backupFileInputRef = useRef<HTMLInputElement>(null)
+
+  const active = NAV_ITEMS.find(n => n.id === section) || NAV_ITEMS[0]
+
+  // Navigating to section updates state, localStorage, and URL parameter ?tab=
+  const selectSection = useCallback((s: SectionId) => {
+    setSectionState(s)
+    setMobileDrawerOpen(false)
+    try {
+      localStorage.setItem(TAB_STORAGE_KEY, s)
+    } catch {}
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.set('tab', s)
+      return next
+    }, { replace: true })
+    if (mainScrollRef.current) {
+      mainScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }, [setSearchParams])
+
+  // Synchronize when user clicks browser Back / Forward buttons
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') as SectionId
+    if (tabParam && VALID_SECTIONS.includes(tabParam) && tabParam !== section) {
+      setSectionState(tabParam)
+      try {
+        localStorage.setItem(TAB_STORAGE_KEY, tabParam)
+      } catch {}
+      if (mainScrollRef.current) {
+        mainScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+    }
+  }, [searchParams, section])
+
+  // Ensure query param is explicitly present in the address bar on initial load
+  useEffect(() => {
+    const tabParam = searchParams.get('tab')
+    if (!tabParam || !VALID_SECTIONS.includes(tabParam as SectionId)) {
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev)
+        next.set('tab', section)
+        return next
+      }, { replace: true })
+    }
+  }, [])
 
   const handleSave = async () => {
     if (isSaving) return
@@ -2895,6 +3192,9 @@ export default function Dashboard() {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
         e.preventDefault()
         void handleSave()
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setCommandPaletteOpen(o => !o)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -2914,43 +3214,174 @@ export default function Dashboard() {
   }, [saved])
 
   useEffect(() => {
-    document.title = data.settings.siteTitle || 'Site Editor'
+    document.title = `${active.label} — ${data.settings.siteTitle || 'Site Editor'}`
     return () => { document.title = data.settings.siteTitle || document.title }
-  }, [data.settings.siteTitle])
+  }, [data.settings.siteTitle, active.label])
 
-  const selectSection = (s: SectionId) => {
-    setSection(s)
-    setMobileDrawerOpen(false)
+  // Pro Developer: Export Full Site JSON Backup
+  const handleExportBackup = () => {
+    try {
+      const exportData = {
+        app: 'sahin-portfolio',
+        version: '2.0.0',
+        exportedAt: new Date().toISOString(),
+        siteTitle: data.settings.siteTitle,
+        data,
+      }
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(exportData, null, 2))
+      const dlAnchor = document.createElement('a')
+      dlAnchor.setAttribute('href', dataStr)
+      dlAnchor.setAttribute('download', `sahin_site_backup_${new Date().toISOString().slice(0, 10)}.json`)
+      document.body.appendChild(dlAnchor)
+      dlAnchor.click()
+      dlAnchor.remove()
+      setSaveToast({ type: 'success', message: 'Full site backup JSON exported!' })
+    } catch {
+      setSaveToast({ type: 'error', message: 'Failed to export backup.' })
+    }
+    setTimeout(() => setSaveToast(null), 3500)
   }
+
+  // Pro Developer: Import Full Site JSON Backup
+  const handleImportBackup = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target?.result as string)
+        const rawData = parsed.data || parsed
+        if (rawData && (rawData.engineer || rawData.projects || rawData.settings)) {
+          importSiteData(rawData)
+          setSaveToast({ type: 'success', message: 'Backup restored into editor! Click "Save Changes" to commit.' })
+        } else {
+          setSaveToast({ type: 'error', message: 'Invalid backup file structure.' })
+        }
+      } catch {
+        setSaveToast({ type: 'error', message: 'Failed to read JSON backup file.' })
+      }
+      setTimeout(() => setSaveToast(null), 4500)
+    }
+    reader.readAsText(file)
+    e.target.value = ''
+  }
+
+  // Copy live site URL
+  const handleCopySiteLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.origin)
+      setSaveToast({ type: 'success', message: 'Public site URL copied to clipboard!' })
+    } catch {
+      setSaveToast({ type: 'error', message: 'Failed to copy URL.' })
+    }
+    setTimeout(() => setSaveToast(null), 3000)
+  }
+
+  // Toggle work availability
+  const handleToggleAvailable = () => {
+    const nextVal = !data.engineer.available
+    updateEngineer({ available: nextVal })
+    setSaveToast({
+      type: 'success',
+      message: nextVal ? 'Status updated: Available for work' : 'Status updated: Currently busy',
+    })
+    setTimeout(() => setSaveToast(null), 3000)
+  }
+
+  // Dynamic Item Count Badges in Sidebar
+  const getItemCountBadge = (id: SectionId) => {
+    if (id === 'projects') return `${data.projects?.length || 0}`
+    if (id === 'credentials') return `${data.credentials?.length || 0}`
+    if (id === 'expertise') return `${data.expertise?.length || 0}`
+    if (id === 'services') return `${data.services?.length || 0}`
+    if (id === 'education') return `${data.education?.length || 0}`
+    if (id === 'shorts') return `${data.shorts?.length || 0}`
+    return null
+  }
+
+  // Command Palette Items
+  const commandItems: CommandItem[] = [
+    // Pages & Sections
+    { id: 'p-overview',    label: 'Overview & Content Health', category: 'Pages & Sections', icon: <LayoutDashboard size={15} />, hint: 'System health, stats & quick jump', onSelect: () => selectSection('overview') },
+    { id: 'p-branding',    label: 'Logo & Visual Identity',   category: 'Pages & Sections', icon: <Sparkles size={15} />,        hint: 'Favicon, header emblems, typography & colors', onSelect: () => selectSection('branding') },
+    { id: 'p-shorts',      label: 'Video Shorts & Field Stories', category: 'Pages & Sections', icon: <Play size={15} />,       hint: 'Cinematic video reels and logs', onSelect: () => selectSection('shorts') },
+    { id: 'p-articles',    label: 'Blog & Technical Articles', category: 'Pages & Sections', icon: <BookOpen size={15} />,       hint: 'Draft and publish engineering publications', onSelect: () => selectSection('articles') },
+    { id: 'p-profile',     label: 'Profile, Bio & Personal Details', category: 'Pages & Sections', icon: <User size={15} />,     hint: 'Name, licenses, contacts & CV info', onSelect: () => selectSection('profile') },
+    { id: 'p-credentials', label: 'Credentials & Licenses',    category: 'Pages & Sections', icon: <Award size={15} />,        hint: 'Class ABC licenses & PE certifications', onSelect: () => selectSection('credentials') },
+    { id: 'p-expertise',   label: 'Core Engineering Expertise', category: 'Pages & Sections', icon: <Zap size={15} />,          hint: 'Substations, BNBC 2020 & industrial power', onSelect: () => selectSection('expertise') },
+    { id: 'p-projects',    label: 'Projects Portfolio',        category: 'Pages & Sections', icon: <FolderOpen size={15} />,   hint: 'Solar farms, substations & industrial works', onSelect: () => selectSection('projects') },
+    { id: 'p-services',    label: 'Professional Services',      category: 'Pages & Sections', icon: <Briefcase size={15} />,    hint: 'Consultancy, testing & commissioning', onSelect: () => selectSection('services') },
+    { id: 'p-education',   label: 'Education & Career Timeline', category: 'Pages & Sections', icon: <GraduationCap size={15} />, hint: 'B.Sc. degree & engineering work history', onSelect: () => selectSection('education') },
+    { id: 'p-settings',    label: 'SEO, Meta & Web Analytics',  category: 'Pages & Sections', icon: <Globe size={15} />,        hint: 'Google Analytics, Clarity & search verification', onSelect: () => selectSection('settings') },
+    { id: 'p-wedding',     label: 'Marriage Invitation & RSVPs', category: 'Pages & Sections', icon: <Heart size={15} />,        hint: 'Wedding invitation details & guest attendance', onSelect: () => selectSection('wedding') },
+    { id: 'p-messages',    label: 'Messages Inbox',            category: 'Pages & Sections', icon: <Inbox size={15} />,        hint: 'Review client contact submissions', onSelect: () => selectSection('messages') },
+
+    // Pro Actions
+    { id: 'a-save',        label: 'Save All Changes to Database', category: 'Pro Actions', icon: <Save size={15} />, shortcut: '⌘S', hint: 'Persist all changes to Supabase cloud', onSelect: handleSave },
+    { id: 'a-avail',       label: `Toggle Availability (${data.engineer.available ? 'Set Busy' : 'Set Available'})`, category: 'Pro Actions', icon: <CheckCircle2 size={15} />, hint: 'Update public availability badge', onSelect: handleToggleAvailable },
+    { id: 'a-export',      label: 'Export Site Backup (JSON)', category: 'Pro Actions', icon: <FileDown size={15} />, hint: 'Download complete site database snapshot', onSelect: handleExportBackup },
+    { id: 'a-import',      label: 'Import Site Backup (JSON)', category: 'Pro Actions', icon: <FileUp size={15} />, hint: 'Restore backup file into editor', onSelect: () => backupFileInputRef.current?.click() },
+    { id: 'a-preview',     label: 'Open Live Website in New Tab', category: 'Pro Actions', icon: <ArrowUpRight size={15} />, hint: 'Inspect public visitor experience', onSelect: onViewSite },
+    { id: 'a-new-art',     label: 'Write New Blog Article',    category: 'Pro Actions', icon: <Plus size={15} />, hint: 'Open rich-text article publishing studio', onSelect: () => navigate('/admin/articles/new') },
+    { id: 'a-copy-url',    label: 'Copy Public Site Link',     category: 'Pro Actions', icon: <Copy size={15} />, hint: 'Copy web address to clipboard', onSelect: handleCopySiteLink },
+  ]
 
   const isMoreTab = !['overview', 'articles', 'projects', 'messages'].includes(section)
 
   return (
     <div className="admin-shell" style={{ display: 'flex', height: '100vh', background: '#F8FAFC', fontFamily: 'Outfit,sans-serif', overflow: 'hidden', position: 'relative' }}>
 
+      {/* Hidden file input for backup JSON restoration */}
+      <input
+        ref={backupFileInputRef}
+        type="file"
+        accept=".json,application/json"
+        style={{ display: 'none' }}
+        onChange={handleImportBackup}
+      />
+
+      {/* Pro Developer Command Palette Modal */}
+      <CommandPaletteModal
+        open={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        items={commandItems}
+      />
+
       {/* ── Desktop Sidebar (Hidden on <= 768px via CSS) ── */}
       <aside className="admin-desktop-sidebar" style={{
-        width: collapsed ? 56 : 232,
+        width: collapsed ? 60 : 236,
         flexShrink: 0, background: '#FFFFFF',
         borderRight: '1px solid #E2E8F0',
         display: 'flex', flexDirection: 'column',
         transition: 'width 0.25s cubic-bezier(0.16,1,0.3,1)',
         overflow: 'hidden',
+        zIndex: 20,
       }}>
-        {/* Logo */}
-        <div style={{ height: 56, display: 'flex', alignItems: 'center', padding: collapsed ? '0 12px' : '0 16px', borderBottom: '1px solid #F1F5F9', gap: 10, flexShrink: 0 }}>
-          <div style={{ width: 28, height: 28, background: '#C47D0E', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Pencil size={13} strokeWidth={2} style={{ color: '#FFFFFF' }} />
+        {/* Logo / Brand header */}
+        <div style={{
+          height: 56, display: 'flex', alignItems: 'center',
+          padding: collapsed ? '0 15px' : '0 16px',
+          borderBottom: '1px solid #F1F5F9', gap: 10, flexShrink: 0,
+        }}>
+          <div style={{
+            width: 30, height: 30, background: 'linear-gradient(135deg, #C47D0E 0%, #B45309 100%)',
+            borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            boxShadow: '0 2px 8px rgba(196,125,14,0.28)',
+          }}>
+            <Pencil size={14} strokeWidth={2.2} style={{ color: '#FFFFFF' }} />
           </div>
           {!collapsed && (
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 13, color: '#0F172A', lineHeight: 1.2 }}>Site Editor</div>
-              <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>{data.engineer.initials}</div>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ fontWeight: 600, fontSize: 13.5, color: '#0F172A', lineHeight: 1.2 }}>Site Editor</div>
+              <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span>{data.engineer.initials}</span>
+                <span style={{ fontSize: 9, background: '#FEF3C7', color: '#92400E', padding: '1px 5px', borderRadius: 3, fontWeight: 600 }}>PRO</span>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Nav */}
+        {/* Navigation list */}
         <nav style={{ flex: 1, padding: '8px 0', overflowY: 'auto', overflowX: 'hidden' }}>
           {NAV_ENTRIES.map(entry => {
             if ((entry as any).type === 'group') {
@@ -2998,14 +3429,13 @@ export default function Dashboard() {
                   {/* Sub-items */}
                   {settingsGroupOpen && !collapsed && (
                     <div style={{ padding: '2px 0 4px', position: 'relative' }}>
-                      {/* Subtle vertical tree guideline */}
                       <div style={{ position: 'absolute', left: 19, top: 2, bottom: 6, width: 1, background: '#E2E8F0' }} />
                       {group.items.map(item => {
                         const isActive = section === item.id
                         return (
                           <button
                             key={item.id}
-                            onClick={() => setSection(item.id)}
+                            onClick={() => selectSection(item.id)}
                             style={{
                               display: 'flex', alignItems: 'center', gap: 9,
                               width: 'calc(100% - 22px)', margin: '1px 11px',
@@ -3039,7 +3469,7 @@ export default function Dashboard() {
                     return (
                       <button
                         key={item.id}
-                        onClick={() => setSection(item.id)}
+                        onClick={() => selectSection(item.id)}
                         title={item.label}
                         style={{
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -3062,10 +3492,12 @@ export default function Dashboard() {
 
             const item = entry as NavItem
             const isActive = section === item.id
+            const countBadge = getItemCountBadge(item.id)
+
             return (
               <button
                 key={item.id}
-                onClick={() => setSection(item.id)}
+                onClick={() => selectSection(item.id)}
                 title={collapsed ? item.label : undefined}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10,
@@ -3074,7 +3506,7 @@ export default function Dashboard() {
                   background: isActive ? '#FEF3C7' : 'transparent',
                   border: 'none', borderRadius: 0,
                   color: isActive ? '#92400E' : '#64748B',
-                  cursor: 'pointer', fontSize: 13, fontWeight: isActive ? 600 : 400,
+                  cursor: 'pointer', fontSize: 13, fontWeight: isActive ? 600 : 450,
                   fontFamily: 'Outfit,sans-serif', textAlign: 'left',
                   transition: 'all 0.15s', whiteSpace: 'nowrap',
                   borderLeft: isActive ? '3px solid #C47D0E' : '3px solid transparent',
@@ -3082,23 +3514,43 @@ export default function Dashboard() {
                 onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = '#F8FAFC' }}
                 onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
               >
-                <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>{item.icon}</span>
-                {!collapsed && <span style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>}
+                <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center', color: isActive ? '#C47D0E' : '#64748B' }}>
+                  {item.icon}
+                </span>
+                {!collapsed && (
+                  <>
+                    <span style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>
+                    {countBadge && (
+                      <span style={{
+                        fontFamily: 'JetBrains Mono,monospace', fontSize: 10,
+                        padding: '1px 6px', borderRadius: 4,
+                        background: isActive ? '#FDE68A' : '#F1F5F9',
+                        color: isActive ? '#78350F' : '#94A3B8',
+                        fontWeight: 600,
+                      }}>
+                        {countBadge}
+                      </span>
+                    )}
+                  </>
+                )}
               </button>
             )
           })}
         </nav>
 
-
-        {/* Bottom actions */}
-        <div style={{ padding: collapsed ? '8px 0' : 12, borderTop: '1px solid #F1F5F9', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {/* Bottom actions & user telemetry */}
+        <div style={{
+          padding: collapsed ? '8px 0' : 12,
+          borderTop: '1px solid #F1F5F9',
+          flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6,
+        }}>
           {!collapsed && (
             <>
               <Button onClick={onViewSite} style={{ width: '100%', justifyContent: 'center' } as any}>
-                <Eye size={13} /> Preview site
+                <ExternalLink size={13} /> Preview public site
               </Button>
               <Button variant="ghost" onClick={() => setShowReset(true)} style={{ width: '100%', justifyContent: 'center', color: '#EF4444', fontSize: 12 } as any}>
-                <RotateCcw size={12} /> Reset defaults
+                <RotateCcw size={12} /> Reset factory defaults
               </Button>
             </>
           )}
@@ -3127,8 +3579,8 @@ export default function Dashboard() {
           onClick={() => setMobileDrawerOpen(false)}
           className="admin-mobile-backdrop"
           style={{
-            position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.45)',
-            backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
+            position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.5)',
+            backdropFilter: 'blur(5px)', WebkitBackdropFilter: 'blur(5px)',
             zIndex: 998, animation: 'fadeIn 0.2s ease-out',
           }}
         />
@@ -3147,7 +3599,7 @@ export default function Dashboard() {
           overflow: 'hidden',
         }}
       >
-        {/* Drawer Header with user pill & close */}
+        {/* Drawer Header */}
         <div style={{ padding: '16px 16px 14px', borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', background: '#F1F5F9', border: '1px solid #E2E8F0', flexShrink: 0 }}>
@@ -3186,6 +3638,7 @@ export default function Dashboard() {
           </div>
           {NAV_ITEMS.map(item => {
             const isActive = section === item.id
+            const countBadge = getItemCountBadge(item.id)
             return (
               <button
                 key={item.id}
@@ -3203,6 +3656,15 @@ export default function Dashboard() {
               >
                 <span style={{ color: isActive ? '#C47D0E' : '#64748B', display: 'flex', flexShrink: 0 }}>{item.icon}</span>
                 <span style={{ flex: 1 }}>{item.label}</span>
+                {countBadge && (
+                  <span style={{
+                    fontFamily: 'JetBrains Mono,monospace', fontSize: 10,
+                    padding: '1px 6px', borderRadius: 4, background: '#F1F5F9',
+                    color: '#64748B',
+                  }}>
+                    {countBadge}
+                  </span>
+                )}
                 {isActive && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#C47D0E' }} />}
               </button>
             )
@@ -3212,7 +3674,7 @@ export default function Dashboard() {
         {/* Drawer Footer actions */}
         <div style={{ padding: '12px 16px', borderTop: '1px solid #F1F5F9', display: 'flex', flexDirection: 'column', gap: 8, background: '#FFFFFF' }}>
           <Button onClick={() => { setMobileDrawerOpen(false); onViewSite(); }} style={{ width: '100%', justifyContent: 'center' } as any}>
-            <Eye size={14} /> Preview site
+            <ExternalLink size={14} /> Preview site
           </Button>
           <div style={{ display: 'flex', gap: 8 }}>
             <Button
@@ -3233,22 +3695,23 @@ export default function Dashboard() {
         </div>
       </aside>
 
-      {/* ── Main View ── */}
+      {/* ── Main View Area ── */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
 
-        {/* Top Header */}
+        {/* Pro Developer Telemetry Header */}
         <header style={{
           height: 56, borderBottom: '1px solid #E2E8F0', background: '#FFFFFF',
-          display: 'flex', alignItems: 'center', padding: '0 clamp(12px, 3vw, 20px)',
-          gap: 12, flexShrink: 0, zIndex: 10,
+          display: 'flex', alignItems: 'center', padding: '0 clamp(12px, 2.5vw, 20px)',
+          gap: 10, flexShrink: 0, zIndex: 10,
         }}>
-          {/* Desktop collapse toggle */}
+          {/* Desktop sidebar collapse toggle */}
           <button
             onClick={() => setCollapsed(c => !c)}
             className="admin-collapse-toggle"
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              color: '#94A3B8', display: 'flex', padding: 4, borderRadius: 4, transition: 'all 0.15s',
+              color: '#94A3B8', display: 'flex', padding: 5, borderRadius: 6, transition: 'all 0.15s',
             }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F1F5F9'; (e.currentTarget as HTMLElement).style.color = '#374151' }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#94A3B8' }}
@@ -3256,7 +3719,7 @@ export default function Dashboard() {
             {collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
           </button>
 
-          {/* Mobile hamburger menu button */}
+          {/* Mobile hamburger menu trigger */}
           <button
             onClick={() => setMobileDrawerOpen(true)}
             className="admin-mobile-menu-btn"
@@ -3270,15 +3733,95 @@ export default function Dashboard() {
             <Menu size={18} />
           </button>
 
-          {/* Title & Icon */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-            <span style={{ color: '#C47D0E', display: 'flex', flexShrink: 0 }}>{active.icon}</span>
-            <h1 style={{ fontWeight: 600, fontSize: 14, color: '#0F172A', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {active.label}
-            </h1>
+          {/* Dynamic Breadcrumbs */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+            <span style={{ color: '#94A3B8', fontSize: 12, fontWeight: 500 }} className="admin-breadcrumb-root">Admin</span>
+            <span style={{ color: '#CBD5E1', fontSize: 12 }} className="admin-breadcrumb-sep">/</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+              <span style={{ color: '#C47D0E', display: 'flex', flexShrink: 0 }}>{active.icon}</span>
+              <h1 style={{
+                fontWeight: 600, fontSize: 13.5, color: '#0F172A', margin: 0,
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>
+                {active.label}
+              </h1>
+              {getItemCountBadge(active.id) && (
+                <span style={{
+                  fontFamily: 'JetBrains Mono,monospace', fontSize: 11,
+                  padding: '1px 6px', borderRadius: 4, background: '#FEF3C7',
+                  color: '#92400E', fontWeight: 600,
+                }}>
+                  {getItemCountBadge(active.id)}
+                </span>
+              )}
+            </div>
           </div>
 
-          {/* Status Indicator */}
+          {/* Spotlight Search & Command Trigger Pill */}
+          <div style={{ flex: 1, display: 'flex', justifyContent: 'center', minWidth: 0, padding: '0 8px' }}>
+            <button
+              type="button"
+              onClick={() => setCommandPaletteOpen(true)}
+              className="admin-search-trigger"
+              title="Open Command Palette (Ctrl+K or Cmd+K)"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                height: 32, padding: '0 12px',
+                background: '#F8FAFC', border: '1px solid #E2E8F0',
+                borderRadius: 7, cursor: 'pointer',
+                color: '#64748B', fontFamily: 'Outfit,sans-serif', fontSize: 12,
+                transition: 'all 0.18s ease',
+                width: '100%', maxWidth: 320,
+              }}
+              onMouseEnter={e => {
+                const el = e.currentTarget as HTMLElement
+                el.style.borderColor = '#CBD5E1'
+                el.style.background = '#FFFFFF'
+                el.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)'
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget as HTMLElement
+                el.style.borderColor = '#E2E8F0'
+                el.style.background = '#F8FAFC'
+                el.style.boxShadow = 'none'
+              }}
+            >
+              <Search size={13} style={{ color: '#94A3B8' }} />
+              <span style={{ flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                Search or jump to…
+              </span>
+              <kbd style={{
+                fontFamily: 'JetBrains Mono,monospace', fontSize: 10,
+                background: '#FFFFFF', border: '1px solid #E2E8F0',
+                borderRadius: 4, padding: '1px 5px', color: '#64748B',
+              }}>
+                ⌘K
+              </kbd>
+            </button>
+          </div>
+
+          {/* Pro Developer Quick Actions: Backup JSON */}
+          <div className="admin-header-actions" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <button
+              type="button"
+              onClick={handleExportBackup}
+              title="Download full portfolio backup JSON file"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                height: 32, padding: '0 9px', borderRadius: 6,
+                background: '#FFFFFF', border: '1px solid #E2E8F0',
+                color: '#475569', fontSize: 11.5, fontFamily: 'Outfit,sans-serif',
+                fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F8FAFC'; (e.currentTarget as HTMLElement).style.borderColor = '#CBD5E1' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#FFFFFF'; (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0' }}
+            >
+              <FileDown size={13} style={{ color: '#C47D0E' }} />
+              <span className="btn-header-backup-text">Backup JSON</span>
+            </button>
+          </div>
+
+          {/* Status Indicator (Saved / Saving / Unsaved) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
             {isSaving ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#C47D0E' }}>
@@ -3296,7 +3839,10 @@ export default function Dashboard() {
               </div>
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#D97706' }}>
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#F59E0B', display: 'inline-block' }} />
+                <span style={{
+                  width: 7, height: 7, borderRadius: '50%', background: '#F59E0B',
+                  display: 'inline-block', animation: 'pulseDot 1.8s infinite',
+                }} />
                 <span className="admin-status-text" style={{ fontSize: 11.5, color: '#D97706', fontWeight: 500 }}>
                   Unsaved changes
                 </span>
@@ -3304,7 +3850,7 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* DEDICATED HEADER SAVE BUTTON */}
+          {/* Dedicated High-Contrast Save Button */}
           <button
             type="button"
             onClick={handleSave}
@@ -3326,7 +3872,7 @@ export default function Dashboard() {
               border: saved ? '1px solid #E2E8F0' : 'none',
               background: saved ? '#F8FAFC' : '#C47D0E',
               color: saved ? '#94A3B8' : '#FFFFFF',
-              boxShadow: saved ? 'none' : '0 2px 6px rgba(196, 125, 14, 0.28)',
+              boxShadow: saved ? 'none' : '0 2px 8px rgba(196, 125, 14, 0.28)',
               opacity: isSaving ? 0.75 : 1,
               flexShrink: 0,
             }}
@@ -3354,16 +3900,30 @@ export default function Dashboard() {
             )}
           </button>
 
-          {/* Preview button */}
+          {/* Live Preview Button */}
           <Button onClick={onViewSite} size="sm" variant="outline">
-            <Eye size={12} /> <span className="btn-preview-text">Preview</span>
+            <ExternalLink size={12} /> <span className="btn-preview-text">Preview</span>
           </Button>
         </header>
 
-        {/* Content area */}
-        <main className="admin-content-main" style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
-          <div style={{ maxWidth: 820, margin: '0 auto' }}>
-            {PANELS[section]({ onNavigate: s => setSection(s) })}
+        {/* Content area with fluid Framer Motion tab transitions */}
+        <main
+          ref={mainScrollRef}
+          className="admin-content-main"
+          style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
+        >
+          <div style={{ maxWidth: 840, margin: '0 auto' }}>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={section}
+                initial={{ opacity: 0, y: 7 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              >
+                {PANELS[section]({ onNavigate: selectSection })}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </main>
       </div>
@@ -3385,7 +3945,7 @@ export default function Dashboard() {
                 if (tab.id === 'more') {
                   setMobileDrawerOpen(true)
                 } else {
-                  setSection(tab.id)
+                  selectSection(tab.id)
                 }
               }}
               style={{
@@ -3423,7 +3983,7 @@ export default function Dashboard() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1100,
+            zIndex: 2200,
             padding: 'max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left))',
           }}
           onClick={() => setShowReset(false)}
@@ -3537,12 +4097,14 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Global CSS Styles for Mobile Responsive App Shell */}
+      {/* Global CSS Styles for Mobile Responsive App Shell & Pro Animations */}
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUpToast { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes resetDialogPop { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        @keyframes commandPalettePop { from { opacity: 0; transform: scale(0.96) translateY(-8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        @keyframes pulseDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(1.3); } }
 
         /* Desktop defaults */
         .admin-mobile-menu-btn { display: none !important; }
@@ -3560,6 +4122,8 @@ export default function Dashboard() {
           .admin-mobile-backdrop { display: block !important; }
           .admin-content-main { padding: 14px 12px 88px !important; }
           .admin-status-text { display: none !important; }
+          .admin-breadcrumb-root, .admin-breadcrumb-sep { display: none !important; }
+          .btn-header-backup-text { display: none !important; }
 
           .admin-bottom-bar {
             display: flex !important;
@@ -3580,6 +4144,7 @@ export default function Dashboard() {
           /* Compact preview and save text on narrow phone screens */
           @media (max-width: 480px) {
             .btn-preview-text { display: none; }
+            .admin-search-trigger { max-width: 140px !important; }
           }
           @media (max-width: 360px) {
             .btn-save-text { display: none; }

@@ -131,6 +131,7 @@ type Ctx = {
   updateShorts: (v: StoryItem[]) => void
   updateFloatingShortsBubble: (v: boolean) => void
   updateWedding: (p: Partial<WeddingConfig>) => void
+  importSiteData: (imported: Partial<SiteData>) => void
   resetToDefaults: () => Promise<void> | void
 }
 
@@ -781,6 +782,16 @@ export function SiteProvider({ children }: { children: ReactNode }) {
     setSaved(false)
   }, [])
 
+  const importSiteData = useCallback((imported: Partial<SiteData>) => {
+    setData(prev => {
+      const next = deepMerge({ ...prev, ...imported })
+      dataRef.current = next
+      writeCache(next)
+      return next
+    })
+    setSaved(false)
+  }, [])
+
   const resetToDefaults = async () => {
     await supabase.from('site_config').delete().eq('id', DB_ROW_ID)
     localStorage.removeItem(CACHE_KEY)
@@ -798,6 +809,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
       updateProjects, updateServices, updateEducation,
       updateExperience, updateSettings, updateShorts, updateFloatingShortsBubble,
       updateWedding,
+      importSiteData,
       resetToDefaults,
     }}>
       {children}
