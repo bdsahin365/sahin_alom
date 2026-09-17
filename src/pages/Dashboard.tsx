@@ -3800,27 +3800,6 @@ export default function Dashboard() {
             </button>
           </div>
 
-          {/* Pro Developer Quick Actions: Backup JSON */}
-          <div className="admin-header-actions" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <button
-              type="button"
-              onClick={handleExportBackup}
-              title="Download full portfolio backup JSON file"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 5,
-                height: 32, padding: '0 9px', borderRadius: 6,
-                background: '#FFFFFF', border: '1px solid #E2E8F0',
-                color: '#475569', fontSize: 11.5, fontFamily: 'Outfit,sans-serif',
-                fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s',
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F8FAFC'; (e.currentTarget as HTMLElement).style.borderColor = '#CBD5E1' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#FFFFFF'; (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0' }}
-            >
-              <FileDown size={13} style={{ color: '#C47D0E' }} />
-              <span className="btn-header-backup-text">Backup JSON</span>
-            </button>
-          </div>
-
           {/* Status Indicator (Saved / Saving / Unsaved) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
             {isSaving ? (
@@ -4123,7 +4102,6 @@ export default function Dashboard() {
           .admin-content-main { padding: 14px 12px 88px !important; }
           .admin-status-text { display: none !important; }
           .admin-breadcrumb-root, .admin-breadcrumb-sep { display: none !important; }
-          .btn-header-backup-text { display: none !important; }
 
           .admin-bottom-bar {
             display: flex !important;
