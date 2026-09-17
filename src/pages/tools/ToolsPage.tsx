@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Search, X, ArrowUpRight, Zap, Activity, Minus, GitFork, Divide, Waves,
   TrendingUp, TrendingDown, BarChart2, Triangle, ArrowDown, ShieldCheck,
   RefreshCw, Settings, BatteryMedium, Target, Cable } from 'lucide-react'
@@ -32,10 +33,17 @@ const CAT_COLOR: Record<ToolCategory, string> = {
 function ToolCard({ tool, onClick }: { tool: Tool; onClick: () => void }) {
   const catColor = CAT_COLOR[tool.category] ?? 'var(--accent)'
   return (
-    <article
+    <motion.article
       onClick={onClick}
       role="button"
       tabIndex={0}
+      layout
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      whileHover={{ y: -4, scale: 1.01 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
       onKeyDown={e => e.key === 'Enter' && onClick()}
       style={{
         background: 'var(--bg)',
@@ -46,18 +54,15 @@ function ToolCard({ tool, onClick }: { tool: Tool; onClick: () => void }) {
         display: 'flex',
         flexDirection: 'column',
         gap: 12,
-        transition: 'border-color 0.2s, transform 0.2s, box-shadow 0.2s',
         position: 'relative',
         outline: 'none',
       }}
       onMouseEnter={e => {
         e.currentTarget.style.borderColor = catColor
-        e.currentTarget.style.transform = 'translateY(-3px)'
-        e.currentTarget.style.boxShadow = `0 8px 24px rgba(0,0,0,0.08)`
+        e.currentTarget.style.boxShadow = `0 12px 28px rgba(0,0,0,0.1)`
       }}
       onMouseLeave={e => {
         e.currentTarget.style.borderColor = 'var(--border)'
-        e.currentTarget.style.transform = 'none'
         e.currentTarget.style.boxShadow = 'none'
       }}
       onFocus={e => { e.currentTarget.style.borderColor = catColor }}
@@ -121,7 +126,7 @@ function ToolCard({ tool, onClick }: { tool: Tool; onClick: () => void }) {
           Open <ArrowUpRight size={9} strokeWidth={2} />
         </span>
       </div>
-    </article>
+    </motion.article>
   )
 }
 
@@ -241,10 +246,13 @@ export default function ToolsPage() {
               const active = activeCategory === cat
               const color = cat === 'All' ? 'var(--accent)' : (CAT_COLOR[cat as ToolCategory] ?? 'var(--accent)')
               return (
-                <button
+                <motion.button
                   key={cat}
                   id={`cat-filter-${cat.replace(/\s+/g, '-').toLowerCase()}`}
                   onClick={() => setActiveCategory(cat)}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ duration: 0.15 }}
                   style={{
                     padding: '7px 16px',
                     background: active ? color : 'transparent',
@@ -253,13 +261,13 @@ export default function ToolsPage() {
                     fontFamily: 'JetBrains Mono, monospace',
                     fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase',
                     cursor: 'pointer', borderRadius: 2,
-                    transition: 'all 0.18s',
+                    boxShadow: active ? `0 2px 10px ${color}33` : 'none',
                   }}
                   onMouseEnter={e => { if (!active) { e.currentTarget.style.borderColor = color; e.currentTarget.style.color = color } }}
                   onMouseLeave={e => { if (!active) { e.currentTarget.style.borderColor = 'var(--border-strong)'; e.currentTarget.style.color = 'var(--fg-dim)' } }}
                 >
                   {cat}
-                </button>
+                </motion.button>
               )
             })}
           </div>
@@ -317,15 +325,20 @@ export default function ToolsPage() {
                 </button>
               </div>
             ) : (
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-                gap: 14,
-              }}>
-                {filtered.map(t => (
-                  <ToolCard key={t.slug} tool={t} onClick={() => openTool(t.slug)} />
-                ))}
-              </div>
+              <motion.div
+                layout
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+                  gap: 14,
+                }}
+              >
+                <AnimatePresence mode="popLayout">
+                  {filtered.map(t => (
+                    <ToolCard key={t.slug} tool={t} onClick={() => openTool(t.slug)} />
+                  ))}
+                </AnimatePresence>
+              </motion.div>
             )}
           </section>
 

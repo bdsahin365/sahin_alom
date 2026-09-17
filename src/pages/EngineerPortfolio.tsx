@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, type ReactNode } from 'react'
+import { Link, useNavigate } from 'react-router'
+import { motion, AnimatePresence, useInView } from 'framer-motion'
 import {
   ArrowUpRight, ArrowDown,
   Zap, Server, Wind, ShieldCheck, Network, Activity,
@@ -9,25 +11,50 @@ import { supabase } from '../lib/supabase'
 import sahinPhoto from '../img/sahin.png'
 import HeaderLogo from '../components/HeaderLogo'
 
-// ── Reveal ─────────────────────────────────────────────────────────────────
-function useReveal() {
-  const ref = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    const el = ref.current; if (!el) return
-    const io = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { el.classList.add('visible'); io.disconnect() } },
-      { threshold: 0.05 }
-    )
-    io.observe(el)
-    return () => io.disconnect()
-  }, [])
-  return ref
+// ── Physics & Transitions ───────────────────────────────────────────────────
+export const luxuryEase = [0.16, 1, 0.3, 1]
+
+export const springSmooth = {
+  type: 'spring' as const,
+  stiffness: 280,
+  damping: 24,
+  mass: 0.8,
 }
 
-function Reveal({ children, delay = 0, style = {} }: { children: ReactNode; delay?: number; style?: React.CSSProperties }) {
-  const ref = useReveal()
+// ── Hardware-Accelerated Scroll Reveal ──────────────────────────────────────
+function Reveal({
+  children,
+  delay = 0,
+  direction = 'up',
+  style = {},
+}: {
+  children: ReactNode
+  delay?: number
+  direction?: 'up' | 'down' | 'left' | 'right' | 'none'
+  style?: React.CSSProperties
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  const isInView = useInView(ref, { once: true, margin: '-6% 0px' })
+  const offset = 22
+
   return (
-    <div ref={ref} className={`reveal${delay ? ` reveal-delay-${delay}` : ''}`} style={style}>{children}</div>
+    <motion.div
+      ref={ref}
+      initial={{
+        opacity: 0,
+        y: direction === 'up' ? offset : direction === 'down' ? -offset : 0,
+        x: direction === 'left' ? offset : direction === 'right' ? -offset : 0,
+      }}
+      animate={isInView ? { opacity: 1, y: 0, x: 0 } : {}}
+      transition={{
+        duration: 0.72,
+        delay: delay * 0.08,
+        ease: luxuryEase,
+      }}
+      style={style}
+    >
+      {children}
+    </motion.div>
   )
 }
 
@@ -168,27 +195,51 @@ function Hero() {
             {E.tagline}
           </p>
           <div className="hero-cta-wrap" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginLeft: 'auto' }}>
-            <a href="#contact" className="btn-primary" style={{ gap: 10, fontSize: 12 }}>
-              Hire me <ArrowUpRight size={14} strokeWidth={2} />
-            </a>
-            <a href="#projects" className="btn-outline" style={{ fontSize: 12 }}>
+            <motion.div
+              whileHover={{ y: -2, scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+            >
+              <Link
+                to="/contact"
+                className="btn-primary"
+                style={{ gap: 10, fontSize: 12, textDecoration: 'none' }}
+              >
+                Schedule Review / Hire me <ArrowUpRight size={14} strokeWidth={2} />
+              </Link>
+            </motion.div>
+            <motion.a
+              href="#projects"
+              className="btn-outline"
+              whileHover={{ y: -2, scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+              style={{ fontSize: 12 }}
+            >
               View work
-            </a>
+            </motion.a>
           </div>
         </div>
 
-        {/* Stats strip */}
+        {/* Stats strip with staggered cascade */}
         <div className="hero-stats-grid" style={fade(0.58)}>
           {[
             { v: E.yearsExp,      l: 'Years exp.' },
             { v: E.projectsMW,   l: 'Total Capacity' },
             { v: E.projectsCount, l: 'Projects' },
             { v: E.clients,       l: 'Clients' },
-          ].map(s => (
-            <div key={s.l} className="hero-stat-cell">
+          ].map((s, idx) => (
+            <motion.div
+              key={s.l}
+              className="hero-stat-cell"
+              initial={{ opacity: 0, y: 14 }}
+              animate={in_ ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6, delay: 0.6 + idx * 0.08, ease: luxuryEase }}
+              whileHover={{ y: -3 }}
+            >
               <div className="display" style={{ fontSize: 'clamp(28px, 4.5vw, 56px)', color: 'var(--accent)', lineHeight: 1, marginBottom: 4 }}>{s.v}</div>
               <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, letterSpacing: '0.15em', color: 'var(--muted)', textTransform: 'uppercase' as const, fontWeight: 600 }}>{s.l}</div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
@@ -328,9 +379,11 @@ function Expertise() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%,320px),1fr))', gap: 1, background: 'var(--border)' }}>
           {expertise.map((item, i) => (
             <Reveal key={item.id} delay={(i % 3 + 1) as 1 | 2 | 3}>
-              <div
+              <motion.div
                 onMouseEnter={() => setHov(i)}
                 onMouseLeave={() => setHov(null)}
+                whileHover={{ y: -4 }}
+                transition={{ type: 'spring', stiffness: 350, damping: 25 }}
                 style={{
                   padding: 'clamp(28px,4vw,48px)',
                   background: hov === i ? 'var(--bg-3)' : 'var(--bg-2)',
@@ -338,6 +391,7 @@ function Expertise() {
                   transition: 'background 0.25s ease',
                   borderLeft: hov === i ? '2px solid var(--accent)' : '2px solid transparent',
                   position: 'relative', overflow: 'hidden',
+                  height: '100%',
                 }}
               >
                 {/* Large background number */}
@@ -347,7 +401,7 @@ function Expertise() {
                   color: 'var(--border-strong)',
                   lineHeight: 1, pointerEvents: 'none',
                   transition: 'color 0.25s',
-                  ...(hov === i ? { color: 'rgba(232,160,32,0.07)' } : {}),
+                  ...(hov === i ? { color: 'rgba(196,125,14,0.1)' } : {}),
                 }}>{item.num}</div>
 
                 <div style={{ color: hov === i ? 'var(--accent)' : 'var(--fg-dim)', marginBottom: 20, transition: 'color 0.25s', position: 'relative', zIndex: 1 }}>
@@ -360,7 +414,7 @@ function Expertise() {
                     <span key={j} className="tag">{t}</span>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             </Reveal>
           ))}
         </div>
@@ -419,12 +473,19 @@ function Projects() {
           </div>
         </Reveal>
 
-        {/* Active project showcase */}
-        {proj && (
-          <div key={proj.id} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))', gap: 'clamp(24px,4vw,56px)', alignItems: 'start' }}>
+        {/* Active project showcase with AnimatePresence */}
+        <AnimatePresence mode="wait">
+          {proj && (
+            <motion.div
+              key={proj.id}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.28, ease: luxuryEase }}
+              style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))', gap: 'clamp(24px,4vw,56px)', alignItems: 'start' }}
+            >
 
-            {/* ── Left: image + capacity ── */}
-            <Reveal>
+              {/* ── Left: image + capacity ── */}
               <div style={{ position: 'relative' }}>
                 {/* Ghosted project number */}
                 <div className="display" style={{
@@ -435,9 +496,14 @@ function Projects() {
                 }}>{proj.num}</div>
 
                 {/* Image */}
-                <div className="project-card" style={{ position: 'relative', overflow: 'hidden', aspectRatio: '4/3', background: proj.imgColor || '#D4CFC5', zIndex: 1 }}>
+                <motion.div
+                  className="project-card"
+                  whileHover={{ scale: 1.015 }}
+                  transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                  style={{ position: 'relative', overflow: 'hidden', aspectRatio: '4/3', background: proj.imgColor || '#D4CFC5', zIndex: 1 }}
+                >
                   {proj.img
-                    ? <img src={proj.img} alt={proj.title} className="project-img" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    ? <img src={proj.img} alt={proj.title} loading="lazy" className="project-img" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                     : <div style={{ width: '100%', height: '100%', background: `linear-gradient(140deg, ${proj.imgColor || '#E8E4DA'}, var(--bg-3))`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Zap size={48} strokeWidth={0.5} style={{ color: 'var(--accent)', opacity: 0.3 }} />
                       </div>
@@ -457,7 +523,7 @@ function Projects() {
                   <div style={{ position: 'absolute', top: 16, right: 16, padding: '4px 10px', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)' }}>
                     <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9, color: 'rgba(255,255,255,0.8)', letterSpacing: '0.15em' }}>{proj.year}</span>
                   </div>
-                </div>
+                </motion.div>
 
                 {/* Meta strip below image */}
                 <div style={{ display: 'flex', gap: 0, marginTop: 2, background: 'var(--border)' }}>
@@ -473,10 +539,8 @@ function Projects() {
                   ))}
                 </div>
               </div>
-            </Reveal>
 
-            {/* ── Right: details ── */}
-            <Reveal delay={1}>
+              {/* ── Right: details ── */}
               <div style={{ paddingTop: 'clamp(0px,2vh,32px)' }}>
                 {/* Title + category */}
                 <div style={{ marginBottom: 'clamp(20px,3vh,36px)' }}>
@@ -533,24 +597,28 @@ function Projects() {
                 {/* Prev / next navigation */}
                 {projects.length > 1 && (
                   <div style={{ display: 'flex', gap: 10, marginTop: 'clamp(24px,4vh,40px)', paddingTop: 'clamp(24px,4vh,40px)', borderTop: '1px solid var(--border)' }}>
-                    <button
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => setActive(a => (a - 1 + projects.length) % projects.length)}
                       style={{ flex: 1, padding: '12px', background: 'var(--bg-2)', border: '1px solid var(--border)', cursor: 'pointer', fontFamily: 'JetBrains Mono,monospace', fontSize: 10, letterSpacing: '0.12em', color: 'var(--fg-dim)', textTransform: 'uppercase' as const, transition: 'border-color 0.2s, color 0.2s' }}
                       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)'; (e.currentTarget as HTMLElement).style.color = 'var(--accent)' }}
                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--fg-dim)' }}
-                    >← Prev</button>
-                    <button
+                    >← Prev</motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => setActive(a => (a + 1) % projects.length)}
                       style={{ flex: 1, padding: '12px', background: 'var(--accent)', border: '1px solid var(--accent)', cursor: 'pointer', fontFamily: 'JetBrains Mono,monospace', fontSize: 10, letterSpacing: '0.12em', color: '#FFFFFF', textTransform: 'uppercase' as const, transition: 'opacity 0.2s' }}
                       onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = '0.85')}
                       onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = '1')}
-                    >Next →</button>
+                    >Next →</motion.button>
                   </div>
                 )}
               </div>
-            </Reveal>
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </section>
   )
@@ -746,9 +814,27 @@ function Contact() {
                     {E.available ? 'Currently available' : 'Not available'}
                   </span>
                 </div>
-                <p style={{ fontFamily: 'Outfit,sans-serif', fontSize: 13, color: 'var(--fg-dim)', lineHeight: 1.65, fontWeight: 300 }}>
+                <p style={{ fontFamily: 'Outfit,sans-serif', fontSize: 13, color: 'var(--fg-dim)', lineHeight: 1.65, fontWeight: 300, margin: 0 }}>
                   {E.available ? 'Open to new consulting projects and full-time roles starting immediately.' : 'Not currently accepting new projects — check back soon.'}
                 </p>
+                <Link
+                  to="/contact"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    marginTop: 14,
+                    fontFamily: 'JetBrains Mono,monospace',
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: 'var(--accent)',
+                    textDecoration: 'none',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Open Dedicated Consultation Page <ArrowUpRight size={12} />
+                </Link>
               </div>
             </div>
           </Reveal>

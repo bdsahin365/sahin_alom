@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router'
 import { ArrowUpRight, Sun, Moon, ArrowLeft, Menu, X } from 'lucide-react'
 
 type NavProps = {
@@ -90,7 +91,7 @@ export default function Nav({ dark, setDark, currentPage, onBack }: NavProps) {
               {dark ? <Sun size={13} strokeWidth={1.5} /> : <Moon size={13} strokeWidth={1.5} />}
             </button>
 
-            <a href="#contact" className="desktop-nav"
+            <Link to="/contact" className="desktop-nav"
               style={{
                 display: 'flex', alignItems: 'center', gap: 6,
                 padding: '8px 18px', background: 'var(--fg)', color: 'var(--bg)',
@@ -102,7 +103,7 @@ export default function Nav({ dark, setDark, currentPage, onBack }: NavProps) {
             >
               Let's talk
               <ArrowUpRight size={12} strokeWidth={2} />
-            </a>
+            </Link>
 
             {/* Mobile hamburger */}
             <button
@@ -148,7 +149,7 @@ export default function Nav({ dark, setDark, currentPage, onBack }: NavProps) {
           ))}
         </div>
         <div style={{ paddingTop: 40 }}>
-          <a href="#contact" onClick={() => setMenuOpen(false)}
+          <Link to="/contact" onClick={() => setMenuOpen(false)}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
               padding: '13px 28px', background: 'var(--fg)', color: 'var(--bg)',
@@ -156,7 +157,7 @@ export default function Nav({ dark, setDark, currentPage, onBack }: NavProps) {
             }}>
             Let's talk
             <ArrowUpRight size={14} strokeWidth={1.5} />
-          </a>
+          </Link>
           <p className="mono" style={{ marginTop: 20, fontSize: 11, color: 'var(--muted)', letterSpacing: '0.06em' }}>sahinalom.com</p>
         </div>
       </div>

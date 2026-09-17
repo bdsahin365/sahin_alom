@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Phone, Mail, MapPin, MessageSquare, Send, CheckCircle2,
   Clock, ShieldCheck, ArrowRight, Copy, Check, Calendar,
@@ -129,7 +130,11 @@ export default function ContactPage() {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   {/* Phone */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 4 }}>
+                  <motion.div
+                    whileHover={{ y: -2 }}
+                    transition={{ duration: 0.2 }}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 4 }}
+                  >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(196,125,14,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)' }}>
                         <Phone size={16} />
@@ -149,10 +154,13 @@ export default function ContactPage() {
                     >
                       {copiedKey === 'phone' ? <Check size={14} style={{ color: 'var(--green)' }} /> : <Copy size={14} />}
                     </button>
-                  </div>
+                  </motion.div>
 
                   {/* WhatsApp */}
-                  <a
+                  <motion.a
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.99 }}
+                    transition={{ duration: 0.2 }}
                     href={whatsappUrl}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -160,7 +168,7 @@ export default function ContactPage() {
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                       padding: '12px 14px', background: 'rgba(34,197,94,0.08)',
                       border: '1px solid rgba(34,197,94,0.3)', borderRadius: 4,
-                      textDecoration: 'none', transition: 'all 0.2s ease'
+                      textDecoration: 'none'
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -175,10 +183,14 @@ export default function ContactPage() {
                       </div>
                     </div>
                     <ArrowRight size={15} style={{ color: '#16A34A' }} />
-                  </a>
+                  </motion.a>
 
                   {/* Email */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 4 }}>
+                  <motion.div
+                    whileHover={{ y: -2 }}
+                    transition={{ duration: 0.2 }}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 4 }}
+                  >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(196,125,14,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)' }}>
                         <Mail size={16} />
@@ -198,10 +210,14 @@ export default function ContactPage() {
                     >
                       {copiedKey === 'email' ? <Check size={14} style={{ color: 'var(--green)' }} /> : <Copy size={14} />}
                     </button>
-                  </div>
+                  </motion.div>
 
                   {/* Location */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 4 }}>
+                  <motion.div
+                    whileHover={{ y: -2 }}
+                    transition={{ duration: 0.2 }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 4 }}
+                  >
                     <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(196,125,14,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', flexShrink: 0 }}>
                       <MapPin size={16} />
                     </div>
@@ -211,7 +227,7 @@ export default function ContactPage() {
                         {E.location} · Bangladesh
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 </div>
               </div>
 
@@ -262,227 +278,247 @@ export default function ContactPage() {
                 Fill out the engineering scope details below. All submitted documentation and project details are treated with strict professional confidentiality.
               </p>
 
-              {sent ? (
-                <div style={{
-                  padding: '36px 24px',
-                  background: 'rgba(34,197,94,0.08)',
-                  border: '1px solid rgba(34,197,94,0.3)',
-                  borderRadius: 6,
-                  textAlign: 'center',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: 12
-                }}>
-                  <CheckCircle2 size={44} style={{ color: 'var(--green)' }} />
-                  <h3 style={{ fontFamily: 'Outfit,sans-serif', fontSize: 18, fontWeight: 700, color: 'var(--fg)', margin: 0 }}>
-                    Consultation Request Transmitted!
-                  </h3>
-                  <p style={{ fontFamily: 'Outfit,sans-serif', fontSize: 13.5, color: 'var(--fg-dim)', maxWidth: 440, lineHeight: 1.6, margin: 0 }}>
-                    Thank you. Engr. Md Sahin Alom has received your technical project request and will respond via email/phone within 24 to 48 hours.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setSent(false)}
+              <AnimatePresence mode="wait">
+                {sent ? (
+                  <motion.div
+                    key="sent"
+                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                     style={{
-                      marginTop: 12,
-                      padding: '8px 18px',
-                      background: 'var(--accent)',
-                      color: '#FFFFFF',
-                      border: 'none',
-                      borderRadius: 4,
-                      fontFamily: 'Outfit,sans-serif',
-                      fontSize: 12,
-                      fontWeight: 600,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Submit Another Inquiry
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  {errorMsg && (
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      padding: '10px 14px', background: 'rgba(239,68,68,0.08)',
-                      border: '1px solid rgba(239,68,68,0.25)', borderRadius: 4,
-                      fontFamily: 'Outfit,sans-serif', fontSize: 12.5, color: '#EF4444'
-                    }}>
-                      <AlertCircle size={14} style={{ flexShrink: 0 }} />
-                      <span>{errorMsg}</span>
-                    </div>
-                  )}
-
-                  {/* Name & Phone */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
-                    <div>
-                      <label style={{ display: 'block', fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, letterSpacing: '0.12em', color: 'var(--fg-dim)', textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>
-                        Your Full Name *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={form.name}
-                        onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                        placeholder="e.g. Engr. Rafiqul Islam / Company Name"
-                        style={{
-                          width: '100%', padding: '10px 12px', background: 'var(--bg)',
-                          border: '1px solid var(--border)', borderRadius: 4,
-                          color: 'var(--fg)', fontFamily: 'Outfit,sans-serif', fontSize: 13.5,
-                          outline: 'none', boxSizing: 'border-box'
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{ display: 'block', fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, letterSpacing: '0.12em', color: 'var(--fg-dim)', textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>
-                        Phone / WhatsApp
-                      </label>
-                      <input
-                        type="tel"
-                        value={form.phone}
-                        onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
-                        placeholder="+880 17... / Contact number"
-                        style={{
-                          width: '100%', padding: '10px 12px', background: 'var(--bg)',
-                          border: '1px solid var(--border)', borderRadius: 4,
-                          color: 'var(--fg)', fontFamily: 'Outfit,sans-serif', fontSize: 13.5,
-                          outline: 'none', boxSizing: 'border-box'
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Email */}
-                  <div>
-                    <label style={{ display: 'block', fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, letterSpacing: '0.12em', color: 'var(--fg-dim)', textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>
-                      Official Email Address *
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      value={form.email}
-                      onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
-                      placeholder="name@company.com"
-                      style={{
-                        width: '100%', padding: '10px 12px', background: 'var(--bg)',
-                        border: '1px solid var(--border)', borderRadius: 4,
-                        color: 'var(--fg)', fontFamily: 'Outfit,sans-serif', fontSize: 13.5,
-                        outline: 'none', boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-
-                  {/* Service Type & Voltage */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
-                    <div>
-                      <label style={{ display: 'block', fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, letterSpacing: '0.12em', color: 'var(--fg-dim)', textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>
-                        Consultation Subject / Type
-                      </label>
-                      <select
-                        value={form.serviceType}
-                        onChange={e => setForm(p => ({ ...p, serviceType: e.target.value }))}
-                        style={{
-                          width: '100%', padding: '10px 12px', background: 'var(--bg)',
-                          border: '1px solid var(--border)', borderRadius: 4,
-                          color: 'var(--fg)', fontFamily: 'Outfit,sans-serif', fontSize: 13,
-                          outline: 'none', boxSizing: 'border-box'
-                        }}
-                      >
-                        <option value="Substation & Transformer Design">Substation &amp; Transformer Design</option>
-                        <option value="BNBC 2020 Compliance Audit">BNBC 2020 Compliance Audit</option>
-                        <option value="SLD & Load Schedule Review">SLD &amp; Load Schedule Review</option>
-                        <option value="Industrial Power Distribution">Industrial Power Distribution</option>
-                        <option value="PFI / Harmonic Mitigation">PFI / Harmonic Mitigation</option>
-                        <option value="Solar PV & Net Metering">Solar PV &amp; Net Metering</option>
-                        <option value="Generator & ATS Synchronizing">Generator &amp; ATS Synchronizing</option>
-                        <option value="General Engineering Inquiry">General Engineering Inquiry</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label style={{ display: 'block', fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, letterSpacing: '0.12em', color: 'var(--fg-dim)', textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>
-                        Capacity / Voltage Rating
-                      </label>
-                      <input
-                        type="text"
-                        value={form.voltageLevel}
-                        onChange={e => setForm(p => ({ ...p, voltageLevel: e.target.value }))}
-                        placeholder="e.g. 500 kVA, 11kV, 415V"
-                        style={{
-                          width: '100%', padding: '10px 12px', background: 'var(--bg)',
-                          border: '1px solid var(--border)', borderRadius: 4,
-                          color: 'var(--fg)', fontFamily: 'Outfit,sans-serif', fontSize: 13.5,
-                          outline: 'none', boxSizing: 'border-box'
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Message / Scope */}
-                  <div>
-                    <label style={{ display: 'block', fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, letterSpacing: '0.12em', color: 'var(--fg-dim)', textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>
-                      Project Scope &amp; Requirements *
-                    </label>
-                    <textarea
-                      rows={5}
-                      required
-                      value={form.message}
-                      onChange={e => setForm(p => ({ ...p, message: e.target.value }))}
-                      placeholder="Describe your plant/building power requirements, single line diagram verification needs, or electrical audit timeline..."
-                      style={{
-                        width: '100%', padding: '12px', background: 'var(--bg)',
-                        border: '1px solid var(--border)', borderRadius: 4,
-                        color: 'var(--fg)', fontFamily: 'Outfit,sans-serif', fontSize: 13.5,
-                        outline: 'none', resize: 'vertical', boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-
-                  {/* Submit button */}
-                  <button
-                    type="submit"
-                    disabled={sending}
-                    style={{
-                      marginTop: 6,
-                      display: 'inline-flex',
+                      padding: '36px 24px',
+                      background: 'rgba(34,197,94,0.08)',
+                      border: '1px solid rgba(34,197,94,0.3)',
+                      borderRadius: 6,
+                      textAlign: 'center',
+                      display: 'flex',
+                      flexDirection: 'column',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 8,
-                      padding: '13px 24px',
-                      background: 'var(--accent)',
-                      color: '#FFFFFF',
-                      border: 'none',
-                      borderRadius: 4,
-                      fontFamily: 'Outfit,sans-serif',
-                      fontSize: 13.5,
-                      fontWeight: 700,
-                      letterSpacing: '0.04em',
-                      textTransform: 'uppercase',
-                      cursor: sending ? 'not-allowed' : 'pointer',
-                      opacity: sending ? 0.7 : 1,
-                      transition: 'background 0.2s ease, transform 0.15s ease',
-                      boxShadow: '0 2px 8px rgba(196,125,14,0.3)',
+                      gap: 12
                     }}
                   >
-                    {sending ? (
-                      <>Transmitting Inquiry...</>
-                    ) : (
-                      <>
-                        <Send size={15} /> Submit Consultation Request
-                      </>
+                    <CheckCircle2 size={44} style={{ color: 'var(--green)' }} />
+                    <h3 style={{ fontFamily: 'Outfit,sans-serif', fontSize: 18, fontWeight: 700, color: 'var(--fg)', margin: 0 }}>
+                      Consultation Request Transmitted!
+                    </h3>
+                    <p style={{ fontFamily: 'Outfit,sans-serif', fontSize: 13.5, color: 'var(--fg-dim)', maxWidth: 440, lineHeight: 1.6, margin: 0 }}>
+                      Thank you. Engr. Md Sahin Alom has received your technical project request and will respond via email/phone within 24 to 48 hours.
+                    </p>
+                    <motion.button
+                      type="button"
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => setSent(false)}
+                      style={{
+                        marginTop: 12,
+                        padding: '8px 18px',
+                        background: 'var(--accent)',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        borderRadius: 4,
+                        fontFamily: 'Outfit,sans-serif',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Submit Another Inquiry
+                    </motion.button>
+                  </motion.div>
+                ) : (
+                  <motion.form
+                    key="form"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onSubmit={handleSubmit}
+                    style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+                  >
+                    {errorMsg && (
+                      <div style={{
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        padding: '10px 14px', background: 'rgba(239,68,68,0.08)',
+                        border: '1px solid rgba(239,68,68,0.25)', borderRadius: 4,
+                        fontFamily: 'Outfit,sans-serif', fontSize: 12.5, color: '#EF4444'
+                      }}>
+                        <AlertCircle size={14} style={{ flexShrink: 0 }} />
+                        <span>{errorMsg}</span>
+                      </div>
                     )}
-                  </button>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, justifyContent: 'center' }}>
-                    <ShieldCheck size={13} style={{ color: 'var(--muted)' }} />
-                    <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, color: 'var(--muted)', letterSpacing: '0.04em' }}>
-                      Certified Class ABC Registered Professional · Direct Response
-                    </span>
-                  </div>
-                </form>
-              )}
+                    {/* Name & Phone */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
+                      <div>
+                        <label style={{ display: 'block', fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, letterSpacing: '0.12em', color: 'var(--fg-dim)', textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>
+                          Your Full Name *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={form.name}
+                          onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+                          placeholder="e.g. Engr. Rafiqul Islam / Company Name"
+                          style={{
+                            width: '100%', padding: '10px 12px', background: 'var(--bg)',
+                            border: '1px solid var(--border)', borderRadius: 4,
+                            color: 'var(--fg)', fontFamily: 'Outfit,sans-serif', fontSize: 13.5,
+                            outline: 'none', boxSizing: 'border-box'
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, letterSpacing: '0.12em', color: 'var(--fg-dim)', textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>
+                          Phone / WhatsApp
+                        </label>
+                        <input
+                          type="tel"
+                          value={form.phone}
+                          onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
+                          placeholder="+880 17... / Contact number"
+                          style={{
+                            width: '100%', padding: '10px 12px', background: 'var(--bg)',
+                            border: '1px solid var(--border)', borderRadius: 4,
+                            color: 'var(--fg)', fontFamily: 'Outfit,sans-serif', fontSize: 13.5,
+                            outline: 'none', boxSizing: 'border-box'
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Email */}
+                    <div>
+                      <label style={{ display: 'block', fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, letterSpacing: '0.12em', color: 'var(--fg-dim)', textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>
+                        Official Email Address *
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={form.email}
+                        onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
+                        placeholder="name@company.com"
+                        style={{
+                          width: '100%', padding: '10px 12px', background: 'var(--bg)',
+                          border: '1px solid var(--border)', borderRadius: 4,
+                          color: 'var(--fg)', fontFamily: 'Outfit,sans-serif', fontSize: 13.5,
+                          outline: 'none', boxSizing: 'border-box'
+                        }}
+                      />
+                    </div>
+
+                    {/* Service Type & Voltage */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
+                      <div>
+                        <label style={{ display: 'block', fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, letterSpacing: '0.12em', color: 'var(--fg-dim)', textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>
+                          Consultation Subject / Type
+                        </label>
+                        <select
+                          value={form.serviceType}
+                          onChange={e => setForm(p => ({ ...p, serviceType: e.target.value }))}
+                          style={{
+                            width: '100%', padding: '10px 12px', background: 'var(--bg)',
+                            border: '1px solid var(--border)', borderRadius: 4,
+                            color: 'var(--fg)', fontFamily: 'Outfit,sans-serif', fontSize: 13,
+                            outline: 'none', boxSizing: 'border-box'
+                          }}
+                        >
+                          <option value="Substation & Transformer Design">Substation &amp; Transformer Design</option>
+                          <option value="BNBC 2020 Compliance Audit">BNBC 2020 Compliance Audit</option>
+                          <option value="SLD & Load Schedule Review">SLD &amp; Load Schedule Review</option>
+                          <option value="Industrial Power Distribution">Industrial Power Distribution</option>
+                          <option value="PFI / Harmonic Mitigation">PFI / Harmonic Mitigation</option>
+                          <option value="Solar PV & Net Metering">Solar PV &amp; Net Metering</option>
+                          <option value="Generator & ATS Synchronizing">Generator &amp; ATS Synchronizing</option>
+                          <option value="General Engineering Inquiry">General Engineering Inquiry</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, letterSpacing: '0.12em', color: 'var(--fg-dim)', textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>
+                          Capacity / Voltage Rating
+                        </label>
+                        <input
+                          type="text"
+                          value={form.voltageLevel}
+                          onChange={e => setForm(p => ({ ...p, voltageLevel: e.target.value }))}
+                          placeholder="e.g. 500 kVA, 11kV, 415V"
+                          style={{
+                            width: '100%', padding: '10px 12px', background: 'var(--bg)',
+                            border: '1px solid var(--border)', borderRadius: 4,
+                            color: 'var(--fg)', fontFamily: 'Outfit,sans-serif', fontSize: 13.5,
+                            outline: 'none', boxSizing: 'border-box'
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Message / Scope */}
+                    <div>
+                      <label style={{ display: 'block', fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, letterSpacing: '0.12em', color: 'var(--fg-dim)', textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>
+                        Project Scope &amp; Requirements *
+                      </label>
+                      <textarea
+                        rows={5}
+                        required
+                        value={form.message}
+                        onChange={e => setForm(p => ({ ...p, message: e.target.value }))}
+                        placeholder="Describe your plant/building power requirements, single line diagram verification needs, or electrical audit timeline..."
+                        style={{
+                          width: '100%', padding: '12px', background: 'var(--bg)',
+                          border: '1px solid var(--border)', borderRadius: 4,
+                          color: 'var(--fg)', fontFamily: 'Outfit,sans-serif', fontSize: 13.5,
+                          outline: 'none', resize: 'vertical', boxSizing: 'border-box'
+                        }}
+                      />
+                    </div>
+
+                    {/* Submit button */}
+                    <motion.button
+                      type="submit"
+                      disabled={sending}
+                      whileHover={{ y: -2, scale: 1.01 }}
+                      whileTap={{ scale: 0.98 }}
+                      transition={{ duration: 0.18 }}
+                      style={{
+                        marginTop: 6,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                        padding: '13px 24px',
+                        background: 'var(--accent)',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        borderRadius: 4,
+                        fontFamily: 'Outfit,sans-serif',
+                        fontSize: 13.5,
+                        fontWeight: 700,
+                        letterSpacing: '0.04em',
+                        textTransform: 'uppercase',
+                        cursor: sending ? 'not-allowed' : 'pointer',
+                        opacity: sending ? 0.7 : 1,
+                        boxShadow: '0 2px 8px rgba(196,125,14,0.3)',
+                      }}
+                    >
+                      {sending ? (
+                        <>Transmitting Inquiry...</>
+                      ) : (
+                        <>
+                          <Send size={15} /> Submit Consultation Request
+                        </>
+                      )}
+                    </motion.button>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, justifyContent: 'center' }}>
+                      <ShieldCheck size={13} style={{ color: 'var(--muted)' }} />
+                      <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, color: 'var(--muted)', letterSpacing: '0.04em' }}>
+                        Certified Class ABC Registered Professional · Direct Response
+                      </span>
+                    </div>
+                  </motion.form>
+                )}
+              </AnimatePresence>
             </div>
 
           </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
+import { motion } from 'framer-motion'
 import EngineerNav from '../components/EngineerNav'
 import EngineerPortfolio from './EngineerPortfolio'
 import StoryModal, { STORIES } from '../components/StoryModal'
@@ -73,9 +74,14 @@ export default function SiteView() {
 
       {/* ── Floating Story Bubble (Bottom Left) ── */}
       {data.showFloatingShortsBubble !== false && (data.shorts || []).filter(s => s.enabled !== false).length > 0 && (
-        <button
+        <motion.button
           onClick={() => handleOpenStory(0)}
           title={`Watch Engineering Video Shorts (${(data.shorts || []).filter(s => s.enabled !== false).length})`}
+          initial={{ opacity: 0, y: 24, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          whileHover={{ y: -4, scale: 1.04 }}
+          whileTap={{ scale: 0.96 }}
+          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
           style={{
             position: 'fixed',
             bottom: 24,
@@ -91,18 +97,10 @@ export default function SiteView() {
             cursor: 'pointer',
             boxShadow: '0 8px 30px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.8)',
             backdropFilter: 'blur(16px)',
-            transition: 'all 0.25s cubic-bezier(0.16,1,0.3,1)',
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.transform = 'translateY(-3px) scale(1.04)'
-            e.currentTarget.style.boxShadow = '0 12px 36px rgba(196,125,14,0.3)'
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.transform = 'none'
-            e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.15)'
           }}
         >
           <div style={{
+            position: 'relative',
             width: 34,
             height: 34,
             borderRadius: '50%',
@@ -123,6 +121,18 @@ export default function SiteView() {
                 border: '1px solid #FFFFFF',
               }}
             />
+            {/* Live pulsing beacon dot */}
+            <span style={{
+              position: 'absolute',
+              top: -2,
+              right: -2,
+              width: 9,
+              height: 9,
+              borderRadius: '50%',
+              background: '#22C55E',
+              border: '1.5px solid #FFFFFF',
+              boxShadow: '0 0 6px rgba(34,197,94,0.6)',
+            }} />
           </div>
           <div style={{ textAlign: 'left' }}>
             <div style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 700, fontSize: 12, color: '#0D1218', lineHeight: 1.1 }}>
@@ -132,7 +142,7 @@ export default function SiteView() {
               ▶ {(data.shorts || []).filter(s => s.enabled !== false).length} {((data.shorts || []).filter(s => s.enabled !== false).length) === 1 ? 'Story' : 'Stories'}
             </div>
           </div>
-        </button>
+        </motion.button>
       )}
     </>
   )

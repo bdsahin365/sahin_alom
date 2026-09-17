@@ -86,7 +86,7 @@ export default function EngineerNav({
     { label: 'Services', href: '#services' },
     { label: 'Tools', to: '/tools', badge: '20+', hasDropdown: true },
     { label: 'Blog', to: '/blog', badge: 'NEW' },
-    { label: 'Contact', href: '#contact' },
+    { label: 'Contact', to: '/contact' },
   ]
 
   const quickTools = [
@@ -731,14 +731,16 @@ export default function EngineerNav({
             </button>
           </div>
 
-          <a
-            href="#contact"
-            onClick={e => handleAnchorClick(e, '#contact')}
+          <button
+            onClick={() => {
+              setMenuOpen(false)
+              navigate('/contact')
+            }}
             className="btn-primary"
             style={{ width: '100%', justifyContent: 'center' }}
           >
-            Get in Touch <ArrowUpRight size={14} strokeWidth={2} />
-          </a>
+            Get in Touch / Consultation <ArrowUpRight size={14} strokeWidth={2} />
+          </button>
 
           <p
             style={{

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, type ReactNode } from 'react'
+import { Link } from 'react-router'
 import {
   ArrowDown, ArrowUpRight, ArrowRight,
   MoveRight, ChevronRight,
@@ -138,10 +139,10 @@ function Hero() {
             View my work
             <ArrowDown size={14} strokeWidth={1.5} />
           </a>
-          <a href="#contact" className="btn-outline">
+          <Link to="/contact" className="btn-outline">
             Let's work together
             <ArrowUpRight size={14} strokeWidth={1.5} />
-          </a>
+          </Link>
         </div>
       </div>
 
@@ -517,9 +518,9 @@ function Services() {
               <Label>Services</Label>
               <h2 className="display-xl">How I can help</h2>
             </div>
-            <a href="#contact" className="btn-outline-sm">
+            <Link to="/contact" className="btn-outline-sm">
               Start a project <ArrowUpRight size={13} strokeWidth={1.5} />
-            </a>
+            </Link>
           </div>
         </Reveal>
 
