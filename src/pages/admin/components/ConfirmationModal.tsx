@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { AlertTriangle, Trash2, X } from 'lucide-react'
 
-interface ConfirmationModalProps {
+export interface ConfirmationModalProps {
   isOpen: boolean
   title: string
   message: string
