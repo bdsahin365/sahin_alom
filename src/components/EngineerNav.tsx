@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import {
-  ArrowUpRight, Menu, X, Search,
+  ArrowUpRight, Menu, X,
   ChevronDown, ChevronRight, Zap, Sun, Moon,
 } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router'
@@ -383,45 +383,6 @@ export default function EngineerNav({
 
           {/* 3. Right controls */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-
-            {/* Search ⌘K pill */}
-            <button
-              onClick={() => setCommandPaletteOpen(true)}
-              aria-label="Open quick search (⌘K)"
-              style={{
-                display: 'flex', alignItems: 'center', gap: 7,
-                background: showSolid ? 'var(--bg-2)' : 'rgba(255,255,255,0.12)',
-                border: showSolid ? '1px solid var(--border)' : '1px solid rgba(255,255,255,0.22)',
-                borderRadius: 8, padding: '6px 11px',
-                cursor: 'pointer', transition: 'all 0.2s',
-                backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
-              }}
-              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)')}
-              onMouseLeave={e => ((e.currentTarget as HTMLElement).style.borderColor = showSolid ? 'var(--border)' : 'rgba(255,255,255,0.22)')}
-            >
-              <Search size={13} style={{ color: 'var(--accent)' }} strokeWidth={2.2} />
-              <span
-                className="desktop-only"
-                style={{
-                  fontFamily: 'Outfit, sans-serif', fontSize: 12,
-                  color: showSolid ? 'var(--fg-dim)' : 'rgba(255,255,255,0.85)',
-                }}
-              >
-                Search…
-              </span>
-              <kbd
-                className="desktop-only"
-                style={{
-                  fontFamily: 'JetBrains Mono, monospace', fontSize: 9, fontWeight: 700,
-                  color: showSolid ? 'var(--muted)' : 'rgba(255,255,255,0.9)',
-                  background: showSolid ? 'var(--bg-3)' : 'rgba(255,255,255,0.2)',
-                  padding: '1px 5px', borderRadius: 4,
-                }}
-              >
-                ⌘K
-              </kbd>
-            </button>
-
             {/* Sun / Moon Theme Toggle */}
             <button
               onClick={toggleTheme}
@@ -594,44 +555,32 @@ export default function EngineerNav({
           padding: 'clamp(24px,5vw,36px)',
         }}>
 
-          {/* Quick search & Theme toggle */}
-          <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-            <button
-              onClick={() => { setMenuOpen(false); setCommandPaletteOpen(true) }}
-              style={{
-                flex: 1,
-                background: 'var(--bg-2)', border: '1px solid var(--border)',
-                borderRadius: 10, padding: '14px 16px', minHeight: 52,
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                cursor: 'pointer',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <Search size={16} style={{ color: 'var(--accent)' }} />
-                <span style={{ fontFamily: 'Outfit, sans-serif', fontSize: 14, color: 'var(--fg-dim)' }}>
-                  Search tools &amp; articles…
-                </span>
-              </div>
-              <kbd style={{
-                fontFamily: 'JetBrains Mono, monospace', fontSize: 9,
-                color: 'var(--muted)', background: 'var(--bg-3)',
-                padding: '2px 6px', borderRadius: 4,
-              }}>
-                ⌘K
-              </kbd>
-            </button>
-
+          {/* Mobile Theme Toggle */}
+          <div style={{ marginBottom: 20 }}>
             <button
               onClick={toggleTheme}
               aria-label="Toggle theme"
               style={{
-                width: 52, minHeight: 52, borderRadius: 10,
+                width: '100%', minHeight: 48, borderRadius: 10,
                 background: 'var(--bg-2)', border: '1px solid var(--border)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '12px 16px', cursor: 'pointer',
               }}
             >
-              {theme === 'dark' ? <Sun size={18} style={{ color: '#F59E0B' }} /> : <Moon size={18} style={{ color: 'var(--fg)' }} />}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                {theme === 'dark' ? <Sun size={17} style={{ color: '#F59E0B' }} /> : <Moon size={17} style={{ color: 'var(--fg)' }} />}
+                <span style={{ fontFamily: 'Outfit, sans-serif', fontSize: 13.5, fontWeight: 500, color: 'var(--fg)' }}>
+                  {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
+                </span>
+              </div>
+              <span style={{
+                fontFamily: 'JetBrains Mono, monospace', fontSize: 9.5,
+                color: 'var(--accent)', background: 'var(--accent-dim)',
+                padding: '3px 8px', borderRadius: 4, fontWeight: 600,
+                textTransform: 'uppercase',
+              }}>
+                Switch
+              </span>
             </button>
           </div>
 
