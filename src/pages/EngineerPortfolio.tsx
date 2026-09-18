@@ -627,16 +627,17 @@ function About() {
         <div>
           <Reveal>
             <h2 className="display" style={{
-              fontSize: 'clamp(36px, 5.5vw, 76px)',
+              fontSize: 'clamp(28px, 5vw, 72px)',
               color: 'var(--fg)',
               marginBottom: 'clamp(16px, 3vh, 28px)',
               letterSpacing: '-0.02em',
+              lineHeight: 1.12,
             }}>
-              <span className="font-playfair italic font-normal" style={{ textTransform: 'none', marginRight: 12, color: 'var(--accent)' }}>
+              <span className="font-playfair italic font-normal" style={{ textTransform: 'none', marginRight: 10, color: 'var(--accent)' }}>
                 High Voltage
               </span>
-              Precision.<br />
-              Zero Fault Tolerance.
+              <span style={{ fontSize: '0.86em', letterSpacing: '-0.02em' }}>Precision.</span><br />
+              <span style={{ fontSize: '0.86em', letterSpacing: '-0.02em' }}>Zero Fault Tolerance.</span>
             </h2>
           </Reveal>
 
@@ -789,11 +790,22 @@ function Expertise() {
           }}>
             <div>
               <SIdx n="03" label="Technical Practice" />
-              <h2 className="display" style={{ fontSize: 'clamp(40px, 6.5vw, 88px)', color: 'var(--fg)', marginTop: 16 }}>
-                <span className="font-playfair italic font-normal" style={{ textTransform: 'none', marginRight: 14 }}>
+              <h2 className="display" style={{
+                fontSize: 'clamp(28px, 5.5vw, 76px)',
+                color: 'var(--fg)',
+                marginTop: 16,
+                lineHeight: 1.1,
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'baseline',
+                gap: '0 clamp(8px, 1.4vw, 14px)',
+              }}>
+                <span className="font-playfair italic font-normal" style={{ textTransform: 'none' }}>
                   Technical
                 </span>
-                Practice
+                <span style={{ fontSize: '0.84em', letterSpacing: '-0.02em' }}>
+                  Practice
+                </span>
               </h2>
             </div>
             <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: 'var(--fg-dim)', maxWidth: 360, lineHeight: 1.7, fontWeight: 350 }}>
@@ -935,11 +947,22 @@ function Projects() {
           }}>
             <div>
               <SIdx n="04" label="Selected Engineering" />
-              <h2 className="display" style={{ fontSize: 'clamp(40px, 6.5vw, 88px)', color: 'var(--fg)', marginTop: 16 }}>
-                <span className="font-playfair italic font-normal" style={{ textTransform: 'none', marginRight: 14 }}>
+              <h2 className="display" style={{
+                fontSize: 'clamp(28px, 5.5vw, 76px)',
+                color: 'var(--fg)',
+                marginTop: 16,
+                lineHeight: 1.1,
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'baseline',
+                gap: '0 clamp(8px, 1.4vw, 14px)',
+              }}>
+                <span className="font-playfair italic font-normal" style={{ textTransform: 'none' }}>
                   Landmark
                 </span>
-                Projects
+                <span style={{ fontSize: '0.84em', letterSpacing: '-0.02em' }}>
+                  Projects
+                </span>
               </h2>
             </div>
 
@@ -1186,11 +1209,22 @@ function Services() {
           }}>
             <div>
               <SIdx n="05" label="Engagement Models" />
-              <h2 className="display" style={{ fontSize: 'clamp(40px, 6.5vw, 88px)', color: 'var(--fg)', marginTop: 16 }}>
-                <span className="font-playfair italic font-normal" style={{ textTransform: 'none', marginRight: 14 }}>
+              <h2 className="display" style={{
+                fontSize: 'clamp(28px, 5.5vw, 76px)',
+                color: 'var(--fg)',
+                marginTop: 16,
+                lineHeight: 1.1,
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'baseline',
+                gap: '0 clamp(8px, 1.4vw, 14px)',
+              }}>
+                <span className="font-playfair italic font-normal" style={{ textTransform: 'none' }}>
                   Engineering
                 </span>
-                Services
+                <span style={{ fontSize: '0.84em', letterSpacing: '-0.02em' }}>
+                  Services
+                </span>
               </h2>
             </div>
             <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: 'var(--fg-dim)', maxWidth: 360, lineHeight: 1.7, fontWeight: 350 }}>
@@ -1273,11 +1307,22 @@ function Education() {
             borderBottom: '1px solid var(--border)',
           }}>
             <SIdx n="06" label="Qualifications & Software" />
-            <h2 className="display" style={{ fontSize: 'clamp(40px, 6.5vw, 88px)', color: 'var(--fg)', marginTop: 16 }}>
-              <span className="font-playfair italic font-normal" style={{ textTransform: 'none', marginRight: 14 }}>
+            <h2 className="display" style={{
+              fontSize: 'clamp(28px, 5.5vw, 76px)',
+              color: 'var(--fg)',
+              marginTop: 16,
+              lineHeight: 1.1,
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'baseline',
+              gap: '0 clamp(8px, 1.4vw, 14px)',
+            }}>
+              <span className="font-playfair italic font-normal" style={{ textTransform: 'none' }}>
                 Academic
               </span>
-              Background
+              <span style={{ fontSize: '0.84em', letterSpacing: '-0.02em' }}>
+                Background
+              </span>
             </h2>
           </div>
         </Reveal>
@@ -1417,11 +1462,22 @@ function Contact() {
             borderBottom: '1px solid var(--border)',
           }}>
             <SIdx n="07" label="Project Consultation" />
-            <h2 className="display" style={{ fontSize: 'clamp(40px, 6.5vw, 88px)', color: 'var(--fg)', marginTop: 16 }}>
-              <span className="font-playfair italic font-normal" style={{ textTransform: 'none', marginRight: 14 }}>
+            <h2 className="display" style={{
+              fontSize: 'clamp(28px, 5.5vw, 76px)',
+              color: 'var(--fg)',
+              marginTop: 16,
+              lineHeight: 1.1,
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'baseline',
+              gap: '0 clamp(8px, 1.4vw, 14px)',
+            }}>
+              <span className="font-playfair italic font-normal" style={{ textTransform: 'none' }}>
                 Project
               </span>
-              Consultation
+              <span style={{ fontSize: '0.84em', letterSpacing: '-0.02em' }}>
+                Consultation
+              </span>
             </h2>
           </div>
         </Reveal>
