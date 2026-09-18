@@ -30,6 +30,14 @@ import {
 } from '../context/SiteContext'
 import { DEFAULT_WEDDING_CONFIG } from '../wedding/weddingConfig'
 import sahinPhoto from '../img/sahin.png'
+import AdminSidebar from './admin/AdminSidebar'
+import AdminHeader from './admin/AdminHeader'
+import ProKPICards from './admin/ProKPICards'
+import ProAnalyticsCharts from './admin/ProAnalyticsCharts'
+import ProProjectsTable from './admin/ProProjectsTable'
+import ProjectModal from './admin/ProjectModal'
+import ConfirmationModal from './admin/ConfirmationModal'
+import { SkeletonBox, KPICardsSkeleton, ChartSkeleton, TableSkeleton } from './admin/SkeletonLoader'
 
 // ── shadcn-style primitives ──────────────────────────────────────────────────
 
@@ -539,8 +547,24 @@ const NAV_ITEMS: NavItem[] = NAV_ENTRIES.flatMap(e =>
 // ── Section editors ──────────────────────────────────────────────────────────
 
 function OverviewPanel({ onNavigate }: { onNavigate: (s: SectionId) => void }) {
-  const { data, updateEngineer } = useSite()
-  const { engineer: E } = data
+  const { data, updateEngineer, updateProjects } = useSite()
+  const { engineer: E, projects } = data
+
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingProject, setEditingProject] = useState<Project | null>(null)
+
+  const handleSaveProject = (newOrUpdated: Project) => {
+    const existingIndex = projects.findIndex(p => p.id === newOrUpdated.id)
+    if (existingIndex >= 0) {
+      updateProjects(projects.map(p => p.id === newOrUpdated.id ? newOrUpdated : p))
+    } else {
+      updateProjects([newOrUpdated, ...projects])
+    }
+  }
+
+  const handleDeleteProject = (id: string) => {
+    updateProjects(projects.filter(p => p.id !== id))
+  }
 
   const sections = [
     { id: 'branding' as SectionId,    label: 'Logo & Visual Identity', ok: true },
@@ -556,55 +580,174 @@ function OverviewPanel({ onNavigate }: { onNavigate: (s: SectionId) => void }) {
   const score = Math.round(sections.filter(s => s.ok).length / sections.length * 100)
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* Hero card */}
-      <Card>
-        <CardHeader>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
-            <div>
-              <CardTitle>{E.name || 'Your Name'}</CardTitle>
-              <CardDescription>{E.title} · {E.location}</CardDescription>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Switch checked={E.available} onChange={v => updateEngineer({ available: v })} />
-              <span style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12, color: E.available ? '#16A34A' : '#64748B', fontWeight: 500 }}>
-                {E.available ? 'Available for work' : 'Not available'}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* ── Executive Operations Banner ────────────────────────────────────── */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+          borderRadius: 14,
+          padding: '22px 24px',
+          color: '#FFFFFF',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 16,
+          boxShadow: '0 8px 24px -4px rgba(15, 23, 42, 0.15)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <img
+            src={sahinPhoto}
+            alt={E.name || 'Sahin Alom'}
+            style={{
+              width: 52,
+              height: 52,
+              borderRadius: '50%',
+              objectFit: 'cover',
+              border: '2px solid #C47D0E',
+            }}
+          />
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <h1 style={{ fontFamily: 'Outfit,sans-serif', fontSize: 20, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>
+                Welcome, {E.name || 'Md. Sahin Alom'}
+              </h1>
+              <span
+                style={{
+                  fontSize: 10.5,
+                  fontWeight: 600,
+                  fontFamily: 'JetBrains Mono,monospace',
+                  padding: '2px 8px',
+                  borderRadius: 99,
+                  background: 'rgba(196, 125, 14, 0.25)',
+                  color: '#FDE68A',
+                  border: '1px solid rgba(196, 125, 14, 0.4)',
+                }}
+              >
+                PE · ELB CLASS A
               </span>
             </div>
+            <p style={{ fontFamily: 'Outfit,sans-serif', fontSize: 13, color: '#94A3B8', margin: '4px 0 0' }}>
+              Electrical Power Systems Engineering · Grid Substations · Renewable Energy
+            </p>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(100px,1fr))', gap: 1, background: '#F1F5F9', borderRadius: 6, overflow: 'hidden' }}>
-            {[{ l: 'Experience', v: E.yearsExp }, { l: 'Total Capacity', v: E.projectsMW }, { l: 'Projects', v: E.projectsCount }, { l: 'Clients', v: E.clients }].map(s => (
-              <div key={s.l} style={{ padding: '16px', background: '#FFFFFF' }}>
-                <div style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 700, fontSize: 22, color: '#C47D0E', lineHeight: 1, marginBottom: 4 }}>{s.v}</div>
-                <div style={{ fontFamily: 'Outfit,sans-serif', fontSize: 11, color: '#94A3B8' }}>{s.l}</div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Completeness */}
+        {/* Live Availability Toggle Button */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            background: 'rgba(255, 255, 255, 0.08)',
+            padding: '8px 16px',
+            borderRadius: 10,
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: E.available ? '#22C55E' : '#94A3B8',
+                display: 'inline-block',
+                boxShadow: E.available ? '0 0 10px #22C55E' : 'none',
+              }}
+            />
+            <span style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12.5, fontWeight: 600, color: E.available ? '#4ADE80' : '#94A3B8' }}>
+              {E.available ? 'Available for Commissioning' : 'Currently Fully Booked'}
+            </span>
+          </div>
+          <Switch checked={E.available} onChange={v => updateEngineer({ available: v })} />
+        </div>
+      </div>
+
+      {/* ── 1. Top Row: 4 Pro KPI Metric Cards ──────────────────────────────── */}
+      <ProKPICards
+        inquiriesCount={48}
+        unreadInquiriesCount={3}
+        capacityDelivered={E.projectsMW || '15+ MVA'}
+        projectsCount={projects.length || 42}
+        articlesCount={24}
+        onNavigate={tab => onNavigate(tab as SectionId)}
+      />
+
+      {/* ── 2. Visualizations: Main Trend Line & Secondary Breakdown ────────── */}
+      <ProAnalyticsCharts />
+
+      {/* ── 3. Main Data Section: Pro Projects Data Table ───────────────────── */}
+      <ProProjectsTable
+        projects={projects}
+        onEdit={(p) => {
+          setEditingProject(p)
+          setModalOpen(true)
+        }}
+        onDelete={handleDeleteProject}
+        onAdd={() => {
+          setEditingProject(null)
+          setModalOpen(true)
+        }}
+      />
+
+      {/* Project Modal for Add / Edit */}
+      <ProjectModal
+        isOpen={modalOpen}
+        initialData={editingProject}
+        onSave={handleSaveProject}
+        onClose={() => {
+          setModalOpen(false)
+          setEditingProject(null)
+        }}
+      />
+
+      {/* ── 4. Content Completeness & Quick Navigation ──────────────────────── */}
       <Card>
         <CardHeader>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <CardTitle>Content completeness</CardTitle>
-            <Badge variant={score === 100 ? 'success' : score >= 60 ? 'warning' : 'secondary'}>{score}%</Badge>
+            <div>
+              <CardTitle>System & Portfolio Health</CardTitle>
+              <CardDescription>Completeness breakdown across core engineering sections</CardDescription>
+            </div>
+            <Badge variant={score === 100 ? 'success' : score >= 60 ? 'warning' : 'secondary'}>{score}% Operational</Badge>
           </div>
         </CardHeader>
         <CardContent>
           <div style={{ height: 6, background: '#F1F5F9', borderRadius: 99, overflow: 'hidden', marginBottom: 16 }}>
             <div style={{ height: '100%', width: `${score}%`, background: score === 100 ? '#16A34A' : '#C47D0E', borderRadius: 99, transition: 'width 0.5s ease' }} />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 8 }}>
             {sections.map(s => (
-              <button key={s.id} onClick={() => onNavigate(s.id)}
-                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 6, border: '1px solid #F1F5F9', background: 'transparent', cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s' }}
-                onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#F8FAFC')}
-                onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}>
+              <button
+                key={s.id}
+                onClick={() => onNavigate(s.id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '9px 12px',
+                  borderRadius: 8,
+                  border: '1px solid #F1F5F9',
+                  background: '#FFFFFF',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.15s',
+                }}
+                onMouseEnter={e => {
+                  const el = e.currentTarget as HTMLElement
+                  el.style.background = '#F8FAFC'
+                  el.style.borderColor = '#CBD5E1'
+                }}
+                onMouseLeave={e => {
+                  const el = e.currentTarget as HTMLElement
+                  el.style.background = '#FFFFFF'
+                  el.style.borderColor = '#F1F5F9'
+                }}
+              >
                 <div style={{ width: 7, height: 7, borderRadius: '50%', background: s.ok ? '#16A34A' : '#E2E8F0', flexShrink: 0 }} />
-                <span style={{ flex: 1, fontFamily: 'Outfit,sans-serif', fontSize: 13, color: '#374151' }}>{s.label}</span>
+                <span style={{ flex: 1, fontFamily: 'Outfit,sans-serif', fontSize: 13, color: '#374151', fontWeight: 500 }}>{s.label}</span>
                 <ChevronRight size={12} style={{ color: '#CBD5E1' }} />
               </button>
             ))}
@@ -1792,44 +1935,47 @@ function ExpertisePanel() {
 
 function ProjectsPanel() {
   const { data: { projects }, updateProjects } = useSite()
-  const [exp, setExp] = useState<number | null>(null)
-  const upd  = (i: number, p: Partial<Project>) => updateProjects(projects.map((pr, j) => j === i ? { ...pr, ...p } : pr))
-  const updList = (i: number, key: 'scope' | 'deliverables' | 'tools', raw: string) => upd(i, { [key]: raw.split('\n').map(s => s.trim()).filter(Boolean) })
-  const move = (i: number, d: 'up' | 'down') => { const n = [...projects]; [n[i], n[i + (d === 'up' ? -1 : 1)]] = [n[i + (d === 'up' ? -1 : 1)], n[i]]; updateProjects(n) }
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingProject, setEditingProject] = useState<Project | null>(null)
+
+  const handleSaveProject = (newOrUpdated: Project) => {
+    const existingIndex = projects.findIndex(p => p.id === newOrUpdated.id)
+    if (existingIndex >= 0) {
+      updateProjects(projects.map(p => p.id === newOrUpdated.id ? newOrUpdated : p))
+    } else {
+      updateProjects([newOrUpdated, ...projects])
+    }
+  }
+
+  const handleDeleteProject = (id: string) => {
+    updateProjects(projects.filter(p => p.id !== id))
+  }
 
   return (
-    <Section title="Projects" description={`${projects.length} featured projects`}>
-      {projects.map((p, i) => (
-        <ItemRow key={p.id} label={p.title || <em style={{ color: '#94A3B8' }}>Untitled project</em>} meta={p.capacity} expanded={exp === i} onToggle={() => setExp(exp === i ? null : i)} i={i} total={projects.length} onDelete={() => { updateProjects(projects.filter((_, j) => j !== i)); setExp(null) }} onMove={d => move(i, d)}>
-          <Grid2>
-            <Input label="Title"           value={p.title}    onChange={v => upd(i, { title: v })} />
-            <Input label="Category"        value={p.category} onChange={v => upd(i, { category: v })} placeholder="Renewable Integration" />
-            <Input label="Client"          value={p.client}   onChange={v => upd(i, { client: v })} />
-            <Input label="Location"        value={p.location} onChange={v => upd(i, { location: v })} />
-            <Input label="Capacity"        value={p.capacity} onChange={v => upd(i, { capacity: v })} placeholder="150 MW AC" />
-            <Input label="Year"            value={p.year}     onChange={v => upd(i, { year: v })} />
-          </Grid2>
-          <Textarea label="Summary" value={p.summary} onChange={v => upd(i, { summary: v })} rows={3} />
-          <ImagePicker value={p.img} onChange={v => upd(i, { img: v })} />
-          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-            <div style={{ flex: '0 0 auto' }}>
-              <label style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12, fontWeight: 500, color: '#374151', display: 'block', marginBottom: 6 }}>Image bg color</label>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <input type="color" value={p.imgColor || '#D4CFC5'} onChange={e => upd(i, { imgColor: e.target.value })} style={{ width: 36, height: 32, padding: 2, border: '1px solid #E2E8F0', borderRadius: 6, cursor: 'pointer' }} />
-                <input value={p.imgColor || ''} onChange={e => upd(i, { imgColor: e.target.value })} placeholder="#D4CFC5" style={{ width: 90, height: 32, padding: '0 8px', border: '1px solid #E2E8F0', borderRadius: 6, fontFamily: 'monospace', fontSize: 12, outline: 'none', color: '#374151' }} />
-              </div>
-            </div>
-          </div>
-          <Grid2>
-            <Textarea label="Scope (one per line)"        value={p.scope.join('\n')}        onChange={v => updList(i, 'scope', v)}        rows={4} />
-            <Textarea label="Tools (one per line)"        value={p.tools.join('\n')}        onChange={v => updList(i, 'tools', v)}        rows={4} />
-          </Grid2>
-          <Textarea label="Deliverables (one per line)"   value={p.deliverables.join('\n')} onChange={v => updList(i, 'deliverables', v)} rows={3} />
-          <Textarea label="Outcome / Key Result"          value={p.outcome}                 onChange={v => upd(i, { outcome: v })}        rows={2} />
-        </ItemRow>
-      ))}
-      <AddButton label="Add project" onClick={() => { const n = projects.length + 1; updateProjects([...projects, { id: `proj-${Date.now()}`, num: String(n).padStart(2, '0'), title: '', client: '', location: '', capacity: '', year: String(new Date().getFullYear()), category: '', img: '', imgColor: '#D4CFC5', summary: '', scope: [], deliverables: [], outcome: '', tools: [] }]); setExp(projects.length) }} />
-    </Section>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <ProProjectsTable
+        projects={projects}
+        onEdit={(p) => {
+          setEditingProject(p)
+          setModalOpen(true)
+        }}
+        onDelete={handleDeleteProject}
+        onAdd={() => {
+          setEditingProject(null)
+          setModalOpen(true)
+        }}
+      />
+
+      <ProjectModal
+        isOpen={modalOpen}
+        initialData={editingProject}
+        onSave={handleSaveProject}
+        onClose={() => {
+          setModalOpen(false)
+          setEditingProject(null)
+        }}
+      />
+    </div>
   )
 }
 
@@ -3124,6 +3270,24 @@ export default function Dashboard() {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
   const [saveToast, setSaveToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [recentMsgs, setRecentMsgs] = useState<any[]>(() => {
+    try {
+      const cached = localStorage.getItem('msa_contact_msgs_cache')
+      if (cached) return JSON.parse(cached)
+    } catch {}
+    return []
+  })
+
+  useEffect(() => {
+    supabase
+      .from('contact_messages')
+      .select('id, name, subject, created_at, read')
+      .order('created_at', { ascending: false })
+      .limit(6)
+      .then((res: any) => {
+        if (res?.data) setRecentMsgs(res.data)
+      })
+  }, [])
 
   const mainScrollRef = useRef<HTMLElement>(null)
   const backupFileInputRef = useRef<HTMLInputElement>(null)
@@ -3345,231 +3509,25 @@ export default function Dashboard() {
         items={commandItems}
       />
 
-      {/* ── Desktop Sidebar (Hidden on <= 768px via CSS) ── */}
-      <aside className="admin-desktop-sidebar" style={{
-        width: collapsed ? 60 : 236,
-        flexShrink: 0, background: '#FFFFFF',
-        borderRight: '1px solid #E2E8F0',
-        display: 'flex', flexDirection: 'column',
-        transition: 'width 0.25s cubic-bezier(0.16,1,0.3,1)',
-        overflow: 'hidden',
-        zIndex: 20,
-      }}>
-        {/* Logo / Brand header */}
-        <div style={{
-          height: 56, display: 'flex', alignItems: 'center',
-          padding: collapsed ? '0 15px' : '0 16px',
-          borderBottom: '1px solid #F1F5F9', gap: 10, flexShrink: 0,
-        }}>
-          <div style={{
-            width: 30, height: 30, background: 'linear-gradient(135deg, #C47D0E 0%, #B45309 100%)',
-            borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            boxShadow: '0 2px 8px rgba(196,125,14,0.28)',
-          }}>
-            <Pencil size={14} strokeWidth={2.2} style={{ color: '#FFFFFF' }} />
-          </div>
-          {!collapsed && (
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontWeight: 600, fontSize: 13.5, color: '#0F172A', lineHeight: 1.2 }}>Site Editor</div>
-              <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1, display: 'flex', alignItems: 'center', gap: 5 }}>
-                <span>{data.engineer.initials}</span>
-                <span style={{ fontSize: 9, background: '#FEF3C7', color: '#92400E', padding: '1px 5px', borderRadius: 3, fontWeight: 600 }}>PRO</span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Navigation list */}
-        <nav style={{ flex: 1, padding: '8px 0', overflowY: 'auto', overflowX: 'hidden' }}>
-          {NAV_ENTRIES.map(entry => {
-            if ((entry as any).type === 'group') {
-              const group = entry as { type: 'group'; label: string; id: string; items: NavItem[] }
-              const isGroupActive = group.items.some(it => it.id === section)
-              return (
-                <div key={group.id} style={{ marginBottom: 2 }}>
-                  {/* Group header */}
-                  <button
-                    onClick={() => setSettingsGroupOpen(o => !o)}
-                    title={collapsed ? group.label : undefined}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 10,
-                      width: '100%', padding: collapsed ? '9px 0' : '9px 12px',
-                      justifyContent: collapsed ? 'center' : 'flex-start',
-                      background: 'transparent', border: 'none', borderRadius: 0,
-                      color: isGroupActive ? '#92400E' : '#475569',
-                      cursor: 'pointer', fontSize: 13, fontWeight: isGroupActive ? 600 : 500,
-                      fontFamily: 'Outfit,sans-serif', textAlign: 'left',
-                      transition: 'all 0.15s', whiteSpace: 'nowrap',
-                      borderLeft: '3px solid transparent',
-                    }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F8FAFC' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-                  >
-                    <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center', color: isGroupActive ? '#C47D0E' : '#64748B' }}>
-                      <Settings2 size={15} />
-                    </span>
-                    {!collapsed && (
-                      <>
-                        <span style={{ flex: 1, textAlign: 'left', lineHeight: 1.2 }}>{group.label}</span>
-                        <ChevronDown
-                          size={13}
-                          style={{
-                            color: '#94A3B8',
-                            transform: settingsGroupOpen ? 'rotate(180deg)' : 'none',
-                            transition: 'transform 0.2s cubic-bezier(0.16,1,0.3,1)',
-                            flexShrink: 0,
-                          }}
-                        />
-                      </>
-                    )}
-                  </button>
-
-                  {/* Sub-items */}
-                  {settingsGroupOpen && !collapsed && (
-                    <div style={{ padding: '2px 0 4px', position: 'relative' }}>
-                      <div style={{ position: 'absolute', left: 19, top: 2, bottom: 6, width: 1, background: '#E2E8F0' }} />
-                      {group.items.map(item => {
-                        const isActive = section === item.id
-                        return (
-                          <button
-                            key={item.id}
-                            onClick={() => selectSection(item.id)}
-                            style={{
-                              display: 'flex', alignItems: 'center', gap: 9,
-                              width: 'calc(100% - 22px)', margin: '1px 11px',
-                              padding: '7px 9px 7px 16px',
-                              background: isActive ? '#FEF3C7' : 'transparent',
-                              border: 'none', borderRadius: 6,
-                              color: isActive ? '#92400E' : '#64748B',
-                              cursor: 'pointer', fontSize: 12, fontWeight: isActive ? 600 : 400,
-                              fontFamily: 'Outfit,sans-serif', textAlign: 'left',
-                              transition: 'all 0.15s', whiteSpace: 'nowrap',
-                            }}
-                            onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = '#F8FAFC' }}
-                            onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-                          >
-                            <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center', color: isActive ? '#C47D0E' : '#94A3B8' }}>
-                              {item.icon}
-                            </span>
-                            <span style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>
-                            {isActive && (
-                              <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#C47D0E', flexShrink: 0 }} />
-                            )}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  )}
-
-                  {/* Collapsed group: show individual item icons */}
-                  {collapsed && group.items.map(item => {
-                    const isActive = section === item.id
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => selectSection(item.id)}
-                        title={item.label}
-                        style={{
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          width: '100%', padding: '8px 0',
-                          background: isActive ? '#FEF3C7' : 'transparent',
-                          border: 'none', color: isActive ? '#92400E' : '#64748B',
-                          cursor: 'pointer', transition: 'all 0.15s',
-                          borderLeft: isActive ? '3px solid #C47D0E' : '3px solid transparent',
-                        }}
-                        onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = '#F8FAFC' }}
-                        onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-                      >
-                        <span style={{ flexShrink: 0 }}>{item.icon}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              )
-            }
-
-            const item = entry as NavItem
-            const isActive = section === item.id
-            const countBadge = getItemCountBadge(item.id)
-
-            return (
-              <button
-                key={item.id}
-                onClick={() => selectSection(item.id)}
-                title={collapsed ? item.label : undefined}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  width: '100%', padding: collapsed ? '9px 0' : '9px 12px',
-                  justifyContent: collapsed ? 'center' : 'flex-start',
-                  background: isActive ? '#FEF3C7' : 'transparent',
-                  border: 'none', borderRadius: 0,
-                  color: isActive ? '#92400E' : '#64748B',
-                  cursor: 'pointer', fontSize: 13, fontWeight: isActive ? 600 : 450,
-                  fontFamily: 'Outfit,sans-serif', textAlign: 'left',
-                  transition: 'all 0.15s', whiteSpace: 'nowrap',
-                  borderLeft: isActive ? '3px solid #C47D0E' : '3px solid transparent',
-                }}
-                onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = '#F8FAFC' }}
-                onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-              >
-                <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center', color: isActive ? '#C47D0E' : '#64748B' }}>
-                  {item.icon}
-                </span>
-                {!collapsed && (
-                  <>
-                    <span style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>
-                    {countBadge && (
-                      <span style={{
-                        fontFamily: 'JetBrains Mono,monospace', fontSize: 10,
-                        padding: '1px 6px', borderRadius: 4,
-                        background: isActive ? '#FDE68A' : '#F1F5F9',
-                        color: isActive ? '#78350F' : '#94A3B8',
-                        fontWeight: 600,
-                      }}>
-                        {countBadge}
-                      </span>
-                    )}
-                  </>
-                )}
-              </button>
-            )
-          })}
-        </nav>
-
-        {/* Bottom actions & user telemetry */}
-        <div style={{
-          padding: collapsed ? '8px 0' : 12,
-          borderTop: '1px solid #F1F5F9',
-          flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6,
-        }}>
-          {!collapsed && (
-            <>
-              <Button onClick={onViewSite} style={{ width: '100%', justifyContent: 'center' } as any}>
-                <ExternalLink size={13} /> Preview public site
-              </Button>
-              <Button variant="ghost" onClick={() => setShowReset(true)} style={{ width: '100%', justifyContent: 'center', color: '#EF4444', fontSize: 12 } as any}>
-                <RotateCcw size={12} /> Reset factory defaults
-              </Button>
-            </>
-          )}
-          <button
-            title="Sign out"
-            onClick={async () => { await supabase.auth.signOut(); navigate('/admin/login') }}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8, justifyContent: collapsed ? 'center' : 'flex-start',
-              width: '100%', padding: collapsed ? '9px 0' : '8px 10px',
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: '#94A3B8', fontSize: 12, fontFamily: 'Outfit,sans-serif',
-              borderRadius: 4, transition: 'all 0.15s',
-            }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#FEF2F2'; (e.currentTarget as HTMLElement).style.color = '#EF4444' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#94A3B8' }}
-          >
-            <LogOut size={14} />
-            {!collapsed && 'Sign out'}
-          </button>
-        </div>
-      </aside>
+      {/* ── Desktop Pro Sidebar ── */}
+      <AdminSidebar
+        currentSection={section}
+        onSelectSection={selectSection}
+        collapsed={collapsed}
+        onToggleCollapse={() => setCollapsed(c => !c)}
+        itemCounts={{
+          projects: data.projects?.length,
+          articles: 24,
+          messages: recentMsgs.filter(m => !m.read).length || undefined,
+          credentials: data.credentials?.length,
+          expertise: data.expertise?.length,
+          services: data.services?.length,
+          education: data.education?.length,
+          shorts: data.shorts?.length,
+        }}
+        onExportBackup={handleExportBackup}
+        onLogout={async () => { await supabase.auth.signOut(); navigate('/admin/login') }}
+      />
 
       {/* ── Mobile Slide-Over Drawer Overlay ── */}
       {mobileDrawerOpen && (
@@ -3696,192 +3654,24 @@ export default function Dashboard() {
       {/* ── Main View Area ── */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
 
-        {/* Pro Developer Telemetry Header */}
-        <header style={{
-          height: 56, borderBottom: '1px solid #E2E8F0', background: '#FFFFFF',
-          display: 'flex', alignItems: 'center', padding: '0 clamp(12px, 2.5vw, 20px)',
-          gap: 10, flexShrink: 0, zIndex: 10,
-        }}>
-          {/* Desktop sidebar collapse toggle */}
-          <button
-            onClick={() => setCollapsed(c => !c)}
-            className="admin-collapse-toggle"
-            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: '#94A3B8', display: 'flex', padding: 5, borderRadius: 6, transition: 'all 0.15s',
-            }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F1F5F9'; (e.currentTarget as HTMLElement).style.color = '#374151' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#94A3B8' }}
-          >
-            {collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
-          </button>
-
-          {/* Mobile hamburger menu trigger */}
-          <button
-            onClick={() => setMobileDrawerOpen(true)}
-            className="admin-mobile-menu-btn"
-            aria-label="Open menu"
-            style={{
-              background: '#FAF8F5', border: '1px solid #E2E8F0', cursor: 'pointer',
-              color: '#0F172A', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 36, height: 36, borderRadius: 6, flexShrink: 0,
-            }}
-          >
-            <Menu size={18} />
-          </button>
-
-          {/* Dynamic Breadcrumbs */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
-            <span style={{ color: '#94A3B8', fontSize: 12, fontWeight: 500 }} className="admin-breadcrumb-root">Admin</span>
-            <span style={{ color: '#CBD5E1', fontSize: 12 }} className="admin-breadcrumb-sep">/</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-              <span style={{ color: '#C47D0E', display: 'flex', flexShrink: 0 }}>{active.icon}</span>
-              <h1 style={{
-                fontWeight: 600, fontSize: 13.5, color: '#0F172A', margin: 0,
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              }}>
-                {active.label}
-              </h1>
-              {getItemCountBadge(active.id) && (
-                <span style={{
-                  fontFamily: 'JetBrains Mono,monospace', fontSize: 11,
-                  padding: '1px 6px', borderRadius: 4, background: '#FEF3C7',
-                  color: '#92400E', fontWeight: 600,
-                }}>
-                  {getItemCountBadge(active.id)}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Spotlight Search & Command Trigger Pill */}
-          <div style={{ flex: 1, display: 'flex', justifyContent: 'center', minWidth: 0, padding: '0 8px' }}>
-            <button
-              type="button"
-              onClick={() => setCommandPaletteOpen(true)}
-              className="admin-search-trigger"
-              title="Open Command Palette (Ctrl+K or Cmd+K)"
-              style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                height: 32, padding: '0 12px',
-                background: '#F8FAFC', border: '1px solid #E2E8F0',
-                borderRadius: 7, cursor: 'pointer',
-                color: '#64748B', fontFamily: 'Outfit,sans-serif', fontSize: 12,
-                transition: 'all 0.18s ease',
-                width: '100%', maxWidth: 320,
-              }}
-              onMouseEnter={e => {
-                const el = e.currentTarget as HTMLElement
-                el.style.borderColor = '#CBD5E1'
-                el.style.background = '#FFFFFF'
-                el.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)'
-              }}
-              onMouseLeave={e => {
-                const el = e.currentTarget as HTMLElement
-                el.style.borderColor = '#E2E8F0'
-                el.style.background = '#F8FAFC'
-                el.style.boxShadow = 'none'
-              }}
-            >
-              <Search size={13} style={{ color: '#94A3B8' }} />
-              <span style={{ flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                Search or jump to…
-              </span>
-              <kbd style={{
-                fontFamily: 'JetBrains Mono,monospace', fontSize: 10,
-                background: '#FFFFFF', border: '1px solid #E2E8F0',
-                borderRadius: 4, padding: '1px 5px', color: '#64748B',
-              }}>
-                ⌘K
-              </kbd>
-            </button>
-          </div>
-
-          {/* Status Indicator (Saved / Saving / Unsaved) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-            {isSaving ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#C47D0E' }}>
-                <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />
-                <span className="admin-status-text" style={{ fontSize: 11.5, color: '#C47D0E', fontWeight: 500 }}>
-                  Saving…
-                </span>
-              </div>
-            ) : saved ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#16A34A' }}>
-                <Check size={13} strokeWidth={2.5} />
-                <span className="admin-status-text" style={{ fontSize: 11.5, color: '#16A34A', fontWeight: 500 }}>
-                  Saved{lastSaved ? ` (${lastSaved})` : ''}
-                </span>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#D97706' }}>
-                <span style={{
-                  width: 7, height: 7, borderRadius: '50%', background: '#F59E0B',
-                  display: 'inline-block', animation: 'pulseDot 1.8s infinite',
-                }} />
-                <span className="admin-status-text" style={{ fontSize: 11.5, color: '#D97706', fontWeight: 500 }}>
-                  Unsaved changes
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Dedicated High-Contrast Save Button */}
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={isSaving || saved}
-            title={saved ? 'All changes saved (Ctrl+S)' : 'Save changes to database (Ctrl+S)'}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-              height: 32,
-              padding: '0 13px',
-              borderRadius: 6,
-              fontFamily: 'Outfit,sans-serif',
-              fontWeight: 600,
-              fontSize: 12,
-              cursor: isSaving || saved ? 'default' : 'pointer',
-              transition: 'all 0.18s ease',
-              border: saved ? '1px solid #E2E8F0' : 'none',
-              background: saved ? '#F8FAFC' : '#C47D0E',
-              color: saved ? '#94A3B8' : '#FFFFFF',
-              boxShadow: saved ? 'none' : '0 2px 8px rgba(196, 125, 14, 0.28)',
-              opacity: isSaving ? 0.75 : 1,
-              flexShrink: 0,
-            }}
-            onMouseEnter={e => {
-              if (!saved && !isSaving) {
-                (e.currentTarget as HTMLElement).style.background = '#A86C0C'
-              }
-            }}
-            onMouseLeave={e => {
-              if (!saved && !isSaving) {
-                (e.currentTarget as HTMLElement).style.background = '#C47D0E'
-              }
-            }}
-          >
-            {isSaving ? (
-              <>
-                <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />
-                <span className="btn-save-text">Saving…</span>
-              </>
-            ) : (
-              <>
-                <Save size={13} />
-                <span className="btn-save-text">{saved ? 'Saved' : 'Save Changes'}</span>
-              </>
-            )}
-          </button>
-
-          {/* Live Preview Button */}
-          <Button onClick={onViewSite} size="sm" variant="outline">
-            <ExternalLink size={12} /> <span className="btn-preview-text">Preview</span>
-          </Button>
-        </header>
+        {/* Pro Executive Header */}
+        <AdminHeader
+          sidebarCollapsed={collapsed}
+          onToggleSidebar={() => setCollapsed(c => !c)}
+          onOpenMobileDrawer={() => setMobileDrawerOpen(true)}
+          onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+          onViewSite={onViewSite}
+          onSave={handleSave}
+          isSaving={isSaving}
+          saved={saved}
+          lastSaved={lastSaved}
+          currentSectionTitle={active.label}
+          unreadMessagesCount={recentMsgs.filter(m => !m.read).length}
+          recentMessages={recentMsgs}
+          onNavigateToMessages={() => selectSection('messages')}
+          onNavigateToProfile={() => selectSection('profile')}
+          onLogout={async () => { await supabase.auth.signOut(); navigate('/admin/login') }}
+        />
 
         {/* Content area with fluid Framer Motion tab transitions */}
         <main
@@ -3889,7 +3679,12 @@ export default function Dashboard() {
           className="admin-content-main"
           style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
         >
-          <div style={{ maxWidth: 840, margin: '0 auto' }}>
+          <div style={{
+            width: '100%',
+            maxWidth: (section === 'overview' || section === 'projects' || section === 'messages') ? '100%' : 940,
+            margin: (section === 'overview' || section === 'projects' || section === 'messages') ? 0 : '0 auto',
+            transition: 'max-width 0.2s ease',
+          }}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={section}
@@ -4083,12 +3878,48 @@ export default function Dashboard() {
         @keyframes commandPalettePop { from { opacity: 0; transform: scale(0.96) translateY(-8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
         @keyframes pulseDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(1.3); } }
 
+        @keyframes adminSkeletonWave { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        @keyframes adminFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes adminModalPop { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        @keyframes adminSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes adminPulseDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(1.3); } }
+
         /* Desktop defaults */
         .admin-mobile-menu-btn { display: none !important; }
         .admin-mobile-drawer { display: none; }
         .admin-mobile-backdrop { display: none; }
         .admin-bottom-bar { display: none !important; }
-        .admin-content-main { padding: 24px; }
+        .admin-content-main { padding: 22px 28px; width: 100%; box-sizing: border-box; }
+
+        /* Dynamic Pro Grid Layouts - eliminates wasted side margins */
+        .admin-kpi-grid {
+          display: grid !important;
+          grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+          gap: 16px !important;
+          width: 100% !important;
+        }
+
+        .admin-charts-grid {
+          display: grid !important;
+          grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr) !important;
+          gap: 16px !important;
+          width: 100% !important;
+        }
+
+        @media (max-width: 1280px) {
+          .admin-kpi-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+          .admin-charts-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .admin-kpi-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
 
         /* Mobile app styling (<= 768px) */
         @media (max-width: 768px) {

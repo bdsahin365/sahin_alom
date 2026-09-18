@@ -603,7 +603,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
               deliverables: p.deliverables,
               outcome: p.outcome,
               tools: p.tools,
-              featured: p.featured ?? true,
+              featured: (p as any).featured ?? true,
               display_order: i + 1,
               updated_at: now
             })))
