@@ -9,7 +9,6 @@ import sahinPhoto from '../../img/sahin.png'
 interface AdminHeaderProps {
   sidebarCollapsed: boolean
   onToggleSidebar: () => void
-  onOpenMobileDrawer: () => void
   onOpenCommandPalette: () => void
   onViewSite: () => void
   onSave: () => void
@@ -33,7 +32,6 @@ interface AdminHeaderProps {
 export default function AdminHeader({
   sidebarCollapsed,
   onToggleSidebar,
-  onOpenMobileDrawer,
   onOpenCommandPalette,
   onViewSite,
   onSave,
@@ -73,39 +71,19 @@ export default function AdminHeader({
         height: 56,
         background: '#FFFFFF',
         borderBottom: '1px solid #E2E8F0',
-        padding: '0 clamp(12px, 2.5vw, 24px)',
+        padding: '0 clamp(10px, 2vw, 24px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: 12,
+        gap: 10,
         position: 'sticky',
         top: 0,
         zIndex: 900,
       }}
     >
-      {/* Left side: Sidebar toggles & Breadcrumbs */}
+      {/* Left side: Sidebar collapse toggle & Breadcrumbs */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-        {/* Mobile menu button */}
-        <button
-          type="button"
-          onClick={onOpenMobileDrawer}
-          className="admin-mobile-menu-btn"
-          aria-label="Open mobile navigation"
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: 6,
-            borderRadius: 6,
-            color: '#475569',
-            display: 'flex',
-            alignItems: 'center',
-          }}
-        >
-          <Menu size={19} />
-        </button>
-
-        {/* Desktop collapse toggle */}
+        {/* Single unified sidebar toggle */}
         <button
           type="button"
           onClick={onToggleSidebar}
@@ -115,12 +93,13 @@ export default function AdminHeader({
             background: '#F8FAFC',
             border: '1px solid #E2E8F0',
             cursor: 'pointer',
-            padding: 6,
+            padding: 7,
             borderRadius: 6,
             color: '#64748B',
             display: 'flex',
             alignItems: 'center',
             transition: 'all 0.15s',
+            flexShrink: 0,
           }}
           onMouseEnter={e => {
             const el = e.currentTarget as HTMLElement

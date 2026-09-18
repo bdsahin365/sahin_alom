@@ -110,31 +110,20 @@ export default function AdminSidebar({
         flexShrink: 0,
       }}
     >
-      {/* ── Brand Header ────────────────────────────────────────────────────── */}
+      {/* ── Brand Header (Emblem Icon Only) ─────────────────────────────── */}
       <div
         style={{
           height: 56,
-          padding: collapsed ? '0 12px' : '0 18px',
+          padding: '0 12px',
           borderBottom: '1px solid #E2E8F0',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: collapsed ? 'center' : 'flex-start',
-          gap: 10,
+          justifyContent: 'center',
           overflow: 'hidden',
           flexShrink: 0,
         }}
       >
         <HeaderLogo compact={true} showSubtitle={false} />
-        {!collapsed && (
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontFamily: 'Outfit,sans-serif', fontSize: 13.5, fontWeight: 700, color: '#0F172A', lineHeight: 1.2 }}>
-              Md. Sahin Alom
-            </div>
-            <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, color: '#C47D0E', fontWeight: 600, letterSpacing: '0.08em' }}>
-              OPERATIONS CONSOLE
-            </div>
-          </div>
-        )}
       </div>
 
       {/* ── Navigation Items Stream ─────────────────────────────────────────── */}

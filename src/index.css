@@ -385,3 +385,36 @@ a { color: inherit; text-decoration: none; }
   -webkit-backdrop-filter: blur(12px);
 }
 
+/* ══ Admin Dashboard Responsive Styles ═══════════════════════════════════════ */
+.admin-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .admin-desktop-sidebar {
+    width: 58px !important;
+  }
+  .admin-search-trigger {
+    max-width: 140px !important;
+  }
+  .admin-search-trigger kbd {
+    display: none !important;
+  }
+  .btn-save-text,
+  .btn-preview-text,
+  .admin-status-text,
+  .admin-breadcrumb-root,
+  .admin-breadcrumb-sep {
+    display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-search-trigger {
+    display: none !important;
+  }
+}
+
+

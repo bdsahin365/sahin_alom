@@ -81,9 +81,11 @@ export default function Dashboard() {
   const { data, saved, isSaving, lastSaved, saveSiteData, resetToDefaults, updateEngineer, importSiteData } = useSite()
 
   const [section, setSectionState] = useState<SectionId>(getInitialSection)
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') return window.innerWidth < 768
+    return false
+  })
   const [showReset, setShowReset] = useState(false)
-  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
   const [saveToast, setSaveToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [recentMsgs, setRecentMsgs] = useState<any[]>([])
@@ -95,11 +97,11 @@ export default function Dashboard() {
     supabase.from('contact_messages').select('id, name, subject, created_at, read')
       .order('created_at', { ascending: false }).limit(6)
       .then((res: any) => { if (res?.data) setRecentMsgs(res.data) })
+      .catch(() => {})
   }, [])
 
   const selectSection = useCallback((s: SectionId) => {
     setSectionState(s)
-    setMobileDrawerOpen(false)
     try { localStorage.setItem(TAB_STORAGE_KEY, s) } catch {}
     setSearchParams(prev => { const n = new URLSearchParams(prev); n.set('tab', s); return n }, { replace: true })
     mainScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
@@ -115,7 +117,16 @@ export default function Dashboard() {
   const handleSave = async () => {
     if (isSaving) return
     const res = await saveSiteData()
-    setSaveToast(res.success ? { type: 'success', message: 'All changes saved to database!' } : { type: 'error', message: res.error || 'Failed to save.' })
+    if (res.success) {
+      setSaveToast({
+        type: 'success',
+        message: (res as any).offline
+          ? 'Saved to local browser cache (Supabase offline)'
+          : 'All changes saved to database!',
+      })
+    } else {
+      setSaveToast({ type: 'error', message: res.error || 'Failed to save.' })
+    }
     setTimeout(() => setSaveToast(null), 3500)
   }
 
@@ -189,7 +200,6 @@ export default function Dashboard() {
         <AdminHeader
           sidebarCollapsed={collapsed}
           onToggleSidebar={() => setCollapsed(c => !c)}
-          onOpenMobileDrawer={() => setMobileDrawerOpen(true)}
           onOpenCommandPalette={() => setCommandPaletteOpen(true)}
           onViewSite={() => window.open('/', '_blank')}
           onSave={handleSave}
@@ -204,7 +214,7 @@ export default function Dashboard() {
           onLogout={async () => { await supabase.auth.signOut(); navigate('/admin/login') }}
         />
 
-        <main ref={mainScrollRef} className="admin-content-main" style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '24px clamp(16px, 3vw, 32px)' }}>
+        <main ref={mainScrollRef} className="admin-content-main" style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: 'clamp(14px, 2.5vw, 24px)' }}>
           <div style={{ width: '100%', maxWidth: ['overview', 'projects', 'messages'].includes(section) ? '100%' : 940, margin: '0 auto' }}>
             <AnimatePresence mode="wait">
               <motion.div key={section} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.16 }}>
@@ -214,14 +224,6 @@ export default function Dashboard() {
           </div>
         </main>
       </div>
-
-      <nav className="admin-bottom-bar">
-        {(['overview', 'articles', 'projects', 'messages'] as SectionId[]).map(tab => (
-          <button key={tab} type="button" onClick={() => selectSection(tab)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, height: '100%', background: 'none', border: 'none', cursor: 'pointer', color: section === tab ? '#C47D0E' : '#64748B' }}>
-            <span style={{ fontSize: 10, fontWeight: section === tab ? 600 : 500 }}>{SECTION_LABELS[tab]}</span>
-          </button>
-        ))}
-      </nav>
 
       <ConfirmationModal
         isOpen={showReset}
