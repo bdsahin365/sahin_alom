@@ -164,7 +164,9 @@ function RevealLayer({
 // 1. HERO SECTION (Clean, Premium, Two Buttons Only, No Pill)
 // ════════════════════════════════════════════════════════════════════════════
 function Hero() {
-  const { data: { engineer: E } } = useSite()
+  const { data } = useSite()
+  const E = data.engineer
+  const H = data.settings?.hero
   const [in_, setIn]           = useState(false)
   const [cursorPos, setCursorPos] = useState({ x: -999, y: -999 })
   const [isTouch, setIsTouch]  = useState(false)
