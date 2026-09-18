@@ -11,7 +11,11 @@ import {
   ImagePicker,
 } from '../components/AdminPrimitives'
 
-export default function BrandingSection() {
+interface BrandingSectionProps {
+  onNavigate?: (tab: any) => void
+}
+
+export default function BrandingSection({ onNavigate }: BrandingSectionProps = {}) {
   const { data: { settings, engineer: E }, updateSettings } = useSite()
   const B = settings.branding || {}
 
@@ -79,6 +83,57 @@ export default function BrandingSection() {
 
   return (
     <div>
+      {/* Quick link to Hero Customizer */}
+      {onNavigate && (
+        <div
+          style={{
+            padding: '12px 18px',
+            background: '#0F172A',
+            color: '#FFFFFF',
+            borderRadius: 8,
+            marginBottom: 20,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 12,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ color: '#F59E0B', display: 'flex' }}>✦</span>
+            <div>
+              <span style={{ fontWeight: 600, fontSize: 13, fontFamily: 'Outfit,sans-serif' }}>
+                Looking to customize the Homepage Hero?
+              </span>
+              <span style={{ fontSize: 12, color: '#94A3B8', marginLeft: 8, fontFamily: 'Outfit,sans-serif' }}>
+                Cinematic headlines, spotlight images, and CTAs have a dedicated editor.
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => onNavigate('hero')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 14px',
+              borderRadius: 6,
+              background: '#C47D0E',
+              color: '#FFFFFF',
+              border: 'none',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontFamily: 'Outfit,sans-serif',
+            }}
+          >
+            Open Hero & Visuals Editor →
+          </button>
+        </div>
+      )}
+
       {/* Live Header Preview */}
       <Section title="Live Header Brand Preview" description="Real-time preview of how your brand title, badge, subtitle, and logo appear on the header.">
         <div style={{ padding: '18px 24px', background: '#FAF8F5', border: '1px solid #EAE6DD', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>

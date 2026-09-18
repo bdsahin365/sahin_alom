@@ -9,6 +9,7 @@ import sahinPhoto from '../../img/sahin.png'
 
 export type SectionId =
   | 'overview'
+  | 'hero'
   | 'branding'
   | 'shorts'
   | 'articles'
@@ -75,7 +76,8 @@ export default function AdminSidebar({
     {
       category: 'Identity & Engineering',
       items: [
-        { id: 'branding', label: 'Logo & Branding', icon: <Sparkles size={16} /> },
+        { id: 'hero', label: 'Hero & Visuals', icon: <Sparkles size={16} /> },
+        { id: 'branding', label: 'Logo & Colors', icon: <Zap size={16} /> },
         { id: 'profile', label: 'Profile & Bio', icon: <User size={16} /> },
         { id: 'credentials', label: 'Credentials & Licenses', icon: <Award size={16} />, badge: itemCounts.credentials },
         { id: 'expertise', label: 'Core Expertise', icon: <Zap size={16} />, badge: itemCounts.expertise },

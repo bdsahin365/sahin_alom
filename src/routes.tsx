@@ -11,6 +11,8 @@ import ToolPage from './pages/tools/ToolPage'
 import ArticleEditor from './pages/blog/ArticleEditor'
 import BlogIndex from './pages/BlogIndex'
 import BlogPost from './pages/BlogPost'
+import ProjectPost from './pages/ProjectPost'
+import ProjectEditor from './pages/project/ProjectEditor'
 import ContactPage from './pages/ContactPage'
 import NotFound from './pages/NotFound'
 // Wedding — fully isolated; registered outside Root to prevent global style/cursor bleed
@@ -39,6 +41,7 @@ export const router = createBrowserRouter(
         { path: 'tools/:slug', Component: ToolPage },
         { path: 'blog', Component: BlogIndex },
         { path: 'blog/:slug', Component: BlogPost },
+        { path: 'projects/:slug', Component: ProjectPost },
         {
           path: 'admin',
           children: [
@@ -49,6 +52,8 @@ export const router = createBrowserRouter(
                 { index: true, Component: Dashboard },
                 { path: 'articles/new', Component: ArticleEditor },
                 { path: 'articles/:id', Component: ArticleEditor },
+                { path: 'projects/new', Component: ProjectEditor },
+                { path: 'projects/:id', Component: ProjectEditor },
               ],
             },
           ],

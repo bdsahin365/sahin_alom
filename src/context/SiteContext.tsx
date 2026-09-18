@@ -80,12 +80,25 @@ export type BrandingSettings = {
   bodyFont?: string
 }
 
+export type HeroSettings = {
+  headlineLine1: string
+  headlineLine2: string
+  tagline: string
+  ctaPrimaryText: string
+  ctaPrimaryLink: string
+  ctaSecondaryText: string
+  ctaSecondaryLink: string
+  imageBase?: string
+  imageReveal?: string
+}
+
 export type Settings = {
   siteTitle: string
   pageDescription: string
   siteUrl: string
   tools: string[]
   branding: BrandingSettings
+  hero?: HeroSettings
   social: {
     linkedin: string
     twitter: string
@@ -229,6 +242,17 @@ const DEFAULT: SiteData = {
       yandexVerification: siteConfig.verification.yandexVerification || '',
       pinterestVerification: siteConfig.verification.pinterestVerification || '',
     },
+    hero: {
+      headlineLine1: 'Power Systems',
+      headlineLine2: '& Engineering',
+      tagline: 'High-voltage substation design, protection coordination, and renewable grid interconnection engineered to international standards (IEC / IEEE / BNBC).',
+      ctaPrimaryText: 'Contact Me',
+      ctaPrimaryLink: '/contact',
+      ctaSecondaryText: 'View CV',
+      ctaSecondaryLink: '/cv',
+      imageBase: '',
+      imageReveal: '',
+    },
   },
   wedding: DEFAULT_WEDDING_CONFIG,
 }
@@ -249,6 +273,7 @@ function deepMerge(parsed: Partial<SiteData>): SiteData {
       ...DEFAULT.settings,
       ...(parsed.settings ?? {}),
       branding: { ...DEFAULT.settings.branding, ...(parsed.settings?.branding ?? {}) },
+      hero: { ...DEFAULT.settings.hero, ...(parsed.settings?.hero ?? {}) },
       social: { ...DEFAULT.settings.social, ...(parsed.settings?.social ?? {}) },
       analytics: { ...DEFAULT.settings.analytics, ...(parsed.settings?.analytics ?? {}) },
       verification: { ...DEFAULT.settings.verification, ...(parsed.settings?.verification ?? {}) },

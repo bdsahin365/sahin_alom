@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef, type ChangeEvent } from 'react'
+import { Link, useNavigate } from 'react-router'
 import {
   Search, Plus, ArrowUpDown, ArrowUp, ArrowDown,
   Pencil, Trash2, ExternalLink, FolderX,
@@ -795,6 +796,27 @@ export function ProProjectsTable({
               )}
             </div>
 
+            <Link
+              to="/admin/projects/new"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                height: 36,
+                padding: '0 14px',
+                borderRadius: 8,
+                background: '#0F172A',
+                color: '#FFFFFF',
+                textDecoration: 'none',
+                fontFamily: 'Outfit,sans-serif',
+                fontSize: 13,
+                fontWeight: 600,
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              }}
+            >
+              <Sparkles size={14} style={{ color: '#F59E0B' }} /> Studio Editor
+            </Link>
+
             <button
               type="button"
               onClick={onAdd}
@@ -814,7 +836,7 @@ export function ProProjectsTable({
                 cursor: 'pointer',
               }}
             >
-              <Plus size={15} /> Add Project
+              <Plus size={15} /> Quick Add
             </button>
           </div>
         </div>
@@ -955,11 +977,30 @@ export function ProProjectsTable({
                   </td>
                   <td style={{ padding: '14px 18px', verticalAlign: 'middle', textAlign: 'right' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>
+                      <Link
+                        to={`/admin/projects/${p.id}`}
+                        style={{
+                          padding: '5px 9px',
+                          background: '#FEF3C7',
+                          border: '1px solid #FDE68A',
+                          borderRadius: 6,
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          fontSize: 11.5,
+                          color: '#92400E',
+                          fontWeight: 600,
+                        }}
+                        title="Edit in Full Studio Editor"
+                      >
+                        <Sparkles size={11} /> Studio
+                      </Link>
                       <button
                         type="button"
                         onClick={() => onEdit(p)}
                         style={{
-                          padding: '5px 10px',
+                          padding: '5px 9px',
                           background: '#F8FAFC',
                           border: '1px solid #CBD5E1',
                           borderRadius: 6,
@@ -971,9 +1012,28 @@ export function ProProjectsTable({
                           color: '#334155',
                           fontWeight: 500,
                         }}
+                        title="Quick Edit Info"
                       >
-                        <Pencil size={12} /> Edit
+                        <Pencil size={11} /> Edit
                       </button>
+                      <a
+                        href={`/projects/${p.slug || p.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          padding: '5px 8px',
+                          background: '#F8FAFC',
+                          border: '1px solid #CBD5E1',
+                          borderRadius: 6,
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          color: '#64748B',
+                        }}
+                        title="View Public Case Study"
+                      >
+                        <ExternalLink size={12} />
+                      </a>
                       <button
                         type="button"
                         onClick={() => setProjectToDelete(p)}
@@ -987,6 +1047,7 @@ export function ProProjectsTable({
                           alignItems: 'center',
                           color: '#DC2626',
                         }}
+                        title="Delete Project"
                       >
                         <Trash2 size={12} />
                       </button>

@@ -218,7 +218,7 @@ function Hero() {
       {/* Layer 1: Base image (Ken Burns zoom) */}
       <div
         className="hero-zoom absolute inset-0 bg-center bg-cover bg-no-repeat"
-        style={{ backgroundImage: `url(${designerImg})`, zIndex: 10 }}
+        style={{ backgroundImage: `url(${data.settings.hero?.imageBase || designerImg})`, zIndex: 10 }}
       />
 
       {/* Cinematic Vignette */}
@@ -237,10 +237,10 @@ function Hero() {
 
       {/* Layer 2: Cursor / touch spotlight reveal */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 30, pointerEvents: 'none' }}>
-        <RevealLayer image={engineerImg} cursorX={cursorPos.x} cursorY={cursorPos.y} />
+        <RevealLayer image={data.settings.hero?.imageReveal || engineerImg} cursorX={cursorPos.x} cursorY={cursorPos.y} />
       </div>
 
-      {/* ════ Center Hero Content (No Pill, Pure Typographic Impact) ════ */}
+      {/* ════ Center Hero Content (Pure Typographic Impact) ════ */}
       <div
         className="absolute left-0 right-0 flex flex-col items-center text-center pointer-events-none"
         style={{
@@ -262,7 +262,7 @@ function Hero() {
               textShadow: '0 4px 32px rgba(0,0,0,0.65)',
             }}
           >
-            Power Systems
+            {data.settings.hero?.headlineLine1 || 'Power Systems'}
           </span>
           <span
             className="block hero-anim hero-reveal"
@@ -277,7 +277,7 @@ function Hero() {
               textShadow: '0 4px 32px rgba(0,0,0,0.65)',
             }}
           >
-            &amp; Engineering
+            {data.settings.hero?.headlineLine2 || '& Engineering'}
           </span>
         </h1>
 
@@ -295,7 +295,7 @@ function Hero() {
             textShadow: '0 2px 16px rgba(0,0,0,0.8)',
           }}
         >
-          {E.tagline || 'High-voltage substation design, protection coordination, and renewable grid interconnection engineered to international standards (IEC / IEEE / BNBC).'}
+          {data.settings.hero?.tagline || E.tagline || 'High-voltage substation design, protection coordination, and renewable grid interconnection engineered to international standards (IEC / IEEE / BNBC).'}
         </p>
 
         {/* CTAs: Exactly Two Buttons (Contact & CV) */}
@@ -304,7 +304,7 @@ function Hero() {
           style={{ animationDelay: '0.66s' }}
         >
           <Link
-            to="/contact"
+            to={data.settings.hero?.ctaPrimaryLink || '/contact'}
             style={{
               background: 'var(--accent)', color: '#FFFFFF',
               fontFamily: "'Inter', sans-serif", fontWeight: 600,
@@ -327,11 +327,11 @@ function Hero() {
               ;(e.currentTarget as HTMLElement).style.boxShadow = '0 8px 30px rgba(196,125,14,0.45)'
             }}
           >
-            Contact Me <ArrowUpRight size={15} strokeWidth={2.2} />
+            {data.settings.hero?.ctaPrimaryText || 'Contact Me'} <ArrowUpRight size={15} strokeWidth={2.2} />
           </Link>
 
-          <button
-            onClick={() => navigate('/cv')}
+          <Link
+            to={data.settings.hero?.ctaSecondaryLink || '/cv'}
             style={{
               background: 'rgba(255,255,255,0.12)', color: '#FFFFFF',
               backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
@@ -342,7 +342,7 @@ function Hero() {
               padding: '14px 30px',
               borderRadius: 8,
               display: 'inline-flex', alignItems: 'center', gap: 8,
-              cursor: 'pointer',
+              textDecoration: 'none',
               transition: 'background 0.2s, transform 0.25s cubic-bezier(0.16,1,0.3,1)',
               minWidth: 140, justifyContent: 'center',
             }}
@@ -355,8 +355,8 @@ function Hero() {
               ;(e.currentTarget as HTMLElement).style.transform = ''
             }}
           >
-            <Download size={14} /> View CV
-          </button>
+            <Download size={14} /> {data.settings.hero?.ctaSecondaryText || 'View CV'}
+          </Link>
         </div>
 
         {/* Mobile Stats Ribbon */}
@@ -1026,7 +1026,10 @@ function Projects() {
                 }}
               >
                 {/* Image / Graphic Banner */}
-                <div style={{ position: 'relative', aspectRatio: '16/10', overflow: 'hidden', background: proj.imgColor || 'var(--bg-3)' }}>
+                <Link
+                  to={'/projects/' + (proj.slug || proj.id)}
+                  style={{ position: 'relative', aspectRatio: '16/10', overflow: 'hidden', background: proj.imgColor || 'var(--bg-3)', display: 'block', textDecoration: 'none' }}
+                >
                   {proj.img ? (
                     <img
                       src={proj.img}
@@ -1084,7 +1087,7 @@ function Projects() {
                       </div>
                     </div>
                   )}
-                </div>
+                </Link>
 
                 {/* Card Body */}
                 <div style={{ padding: 'clamp(20px, 3vw, 26px)', display: 'flex', flexDirection: 'column', flex: 1 }}>
@@ -1104,12 +1107,21 @@ function Projects() {
                   </div>
 
                   {/* Title */}
-                  <h3 style={{
-                    fontFamily: "'Inter', sans-serif", fontSize: 'clamp(18px, 1.8vw, 22px)',
-                    fontWeight: 700, color: 'var(--fg)', lineHeight: 1.25, marginBottom: 12,
-                  }}>
-                    {proj.title}
-                  </h3>
+                  <Link
+                    to={'/projects/' + (proj.slug || proj.id)}
+                    style={{ textDecoration: 'none', color: 'inherit' }}
+                  >
+                    <h3 style={{
+                      fontFamily: "'Inter', sans-serif", fontSize: 'clamp(18px, 1.8vw, 22px)',
+                      fontWeight: 700, color: 'var(--fg)', lineHeight: 1.25, marginBottom: 12,
+                      transition: 'color 0.2s ease',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
+                    onMouseLeave={e => (e.currentTarget.style.color = 'var(--fg)')}
+                    >
+                      {proj.title}
+                    </h3>
+                  </Link>
 
                   {/* Summary */}
                   <p style={{
@@ -1166,6 +1178,37 @@ function Projects() {
                       ))}
                     </div>
                   )}
+
+                  {/* Action Link to Full Case Study */}
+                  <div style={{
+                    marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--border)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  }}>
+                    <Link
+                      to={'/projects/' + (proj.slug || proj.id)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        fontFamily: 'JetBrains Mono, monospace',
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: 'var(--accent)',
+                        textDecoration: 'none',
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
+                        transition: 'gap 0.2s ease',
+                      }}
+                      onMouseEnter={e => ((e.currentTarget as HTMLElement).style.gap = '10px')}
+                      onMouseLeave={e => ((e.currentTarget as HTMLElement).style.gap = '6px')}
+                    >
+                      <span>Full Case Study</span>
+                      <ArrowUpRight size={13} strokeWidth={2.4} />
+                    </Link>
+                    <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9.5, color: 'var(--muted)' }}>
+                      Single-Line & Specs
+                    </span>
+                  </div>
                 </div>
               </motion.article>
             </Reveal>

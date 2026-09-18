@@ -22,6 +22,7 @@ import OverviewSection from './sections/OverviewSection'
 import ProjectsSection from './sections/ProjectsSection'
 import BrandingSection from './sections/BrandingSection'
 import ProfileSection from './sections/ProfileSection'
+import HeroSection from './sections/HeroSection'
 import CredentialsSection from './sections/CredentialsSection'
 import ExpertiseSection from './sections/ExpertiseSection'
 import ServicesSection from './sections/ServicesSection'
@@ -33,7 +34,7 @@ import WeddingSection from './sections/WeddingSection'
 import ArticlesList from '../blog/ArticlesList'
 
 const VALID_SECTIONS: SectionId[] = [
-  'overview', 'branding', 'shorts', 'articles', 'profile', 'credentials',
+  'overview', 'hero', 'branding', 'shorts', 'articles', 'profile', 'credentials',
   'expertise', 'projects', 'services', 'education', 'settings', 'messages', 'wedding'
 ]
 
@@ -53,7 +54,8 @@ const getInitialSection = (): SectionId => {
 
 const PANELS: Record<SectionId, (props: { onNavigate: (s: SectionId) => void }) => ReactNode> = {
   overview:    ({ onNavigate }) => <OverviewSection onNavigate={onNavigate} />,
-  branding:    () => <BrandingSection />,
+  hero:        ({ onNavigate }) => <HeroSection onNavigate={onNavigate} />,
+  branding:    ({ onNavigate }) => <BrandingSection onNavigate={onNavigate} />,
   shorts:      () => <ShortsSection />,
   articles:    () => <ArticlesList />,
   profile:     () => <ProfileSection />,
@@ -68,7 +70,7 @@ const PANELS: Record<SectionId, (props: { onNavigate: (s: SectionId) => void }) 
 }
 
 const SECTION_LABELS: Record<SectionId, string> = {
-  overview: 'Overview', branding: 'Logo & Branding', shorts: 'Video Shorts',
+  overview: 'Overview', hero: 'Hero & Visuals', branding: 'Logo & Colors', shorts: 'Video Shorts',
   articles: 'Articles', profile: 'Profile & Bio', credentials: 'Credentials',
   expertise: 'Expertise', projects: 'Projects', services: 'Services',
   education: 'Education', settings: 'SEO & Analytics', messages: 'Messages Inbox',

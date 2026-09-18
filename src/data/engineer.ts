@@ -108,20 +108,27 @@ export const EXPERTISE = [
 
 export type Project = {
   id: string
-  num: string
+  num?: string
+  slug?: string
   title: string
   client: string
   location: string
   capacity: string
   year: string
   category: string
-  img: string
-  imgColor: string
+  img?: string
+  imgColor?: string
   summary: string
-  scope: string[]
-  deliverables: string[]
-  outcome: string
-  tools: string[]
+  scope?: string[]
+  deliverables?: string[]
+  outcome?: string
+  tools?: string[]
+  detailedContent?: string
+  specifications?: Record<string, string>
+  gallery?: string[]
+  challenges?: string[]
+  clientLogo?: string
+  featured?: boolean
 }
 
 export const PROJECTS: Project[] = [
