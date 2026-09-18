@@ -268,9 +268,9 @@ function Hero() {
             className="block hero-anim hero-reveal"
             style={{
               color: '#FFFFFF',
-              letterSpacing: '-0.025em',
-              fontSize: 'clamp(38px, 9.8vw, 106px)',
-              fontFamily: "'Barlow Condensed', sans-serif",
+              letterSpacing: '-0.035em',
+              fontSize: 'clamp(34px, 8.8vw, 98px)',
+              fontFamily: 'var(--font-display)',
               fontWeight: 800,
               textTransform: 'uppercase',
               animationDelay: '0.34s',

@@ -140,10 +140,10 @@ export default function HeaderLogo({ compact = false, showSubtitle = true, textC
             {showBrandTitle && (
               <span
                 style={{
-                  fontFamily: 'var(--font-display, "Barlow Condensed", sans-serif)',
+                  fontFamily: 'var(--font-display, "Plus Jakarta Sans", sans-serif)',
                   fontWeight: 800,
-                  fontSize: compact ? 19 : 22,
-                  letterSpacing: '0.04em',
+                  fontSize: compact ? 18 : 21,
+                  letterSpacing: '0.02em',
                   color: textColor || 'var(--fg, #0D1218)',
                   textTransform: 'uppercase',
                   lineHeight: 1,

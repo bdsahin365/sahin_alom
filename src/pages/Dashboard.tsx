@@ -813,7 +813,7 @@ function BrandingPanel() {
               Display / Headline Font
             </label>
             <select
-              value={B.displayFont || 'Barlow Condensed'}
+              value={B.displayFont || 'Plus Jakarta Sans'}
               onChange={e => updateB({ displayFont: e.target.value })}
               style={{
                 width: '100%', padding: '9px 12px', background: '#FFFFFF',
@@ -822,12 +822,10 @@ function BrandingPanel() {
                 outline: 'none', marginBottom: 6
               }}
             >
-              <option value="Barlow Condensed">Barlow Condensed (Architectural & Technical — Default)</option>
+              <option value="Plus Jakarta Sans">Plus Jakarta Sans (Editorial & Geometric Luxury — Default)</option>
               <option value="Outfit">Outfit (Modern Clean Geometric)</option>
               <option value="Space Grotesk">Space Grotesk (Futuristic Precision)</option>
-              <option value="Plus Jakarta Sans">Plus Jakarta Sans (Refined Contemporary)</option>
               <option value="Inter">Inter (Minimalist Swiss Tech)</option>
-              <option value="Roboto Condensed">Roboto Condensed (Structured Industrial)</option>
               <option value="Syne">Syne (Bold Display)</option>
             </select>
             <div style={{ fontFamily: 'Outfit,sans-serif', fontSize: 11, color: '#64748B' }}>

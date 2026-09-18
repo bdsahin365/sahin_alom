@@ -209,7 +209,7 @@ const DEFAULT: SiteData = {
       showBrandSubtitle: true,
       showLogoEmblem: true,
       primaryColor: '#C47D0E',
-      displayFont: 'Barlow Condensed',
+      displayFont: 'Plus Jakarta Sans',
       bodyFont: 'Outfit',
     },
     social: {
@@ -341,7 +341,8 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   // Dynamically synchronize primary brand color and typography across entire site
   useEffect(() => {
     const primaryColor = data.settings.branding?.primaryColor || '#C47D0E'
-    const displayFont = data.settings.branding?.displayFont || 'Barlow Condensed'
+    const rawDisplay = data.settings.branding?.displayFont
+    const displayFont = (!rawDisplay || rawDisplay === 'Barlow Condensed') ? 'Plus Jakarta Sans' : rawDisplay
     const bodyFont = data.settings.branding?.bodyFont || 'Outfit'
 
     // 1. Update CSS Variables on :root
