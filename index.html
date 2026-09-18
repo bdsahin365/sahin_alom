@@ -35,15 +35,25 @@
     <link rel="dns-prefetch" href="https://www.google-analytics.com" />
 
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Hind+Siliguri:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,500;1,600&family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23C47D0E'><path d='M13 2L3 14h9l-1 8 10-12h-9l1-8z'/></svg>" />
 
-    <!-- Synchronous Theme & Brand Style Hydration (Eliminates Flash of Old Accent / Fonts) -->
+    <!-- Synchronous Theme & Brand Style Hydration (Eliminates Flash of Old Accent / Fonts / Theme) -->
     <script>
       (function () {
         try {
+          var savedTheme = localStorage.getItem('msa_theme');
+          var isDark = savedTheme ? savedTheme === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (isDark) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            document.documentElement.classList.remove('dark');
+          }
+
           var raw = localStorage.getItem('msa_site_v13');
           if (raw) {
             var parsed = JSON.parse(raw);

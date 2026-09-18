@@ -131,6 +131,9 @@ type Ctx = {
   updateShorts: (v: StoryItem[]) => void
   updateFloatingShortsBubble: (v: boolean) => void
   updateWedding: (p: Partial<WeddingConfig>) => void
+  theme: 'light' | 'dark'
+  setTheme: (t: 'light' | 'dark') => void
+  toggleTheme: () => void
   importSiteData: (imported: Partial<SiteData>) => void
   resetToDefaults: () => Promise<void> | void
 }
@@ -282,6 +285,44 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<string>('')
   const dataRef = useRef<SiteData>(data)
+
+  // ── Global Theme Management (Dark / Light) ──────────────────────────────────
+  const [theme, setThemeState] = useState<'light' | 'dark'>(() => {
+    try {
+      const saved = localStorage.getItem('msa_theme')
+      if (saved === 'dark' || saved === 'light') return saved
+      if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        return 'dark'
+      }
+    } catch {}
+    return 'light'
+  })
+
+  const setTheme = useCallback((t: 'light' | 'dark') => {
+    setThemeState(t)
+    try {
+      localStorage.setItem('msa_theme', t)
+      document.documentElement.setAttribute('data-theme', t)
+      if (t === 'dark') {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
+    } catch {}
+  }, [])
+
+  const toggleTheme = useCallback(() => {
+    setTheme(theme === 'dark' ? 'light' : 'dark')
+  }, [theme, setTheme])
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [theme])
 
   // Dynamically synchronize favicon with document head
   useEffect(() => {
@@ -804,6 +845,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   return (
     <SiteCtx.Provider value={{
       data, loading, saved, isSaving, lastSaved,
+      theme, setTheme, toggleTheme,
       saveSiteData,
       updateEngineer, updateCredentials, updateExpertise,
       updateProjects, updateServices, updateEducation,

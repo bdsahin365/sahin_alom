@@ -8,8 +8,8 @@ export default function WVenue({ config }: WVenueProps) {
   const ref = useRef<HTMLDivElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-10% 0px' })
 
-  const leftVariants = { hidden: { opacity: 0, x: -40 }, visible: { opacity: 1, x: 0, transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1] } } }
-  const rightVariants = { hidden: { opacity: 0, x: 40 }, visible: { opacity: 1, x: 0, transition: { duration: 0.9, delay: 0.15, ease: [0.16, 1, 0.3, 1] } } }
+  const leftVariants = { hidden: { opacity: 0, x: -40 }, visible: { opacity: 1, x: 0, transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1] as const } } }
+  const rightVariants = { hidden: { opacity: 0, x: 40 }, visible: { opacity: 1, x: 0, transition: { duration: 0.9, delay: 0.15, ease: [0.16, 1, 0.3, 1] as const } } }
 
   return (
     <section className="w-venue w-section" ref={ref}>

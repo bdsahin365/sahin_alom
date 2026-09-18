@@ -1,18 +1,21 @@
-import { useState, useEffect, useRef, type ReactNode } from 'react'
+import { useState, useEffect, useRef, useMemo, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
 import {
   ArrowUpRight, ArrowDown,
-  Zap, Server, Wind, ShieldCheck, Network, Activity,
-  MapPin, Mail, Phone, Globe,
+  Zap, ShieldCheck, Activity, Wind, Layers,
+  Mail, Phone, Globe, Download, CheckCircle2,
+  Calendar, MapPin, Building,
 } from 'lucide-react'
-import { useSite } from '../context/SiteContext'
+import { useSite, type Project } from '../context/SiteContext'
 import { supabase } from '../lib/supabase'
 import sahinPhoto from '../img/sahin.png'
+import designerImg from '../img/designer.png'
+import engineerImg from '../img/engineer.png'
 import HeaderLogo from '../components/HeaderLogo'
 
 // ── Physics & Transitions ───────────────────────────────────────────────────
-export const luxuryEase = [0.16, 1, 0.3, 1]
+export const luxuryEase: [number, number, number, number] = [0.16, 1, 0.3, 1]
 
 export const springSmooth = {
   type: 'spring' as const,
@@ -27,19 +30,22 @@ function Reveal({
   delay = 0,
   direction = 'up',
   style = {},
+  className = '',
 }: {
   children: ReactNode
   delay?: number
   direction?: 'up' | 'down' | 'left' | 'right' | 'none'
   style?: React.CSSProperties
+  className?: string
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-6% 0px' })
-  const offset = 22
+  const offset = 24
 
   return (
     <motion.div
       ref={ref}
+      className={className}
       initial={{
         opacity: 0,
         y: direction === 'up' ? offset : direction === 'down' ? -offset : 0,
@@ -58,216 +64,439 @@ function Reveal({
   )
 }
 
-// Section index tag
+// ── Section Index Label ──────────────────────────────────────────────────────
 function SIdx({ n, label }: { n: string; label: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-      <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 10, letterSpacing: '0.2em', color: 'var(--accent)', textTransform: 'uppercase' as const }}>{n}</span>
-      <div style={{ width: 40, height: 1, background: 'var(--border-strong)' }} />
-      <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 10, letterSpacing: '0.2em', color: 'var(--fg-dim)', textTransform: 'uppercase' as const }}>{label}</span>
+      <span style={{
+        fontFamily: 'JetBrains Mono, monospace',
+        fontSize: 10,
+        letterSpacing: '0.22em',
+        color: 'var(--accent)',
+        textTransform: 'uppercase',
+        fontWeight: 700,
+      }}>
+        {n}
+      </span>
+      <div style={{ width: 42, height: 1, background: 'var(--border-strong)' }} />
+      <span style={{
+        fontFamily: 'JetBrains Mono, monospace',
+        fontSize: 10,
+        letterSpacing: '0.2em',
+        color: 'var(--fg-dim)',
+        textTransform: 'uppercase',
+        fontWeight: 600,
+      }}>
+        {label}
+      </span>
     </div>
   )
 }
 
-const EXPERTISE_ICONS: Record<string, ReactNode> = {
-  'power-systems': <Activity size={18} strokeWidth={1} />,
-  'hv-substation': <Zap size={18} strokeWidth={1} />,
-  'renewables':    <Wind size={18} strokeWidth={1} />,
-  'protection':    <ShieldCheck size={18} strokeWidth={1} />,
-  'grid-planning': <Network size={18} strokeWidth={1} />,
-  'power-quality': <Server size={18} strokeWidth={1} />,
-}
+// ── Spotlight Constants & Reveal Layer ───────────────────────────────────────
+const SPOTLIGHT_R = 280
 
-// ── Hero ────────────────────────────────────────────────────────────────────
-function Hero() {
-  const { data: { engineer: E } } = useSite()
-  const [in_, setIn] = useState(false)
-  const [tick, setTick] = useState(0)
+function RevealLayer({
+  image,
+  cursorX,
+  cursorY,
+}: {
+  image: string
+  cursorX: number
+  cursorY: number
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const divRef    = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const t = setTimeout(() => setIn(true), 80)
-    const i = setInterval(() => setTick(n => n + 1), 1200)
-    return () => { clearTimeout(t); clearInterval(i) }
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const sync = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight }
+    sync()
+    window.addEventListener('resize', sync)
+    return () => window.removeEventListener('resize', sync)
   }, [])
 
-  const fade = (delay: number): React.CSSProperties => ({
-    opacity: in_ ? 1 : 0,
-    transform: in_ ? 'none' : 'translateY(20px)',
-    transition: `opacity 0.9s ${delay}s cubic-bezier(0.16,1,0.3,1), transform 0.9s ${delay}s cubic-bezier(0.16,1,0.3,1)`,
+  useEffect(() => {
+    const canvas = canvasRef.current
+    const div    = divRef.current
+    if (!canvas || !div) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    const g = ctx.createRadialGradient(cursorX, cursorY, 0, cursorX, cursorY, SPOTLIGHT_R)
+    g.addColorStop(0,    'rgba(255,255,255,1)')
+    g.addColorStop(0.4,  'rgba(255,255,255,1)')
+    g.addColorStop(0.6,  'rgba(255,255,255,0.75)')
+    g.addColorStop(0.75, 'rgba(255,255,255,0.4)')
+    g.addColorStop(0.88, 'rgba(255,255,255,0.12)')
+    g.addColorStop(1,    'rgba(255,255,255,0)')
+    ctx.fillStyle = g
+    ctx.beginPath()
+    ctx.arc(cursorX, cursorY, SPOTLIGHT_R, 0, Math.PI * 2)
+    ctx.fill()
+
+    const url = canvas.toDataURL()
+    div.style.maskImage          = `url(${url})`
+    div.style.webkitMaskImage    = `url(${url})`
+    div.style.maskSize           = '100% 100%'
+    ;(div.style as any).webkitMaskSize = '100% 100%'
   })
 
   return (
-    <section id="hero" style={{
-      minHeight: '100svh',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'flex-end',
-      padding: `calc(var(--nav-h) + clamp(20px,4vh,40px)) var(--px) clamp(32px,5vh,64px)`,
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
-      {/* ── Minimal & Modern Engineering Background (Desktop & Mobile) ── */}
-      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
-        {/* Ambient warm center glow */}
-        <div style={{
-          position: 'absolute', top: '35%', left: '50%',
-          width: 'clamp(360px, 60vw, 850px)', height: 'clamp(360px, 60vw, 850px)',
-          transform: 'translate(-50%, -50%)',
-          background: 'radial-gradient(circle, rgba(196,125,14,0.08) 0%, transparent 68%)',
-        }} />
-
-        {/* Minimal architectural precision vertical lines */}
-        {[20, 40, 60, 80].map(pct => (
-          <div key={pct} style={{
-            position: 'absolute', top: 0, bottom: 0,
-            left: `${pct}%`, width: 1,
-            background: 'var(--border)',
-            opacity: 0.35,
-          }} />
-        ))}
-        {/* Soft amber vertical accent line */}
-        <div style={{
-          position: 'absolute', top: 0, bottom: 0, left: '20%',
-          width: 1, background: 'var(--accent)', opacity: 0.22,
-        }} />
-
-        {/* Subtle modern engineering micro-grid pattern */}
-        <div style={{
+    <>
+      <canvas ref={canvasRef} style={{ display: 'none', position: 'absolute', inset: 0, pointerEvents: 'none' }} />
+      <div
+        ref={divRef}
+        style={{
           position: 'absolute', inset: 0,
-          backgroundImage: 'radial-gradient(rgba(196,125,14,0.12) 1px, transparent 1px)',
-          backgroundSize: '28px 28px',
-          opacity: 0.45,
-        }} />
+          backgroundImage: `url(${image})`,
+          backgroundSize: 'cover', backgroundPosition: 'center',
+          zIndex: 25, pointerEvents: 'none',
+        }}
+      />
+    </>
+  )
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 1. HERO SECTION (Clean, Premium, Two Buttons Only, No Pill)
+// ════════════════════════════════════════════════════════════════════════════
+function Hero() {
+  const { data: { engineer: E } } = useSite()
+  const [in_, setIn]           = useState(false)
+  const [cursorPos, setCursorPos] = useState({ x: -999, y: -999 })
+  const [isTouch, setIsTouch]  = useState(false)
+  const mouseRef  = useRef({ x: -999, y: -999 })
+  const smoothRef = useRef({ x: -999, y: -999 })
+  const rafRef    = useRef<number | null>(null)
+  const navigate  = useNavigate()
+
+  useEffect(() => {
+    const t = setTimeout(() => setIn(true), 80)
+    if (window.matchMedia('(hover: none)').matches) setIsTouch(true)
+
+    const onMove = (e: MouseEvent) => {
+      mouseRef.current.x = e.clientX
+      mouseRef.current.y = e.clientY
+    }
+    const onTouch = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        mouseRef.current.x = e.touches[0].clientX
+        mouseRef.current.y = e.touches[0].clientY
+      }
+    }
+
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('touchmove', onTouch, { passive: true })
+    window.addEventListener('touchstart', onTouch, { passive: true })
+
+    const loop = () => {
+      smoothRef.current.x += (mouseRef.current.x - smoothRef.current.x) * 0.12
+      smoothRef.current.y += (mouseRef.current.y - smoothRef.current.y) * 0.12
+      setCursorPos({ x: smoothRef.current.x, y: smoothRef.current.y })
+      rafRef.current = requestAnimationFrame(loop)
+    }
+    rafRef.current = requestAnimationFrame(loop)
+
+    return () => {
+      clearTimeout(t)
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('touchmove', onTouch)
+      window.removeEventListener('touchstart', onTouch)
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
+    }
+  }, [])
+
+  return (
+    <section
+      id="hero"
+      className="relative w-full overflow-hidden bg-black select-none"
+      style={{ minHeight: '100dvh', height: '100dvh' }}
+    >
+      {/* Layer 1: Base image (Ken Burns zoom) */}
+      <div
+        className="hero-zoom absolute inset-0 bg-center bg-cover bg-no-repeat"
+        style={{ backgroundImage: `url(${designerImg})`, zIndex: 10 }}
+      />
+
+      {/* Cinematic Vignette */}
+      <div
+        style={{
+          position: 'absolute', inset: 0, zIndex: 20, pointerEvents: 'none',
+          background: [
+            'linear-gradient(to bottom,',
+            '  rgba(0,0,0,0.72) 0%,',
+            '  rgba(0,0,0,0.30) 35%,',
+            '  rgba(0,0,0,0.30) 65%,',
+            '  rgba(0,0,0,0.85) 100%)',
+          ].join(''),
+        }}
+      />
+
+      {/* Layer 2: Cursor / touch spotlight reveal */}
+      <div style={{ position: 'absolute', inset: 0, zIndex: 30, pointerEvents: 'none' }}>
+        <RevealLayer image={engineerImg} cursorX={cursorPos.x} cursorY={cursorPos.y} />
       </div>
 
-      {/* Top bar / Intro section badge */}
-      <div style={{
-        ...fade(0.1),
-        position: 'absolute',
-        top: 'calc(var(--nav-h) + clamp(14px, 2.5vh, 24px))',
-        left: 'var(--px)',
-        right: 'var(--px)',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        zIndex: 1,
-      }}>
-        <SIdx n="01" label="Introduction" />
-      </div>
-
-      {/* Main headline & hero content container */}
-      <div style={{ position: 'relative', zIndex: 1 }}>
-        {/* Name sub-ribbon */}
-        <div style={{ ...fade(0.15), marginBottom: 'clamp(8px,1.5vh,20px)', display: 'flex', alignItems: 'center', gap: 16 }}>
-          <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 11, color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase' as const, fontWeight: 700 }}>{E.initials}</span>
-          <div style={{ flex: 1, height: 1, background: 'var(--border-strong)' }} />
-        </div>
-
-        {/* Giant headline — majestic condensed typography */}
-        <h1 className="display" style={{
-          fontSize: 'clamp(64px, 13.5vw, 210px)',
-          lineHeight: 0.91,
-          color: 'var(--fg)',
-          marginBottom: 'clamp(6px, 1vh, 14px)',
-          letterSpacing: '-0.02em',
-        }}>
-          {['Power', 'Systems'].map((word, i) => (
-            <div key={word} style={{
-              ...fade(0.22 + i * 0.08),
-              display: 'flex', alignItems: 'flex-end', gap: '0.04em',
-            }}>
-              <span>{word}</span>
-              {i === 0 && (
-                <span style={{ fontSize: '0.25em', fontFamily: 'JetBrains Mono,monospace', fontWeight: 400, color: 'var(--accent)', letterSpacing: '0.1em', marginBottom: '0.15em', paddingLeft: '0.2em', textTransform: 'uppercase' as const, lineHeight: 1 }}>
-                  &amp;
-                </span>
-              )}
-            </div>
-          ))}
-          <div style={fade(0.38)}>
-            <span style={{ color: 'var(--accent)' }}>Engineer</span>
-          </div>
+      {/* ════ Center Hero Content (No Pill, Pure Typographic Impact) ════ */}
+      <div
+        className="absolute left-0 right-0 flex flex-col items-center text-center pointer-events-none"
+        style={{
+          top: '50%',
+          transform: 'translateY(-50%)',
+          zIndex: 50,
+          padding: '0 clamp(18px, 5vw, 48px)',
+        }}
+      >
+        {/* Main Headline */}
+        <h1 style={{ margin: 0, lineHeight: 0.92 }}>
+          <span
+            className="block font-playfair italic hero-anim hero-reveal"
+            style={{
+              color: '#FFFFFF',
+              letterSpacing: '-0.04em',
+              fontSize: 'clamp(42px, 10vw, 112px)',
+              animationDelay: '0.18s',
+              textShadow: '0 4px 32px rgba(0,0,0,0.65)',
+            }}
+          >
+            Power Systems
+          </span>
+          <span
+            className="block hero-anim hero-reveal"
+            style={{
+              color: '#FFFFFF',
+              letterSpacing: '-0.025em',
+              fontSize: 'clamp(38px, 9.8vw, 106px)',
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 800,
+              textTransform: 'uppercase',
+              animationDelay: '0.34s',
+              textShadow: '0 4px 32px rgba(0,0,0,0.65)',
+            }}
+          >
+            &amp; Engineering
+          </span>
         </h1>
 
-        {/* Rule + Tagline & CTA Group */}
-        <div style={{ ...fade(0.48), display: 'flex', alignItems: 'flex-start', gap: 'clamp(24px, 4vw, 64px)', marginTop: 'clamp(20px, 3vh, 36px)', paddingTop: 'clamp(20px, 3vh, 36px)', borderTop: '1px solid var(--border-strong)', flexWrap: 'wrap' }}>
-          <p style={{ fontFamily: 'Outfit,sans-serif', fontSize: 'clamp(15px, 1.5vw, 18px)', color: 'var(--fg-dim)', lineHeight: 1.65, maxWidth: 480, fontWeight: 300 }}>
-            {E.tagline}
-          </p>
-          <div className="hero-cta-wrap" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginLeft: 'auto' }}>
-            <motion.div
-              whileHover={{ y: -2, scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-            >
-              <Link
-                to="/contact"
-                className="btn-primary"
-                style={{ gap: 10, fontSize: 12, textDecoration: 'none' }}
-              >
-                Schedule Review / Hire me <ArrowUpRight size={14} strokeWidth={2} />
-              </Link>
-            </motion.div>
-            <motion.a
-              href="#projects"
-              className="btn-outline"
-              whileHover={{ y: -2, scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-              style={{ fontSize: 12 }}
-            >
-              View work
-            </motion.a>
-          </div>
+        {/* Tagline */}
+        <p
+          className="hero-anim hero-fade mt-5 sm:mt-6"
+          style={{
+            color: 'rgba(255,255,255,0.85)',
+            lineHeight: 1.65,
+            fontSize: 'clamp(14px, 3.2vw, 18px)',
+            maxWidth: 'min(580px, 92vw)',
+            animationDelay: '0.5s',
+            fontFamily: "'Inter', sans-serif",
+            fontWeight: 350,
+            textShadow: '0 2px 16px rgba(0,0,0,0.8)',
+          }}
+        >
+          {E.tagline || 'High-voltage substation design, protection coordination, and renewable grid interconnection engineered to international standards (IEC / IEEE / BNBC).'}
+        </p>
+
+        {/* CTAs: Exactly Two Buttons (Contact & CV) */}
+        <div
+          className="hero-anim hero-fade flex flex-wrap items-center justify-center gap-4 mt-7 sm:mt-9 pointer-events-auto"
+          style={{ animationDelay: '0.66s' }}
+        >
+          <Link
+            to="/contact"
+            style={{
+              background: 'var(--accent)', color: '#FFFFFF',
+              fontFamily: "'Inter', sans-serif", fontWeight: 600,
+              fontSize: 'clamp(12.5px, 2.8vw, 14px)',
+              letterSpacing: '0.04em', textTransform: 'uppercase',
+              padding: '14px 32px',
+              borderRadius: 8,
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              textDecoration: 'none',
+              boxShadow: '0 8px 30px rgba(196,125,14,0.45)',
+              transition: 'transform 0.25s cubic-bezier(0.16,1,0.3,1), box-shadow 0.25s ease',
+              minWidth: 150, justifyContent: 'center',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'
+              ;(e.currentTarget as HTMLElement).style.boxShadow = '0 14px 38px rgba(196,125,14,0.6)'
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLElement).style.transform = ''
+              ;(e.currentTarget as HTMLElement).style.boxShadow = '0 8px 30px rgba(196,125,14,0.45)'
+            }}
+          >
+            Contact Me <ArrowUpRight size={15} strokeWidth={2.2} />
+          </Link>
+
+          <button
+            onClick={() => navigate('/cv')}
+            style={{
+              background: 'rgba(255,255,255,0.12)', color: '#FFFFFF',
+              backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+              border: '1px solid rgba(255,255,255,0.32)',
+              fontFamily: "'Inter', sans-serif", fontWeight: 500,
+              fontSize: 'clamp(12.5px, 2.8vw, 14px)',
+              letterSpacing: '0.04em', textTransform: 'uppercase',
+              padding: '14px 30px',
+              borderRadius: 8,
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              cursor: 'pointer',
+              transition: 'background 0.2s, transform 0.25s cubic-bezier(0.16,1,0.3,1)',
+              minWidth: 140, justifyContent: 'center',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.22)'
+              ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.12)'
+              ;(e.currentTarget as HTMLElement).style.transform = ''
+            }}
+          >
+            <Download size={14} /> View CV
+          </button>
         </div>
 
-        {/* Stats strip with staggered cascade */}
-        <div className="hero-stats-grid" style={fade(0.58)}>
-          {[
-            { v: E.yearsExp,      l: 'Years exp.' },
-            { v: E.projectsMW,   l: 'Total Capacity' },
-            { v: E.projectsCount, l: 'Projects' },
-            { v: E.clients,       l: 'Clients' },
-          ].map((s, idx) => (
-            <motion.div
-              key={s.l}
-              className="hero-stat-cell"
-              initial={{ opacity: 0, y: 14 }}
-              animate={in_ ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: 0.6 + idx * 0.08, ease: luxuryEase }}
-              whileHover={{ y: -3 }}
-            >
-              <div className="display" style={{ fontSize: 'clamp(28px, 4.5vw, 56px)', color: 'var(--accent)', lineHeight: 1, marginBottom: 4 }}>{s.v}</div>
-              <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, letterSpacing: '0.15em', color: 'var(--muted)', textTransform: 'uppercase' as const, fontWeight: 600 }}>{s.l}</div>
-            </motion.div>
-          ))}
+        {/* Mobile Stats Ribbon */}
+        <div
+          className="sm:hidden hero-anim hero-fade w-full mt-7 pointer-events-auto"
+          style={{ animationDelay: '0.8s', maxWidth: 'min(380px, 92vw)' }}
+        >
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+            background: 'rgba(10, 13, 20, 0.65)',
+            backdropFilter: 'blur(16px)',
+            border: '1px solid rgba(255,255,255,0.15)',
+            borderRadius: 10,
+            padding: '10px 8px',
+          }}>
+            {[
+              { v: E.yearsExp,       l: 'Experience' },
+              { v: E.projectsMW,    l: 'Capacity'   },
+              { v: E.projectsCount, l: 'Projects'   },
+            ].map((s, i) => (
+              <div
+                key={s.l}
+                style={{
+                  borderRight: i < 2 ? '1px solid rgba(255,255,255,0.12)' : undefined,
+                  textAlign: 'center',
+                }}
+              >
+                <div className="display" style={{ fontSize: 22, color: 'var(--accent)', lineHeight: 1 }}>
+                  {s.v}
+                </div>
+                <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 8, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', marginTop: 3 }}>
+                  {s.l}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Scroll cue (desktop only) */}
-      <div className="desktop-only" style={{ ...fade(0.7), position: 'absolute', bottom: 28, right: 'var(--px)', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9, letterSpacing: '0.2em', color: 'var(--muted)', textTransform: 'uppercase' as const }}>Scroll</span>
-        <ArrowDown size={12} strokeWidth={2} style={{ color: 'var(--muted)', opacity: 0.7 }} />
+      {/* ════ Desktop Bottom Ribbon (Identity Left / Stats Right) ════ */}
+      <div
+        className="hero-anim hero-fade hidden sm:flex absolute justify-between items-end"
+        style={{ bottom: 36, left: 'var(--px, 40px)', right: 'var(--px, 40px)', zIndex: 50, animationDelay: '0.75s' }}
+      >
+        {/* Left: Identity */}
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 5 }}>
+            <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 10.5, letterSpacing: '0.22em', color: 'var(--accent)', textTransform: 'uppercase', fontWeight: 700 }}>
+              {E.initials || 'MSA'}
+            </span>
+            <div style={{ width: 32, height: 1, background: 'rgba(255,255,255,0.35)' }} />
+            <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>
+              Electrical Engineer
+            </span>
+          </div>
+          <p style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 14.5, color: '#FFFFFF', margin: 0 }}>
+            {E.name}
+          </p>
+        </div>
+
+        {/* Center: Scroll Cue */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
+          <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 8.5, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase' }}>
+            Scroll
+          </span>
+          <motion.div
+            animate={{ y: [0, 6, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <ArrowDown size={13} style={{ color: 'rgba(255,255,255,0.5)' }} strokeWidth={1.8} />
+          </motion.div>
+        </div>
+
+        {/* Right: Glass Stats Box */}
+        <div
+          style={{
+            background: 'rgba(10, 13, 20, 0.7)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.18)',
+            borderRadius: 10,
+            padding: '12px 20px',
+            width: 320,
+          }}
+        >
+          <p style={{
+            fontFamily: 'JetBrains Mono,monospace', fontSize: 8.5, letterSpacing: '0.18em',
+            color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', marginBottom: 8, textAlign: 'right',
+          }}>
+            {isTouch ? '✦ Tap to spotlight' : '↖ Move cursor to reveal'}
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+            {[
+              { v: E.yearsExp,       l: 'Yrs Exp.'  },
+              { v: E.projectsMW,    l: 'Capacity'  },
+              { v: E.projectsCount, l: 'Delivered' },
+            ].map((s, i) => (
+              <div key={s.l} style={{ textAlign: i === 0 ? 'left' : i === 2 ? 'right' : 'center' }}>
+                <div className="display" style={{ fontSize: 26, color: 'var(--accent)', lineHeight: 1 }}>
+                  {s.v}
+                </div>
+                <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 8, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', marginTop: 3 }}>
+                  {s.l}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   )
 }
 
-// ── Credential Strip ─────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════════
+// 2. TRUST & ACCREDITATION TICKER (MARQUEE)
+// ════════════════════════════════════════════════════════════════════════════
 function CredStrip() {
   const { data: { credentials } } = useSite()
   const items = [...credentials, ...credentials]
+
   return (
-    <div style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', overflow: 'hidden', background: 'var(--bg-2)' }}>
-      <div className="marquee-track" style={{ display: 'flex', alignItems: 'center', whiteSpace: 'nowrap', gap: 0, padding: '0' }}>
+    <div style={{
+      borderTop: '1px solid var(--border)',
+      borderBottom: '1px solid var(--border)',
+      overflow: 'hidden',
+      background: 'var(--bg-2)',
+      position: 'relative',
+    }}>
+      <div className="marquee-track" style={{ display: 'flex', alignItems: 'center', whiteSpace: 'nowrap', padding: 0 }}>
         {items.map((c, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 0, flexShrink: 0 }}>
-            <div style={{ padding: 'clamp(14px,2vh,20px) clamp(24px,4vw,48px)', display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 3, height: 3, background: 'var(--accent)', flexShrink: 0 }} />
-              <span style={{ fontFamily: 'Outfit,sans-serif', fontSize: 13, fontWeight: 500, color: 'var(--fg)', letterSpacing: '0.02em' }}>{c.label}</span>
-              <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 10, color: 'var(--fg-dim)', letterSpacing: '0.1em' }}>{c.value}</span>
+          <div key={i} style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+            <div style={{ padding: 'clamp(14px, 2vh, 18px) clamp(24px, 4vw, 44px)', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0 }} />
+              <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 13.5, fontWeight: 600, color: 'var(--fg)', letterSpacing: '0.01em' }}>
+                {c.label}
+              </span>
+              <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 10.5, color: 'var(--fg-dim)', letterSpacing: '0.08em', fontWeight: 500 }}>
+                {c.value}
+              </span>
             </div>
-            <div style={{ width: 1, height: 16, background: 'var(--border-strong)', flexShrink: 0 }} />
+            <div style={{ width: 1, height: 18, background: 'var(--border-strong)', flexShrink: 0 }} />
           </div>
         ))}
       </div>
@@ -275,392 +504,751 @@ function CredStrip() {
   )
 }
 
-// ── About ────────────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════════
+// 3. EDITORIAL ABOUT SECTION (Premium Typography & Precision)
+// ════════════════════════════════════════════════════════════════════════════
 function About() {
   const { data: { engineer: E } } = useSite()
+  const navigate = useNavigate()
+
   return (
     <section id="about" style={{ padding: 'var(--section-py) var(--px)', maxWidth: 'var(--max-w)', margin: '0 auto' }}>
-      <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: 'clamp(32px,5vh,60px)', marginBottom: 'clamp(40px,6vh,72px)' }}>
+      <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: 'clamp(28px, 4.5vh, 48px)', marginBottom: 'clamp(36px, 5vh, 64px)' }}>
         <Reveal>
-          <SIdx n="02" label="About" />
+          <SIdx n="02" label="Engineering Profile" />
         </Reveal>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%,400px),1fr))', gap: 'clamp(40px,7vw,100px)', alignItems: 'start' }}>
-        {/* Left — portrait */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 380px), 1fr))', gap: 'clamp(36px, 6vw, 84px)', alignItems: 'start' }}>
+        {/* Left: Portrait Card with Architectural Border */}
         <Reveal>
-          <div>
-            {/* Portrait frame */}
+          <div style={{ position: 'relative' }}>
             <div style={{
-              aspectRatio: '4/5', background: 'var(--bg-3)',
+              aspectRatio: '4/5',
+              background: 'var(--bg-3)',
               border: '1px solid var(--border-strong)',
-              overflow: 'hidden', position: 'relative',
-              boxShadow: '0 12px 36px rgba(0,0,0,0.12)',
+              borderRadius: 8,
+              overflow: 'hidden',
+              position: 'relative',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.12)',
             }}>
               <img
                 src={E.photo || sahinPhoto}
                 alt={E.name || "Md Sahin Alom"}
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
-              {/* Amber frame accent */}
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: 'var(--accent)' }} />
-              <div style={{ position: 'absolute', top: 16, left: 16 }}>
-                <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase' as const }}>ABC Licensed · Electrical Engineer</span>
+
+              {/* Bottom Gradient Overlay */}
+              <div style={{
+                position: 'absolute', inset: 0,
+                background: 'linear-gradient(to top, rgba(10,13,20,0.85) 0%, transparent 45%)',
+                pointerEvents: 'none',
+              }} />
+
+              {/* Verification Stamp Top Left */}
+              <div style={{
+                position: 'absolute', top: 16, left: 16,
+                background: 'rgba(10,13,20,0.75)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                borderRadius: 4, padding: '5px 12px',
+                display: 'flex', alignItems: 'center', gap: 6,
+              }}>
+                <CheckCircle2 size={12} style={{ color: 'var(--accent)' }} />
+                <span style={{
+                  fontFamily: 'JetBrains Mono, monospace', fontSize: 9.5,
+                  letterSpacing: '0.14em', color: '#FFFFFF', textTransform: 'uppercase', fontWeight: 600,
+                }}>
+                  ABC Certified Engineer
+                </span>
+              </div>
+
+              {/* Bottom Details Overlay */}
+              <div style={{ position: 'absolute', bottom: 18, left: 20, right: 20 }}>
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, fontWeight: 700, color: '#FFFFFF' }}>
+                  {E.name}
+                </div>
+                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: 'rgba(255,255,255,0.75)', marginTop: 2 }}>
+                  Senior Power Systems Engineer · Substation Specialist
+                </div>
               </div>
             </div>
-          </div>
-        </Reveal>
 
-        {/* Right — bio */}
-        <div>
-          <Reveal>
-            <h2 className="display" style={{ fontSize: 'clamp(40px,6vw,80px)', color: 'var(--fg)', marginBottom: 'clamp(24px,4vh,40px)', letterSpacing: '-0.01em' }}>
-              {E.name}
-            </h2>
-          </Reveal>
-          <Reveal delay={1}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 'clamp(24px,4vh,40px)', paddingBottom: 'clamp(24px,4vh,40px)', borderBottom: '1px solid var(--border)' }}>
-              <span className="display" style={{ fontSize: 'clamp(14px,2vw,18px)', color: 'var(--accent)', letterSpacing: 0 }}>{E.title}</span>
-              <div style={{ width: 4, height: 4, background: 'var(--border-strong)', borderRadius: '50%' }} />
-              <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 10, color: 'var(--fg-dim)', letterSpacing: '0.1em', textTransform: 'uppercase' as const }}>{E.subtitle}</span>
-            </div>
-          </Reveal>
-          <Reveal delay={2}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {(E.bio || []).map((p, i) => (
-                <p key={i} style={{ fontFamily: 'Outfit,sans-serif', fontSize: 'clamp(15px,1.4vw,17px)', color: 'var(--fg-dim)', lineHeight: 1.75, fontWeight: 300 }}>{p}</p>
-              ))}
-            </div>
-          </Reveal>
-          <Reveal delay={3}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 'clamp(28px,4vh,48px)', paddingTop: 'clamp(28px,4vh,48px)', borderTop: '1px solid var(--border)' }}>
-              {[
-                { icon: <MapPin size={14} strokeWidth={1.5} />, v: E.location },
-                { icon: <Mail size={14} strokeWidth={1.5} />,   v: E.email },
-                { icon: <Phone size={14} strokeWidth={1.5} />,  v: E.phone },
-                { icon: <Globe size={14} strokeWidth={1.5} />,  v: E.linkedin, link: E.linkedin },
-              ].filter(r => r.v).map((r, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span style={{ color: 'var(--accent)', flexShrink: 0 }}>{r.icon}</span>
-                  {r.link
-                    ? <a href={r.link} target="_blank" rel="noopener noreferrer" className="link-line" style={{ fontFamily: 'Outfit,sans-serif', fontSize: 14, color: 'var(--fg-dim)', fontWeight: 400 }}>{r.v}</a>
-                    : <span style={{ fontFamily: 'Outfit,sans-serif', fontSize: 14, color: 'var(--fg-dim)' }}>{r.v}</span>
-                  }
-                </div>
-              ))}
-            </div>
-          </Reveal>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// ── Expertise ────────────────────────────────────────────────────────────────
-function Expertise() {
-  const { data: { expertise } } = useSite()
-  const [hov, setHov] = useState<number | null>(null)
-
-  return (
-    <section id="expertise" style={{ padding: 'var(--section-py) 0', background: 'var(--bg-2)' }}>
-      <div style={{ maxWidth: 'var(--max-w)', margin: '0 auto', padding: '0 var(--px)' }}>
-        <Reveal>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 'clamp(40px,6vh,72px)', paddingBottom: 'clamp(32px,5vh,56px)', borderBottom: '1px solid var(--border)', flexWrap: 'wrap', gap: 16 }}>
-            <div>
-              <SIdx n="03" label="Expertise" />
-              <h2 className="display" style={{ fontSize: 'clamp(44px,7vw,96px)', color: 'var(--fg)', marginTop: 16 }}>Technical<br />Practice</h2>
-            </div>
-            <p style={{ fontFamily: 'Outfit,sans-serif', fontSize: 15, color: 'var(--fg-dim)', maxWidth: 340, lineHeight: 1.7, fontWeight: 300 }}>
-              {expertise.length} specialized areas spanning the full lifecycle of power infrastructure — from planning through commissioning.
-            </p>
-          </div>
-        </Reveal>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%,320px),1fr))', gap: 1, background: 'var(--border)' }}>
-          {expertise.map((item, i) => (
-            <Reveal key={item.id} delay={(i % 3 + 1) as 1 | 2 | 3}>
-              <motion.div
-                onMouseEnter={() => setHov(i)}
-                onMouseLeave={() => setHov(null)}
-                whileHover={{ y: -4 }}
-                transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+            {/* Quick Contact Ribbon below portrait */}
+            <div style={{
+              display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginTop: 14,
+            }}>
+              <a
+                href={`mailto:${E.email}`}
                 style={{
-                  padding: 'clamp(28px,4vw,48px)',
-                  background: hov === i ? 'var(--bg-3)' : 'var(--bg-2)',
-                  cursor: 'default',
-                  transition: 'background 0.25s ease',
-                  borderLeft: hov === i ? '2px solid var(--accent)' : '2px solid transparent',
-                  position: 'relative', overflow: 'hidden',
-                  height: '100%',
-                }}
-              >
-                {/* Large background number */}
-                <div className="display" style={{
-                  position: 'absolute', top: -10, right: 16,
-                  fontSize: 'clamp(80px,10vw,130px)',
-                  color: 'var(--border-strong)',
-                  lineHeight: 1, pointerEvents: 'none',
-                  transition: 'color 0.25s',
-                  ...(hov === i ? { color: 'rgba(196,125,14,0.1)' } : {}),
-                }}>{item.num}</div>
-
-                <div style={{ color: hov === i ? 'var(--accent)' : 'var(--fg-dim)', marginBottom: 20, transition: 'color 0.25s', position: 'relative', zIndex: 1 }}>
-                  {EXPERTISE_ICONS[item.id] ?? <Zap size={18} strokeWidth={1} />}
-                </div>
-                <h3 style={{ fontFamily: 'Outfit,sans-serif', fontSize: 'clamp(16px,1.8vw,20px)', fontWeight: 600, color: 'var(--fg)', marginBottom: 12, position: 'relative', zIndex: 1, lineHeight: 1.2 }}>{item.title}</h3>
-                <p style={{ fontFamily: 'Outfit,sans-serif', fontSize: 13, color: 'var(--fg-dim)', lineHeight: 1.7, marginBottom: 20, fontWeight: 300, position: 'relative', zIndex: 1 }}>{item.desc}</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, position: 'relative', zIndex: 1 }}>
-                  {item.tags.slice(0, 4).map((t, j) => (
-                    <span key={j} className="tag">{t}</span>
-                  ))}
-                </div>
-              </motion.div>
-            </Reveal>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// ── Projects ─────────────────────────────────────────────────────────────────
-function Projects() {
-  const { data: { projects } } = useSite()
-  const [active, setActive] = useState(0)
-  const proj = projects[active]
-
-  if (!projects.length) return null
-
-  return (
-    <section id="projects" style={{ padding: 'var(--section-py) 0', background: 'var(--bg)' }}>
-      <div style={{ maxWidth: 'var(--max-w)', margin: '0 auto', padding: '0 var(--px)' }}>
-
-        {/* Section header */}
-        <Reveal>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 'clamp(32px,5vh,56px)', paddingBottom: 'clamp(24px,4vh,40px)', borderBottom: '1px solid var(--border)', flexWrap: 'wrap', gap: 16 }}>
-            <div>
-              <SIdx n="04" label="Projects" />
-              <h2 className="display" style={{ fontSize: 'clamp(44px,7vw,96px)', color: 'var(--fg)', marginTop: 16 }}>Featured<br />Work</h2>
-            </div>
-            <p style={{ fontFamily: 'Outfit,sans-serif', fontSize: 15, color: 'var(--fg-dim)', maxWidth: 320, lineHeight: 1.7, fontWeight: 300 }}>
-              Landmark infrastructure projects delivered across South Asia and beyond.
-            </p>
-          </div>
-        </Reveal>
-
-        {/* Tab strip */}
-        <Reveal>
-          <div style={{ display: 'flex', gap: 0, marginBottom: 'clamp(28px,4vh,48px)', overflowX: 'auto', scrollbarWidth: 'none', borderBottom: '1px solid var(--border)' }}>
-            {projects.map((p, i) => (
-              <button
-                key={p.id}
-                onClick={() => setActive(i)}
-                style={{
-                  flexShrink: 0,
-                  display: 'flex', flexDirection: 'column', gap: 6,
-                  padding: 'clamp(14px,2.5vh,20px) clamp(16px,3vw,32px)',
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  borderBottom: active === i ? '2px solid var(--accent)' : '2px solid transparent',
-                  marginBottom: -1,
-                  textAlign: 'left' as const,
+                  display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px',
+                  background: 'var(--bg-2)', border: '1px solid var(--border)',
+                  borderRadius: 6, textDecoration: 'none', color: 'var(--fg)',
                   transition: 'border-color 0.2s',
                 }}
+                onMouseEnter={e => ((e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)')}
+                onMouseLeave={e => ((e.currentTarget as HTMLElement).style.borderColor = 'var(--border)')}
               >
-                <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9, letterSpacing: '0.2em', color: active === i ? 'var(--accent)' : 'var(--muted)', textTransform: 'uppercase' as const, transition: 'color 0.2s' }}>{p.num}</span>
-                <span style={{ fontFamily: 'Outfit,sans-serif', fontSize: 'clamp(13px,1.5vw,15px)', fontWeight: 600, color: active === i ? 'var(--fg)' : 'var(--fg-dim)', whiteSpace: 'nowrap', transition: 'color 0.2s' }}>{p.title}</span>
-              </button>
-            ))}
+                <Mail size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                <div style={{ overflow: 'hidden' }}>
+                  <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8.5, color: 'var(--muted)', textTransform: 'uppercase' }}>Email</div>
+                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11.5, fontWeight: 600, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                    {E.email}
+                  </div>
+                </div>
+              </a>
+
+              <a
+                href={E.whatsapp ? `https://wa.me/${E.whatsapp}` : `tel:${E.phone}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px',
+                  background: 'var(--bg-2)', border: '1px solid var(--border)',
+                  borderRadius: 6, textDecoration: 'none', color: 'var(--fg)',
+                  transition: 'border-color 0.2s',
+                }}
+                onMouseEnter={e => ((e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)')}
+                onMouseLeave={e => ((e.currentTarget as HTMLElement).style.borderColor = 'var(--border)')}
+              >
+                <Phone size={14} style={{ color: 'var(--green)', flexShrink: 0 }} />
+                <div style={{ overflow: 'hidden' }}>
+                  <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8.5, color: 'var(--muted)', textTransform: 'uppercase' }}>Direct / WhatsApp</div>
+                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11.5, fontWeight: 600, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                    {E.whatsapp || E.phone}
+                  </div>
+                </div>
+              </a>
+            </div>
           </div>
         </Reveal>
 
-        {/* Active project showcase with AnimatePresence */}
-        <AnimatePresence mode="wait">
-          {proj && (
-            <motion.div
-              key={proj.id}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.28, ease: luxuryEase }}
-              style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))', gap: 'clamp(24px,4vw,56px)', alignItems: 'start' }}
-            >
+        {/* Right: Technical Biography & Action Panel */}
+        <div>
+          <Reveal>
+            <h2 className="display" style={{
+              fontSize: 'clamp(36px, 5.5vw, 76px)',
+              color: 'var(--fg)',
+              marginBottom: 'clamp(16px, 3vh, 28px)',
+              letterSpacing: '-0.02em',
+            }}>
+              <span className="font-playfair italic font-normal" style={{ textTransform: 'none', marginRight: 12, color: 'var(--accent)' }}>
+                High Voltage
+              </span>
+              Precision.<br />
+              Zero Fault Tolerance.
+            </h2>
+          </Reveal>
 
-              {/* ── Left: image + capacity ── */}
-              <div style={{ position: 'relative' }}>
-                {/* Ghosted project number */}
-                <div className="display" style={{
-                  position: 'absolute', top: -24, left: -8, zIndex: 0,
-                  fontSize: 'clamp(100px,18vw,220px)', lineHeight: 1,
-                  color: 'var(--border)', pointerEvents: 'none', userSelect: 'none',
-                  letterSpacing: '-0.02em',
-                }}>{proj.num}</div>
+          <Reveal delay={1}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              marginBottom: 24, paddingBottom: 20, borderBottom: '1px solid var(--border)',
+            }}>
+              <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, fontWeight: 700, color: 'var(--fg)' }}>
+                {E.title}
+              </span>
+              <div style={{ width: 4, height: 4, background: 'var(--border-strong)', borderRadius: '50%' }} />
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10.5, color: 'var(--accent)', textTransform: 'uppercase', fontWeight: 600 }}>
+                {E.subtitle || 'Power Systems & Substation Design Specialist'}
+              </span>
+            </div>
+          </Reveal>
 
-                {/* Image */}
-                <motion.div
-                  className="project-card"
-                  whileHover={{ scale: 1.015 }}
-                  transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-                  style={{ position: 'relative', overflow: 'hidden', aspectRatio: '4/3', background: proj.imgColor || '#D4CFC5', zIndex: 1 }}
+          <Reveal delay={2}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {(E.bio || [
+                "Md Sahin Alom is a specialized Electrical Engineer with extensive hands-on expertise in high-voltage substation engineering, industrial power distribution, and power system protection across South Asia.",
+                "Proven track record delivering end-to-end electrical design for 33/11kV substations, industrial manufacturing plants, commercial towers, and utility-scale solar PV interconnections adhering strictly to BNBC 2020, IEEE, and IEC standards."
+              ]).map((p, i) => (
+                <p key={i} style={{ fontFamily: "'Inter', sans-serif", fontSize: 'clamp(15px, 1.3vw, 17px)', color: 'var(--fg-dim)', lineHeight: 1.75, fontWeight: 350 }}>
+                  {p}
+                </p>
+              ))}
+            </div>
+          </Reveal>
+
+          {/* Key Engineering Pillars */}
+          <Reveal delay={3}>
+            <div style={{
+              display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12,
+              marginTop: 28, paddingTop: 24, borderTop: '1px solid var(--border)',
+            }}>
+              {[
+                { title: 'Substation Engineering', desc: '33/11kV & 132/33kV SLD, GIS/AIS layout, and transformer sizing.' },
+                { title: 'Protection Coordination', desc: 'Relay settings, short circuit calculations & discrimination.' },
+                { title: 'BNBC 2020 Compliance', desc: 'Complete building electrical safety, LPS & earthing compliance.' },
+              ].map(pillar => (
+                <div
+                  key={pillar.title}
+                  style={{
+                    padding: '14px 16px', background: 'var(--bg-2)', border: '1px solid var(--border)',
+                    borderRadius: 6,
+                  }}
                 >
-                  {proj.img
-                    ? <img src={proj.img} alt={proj.title} loading="lazy" className="project-img" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                    : <div style={{ width: '100%', height: '100%', background: `linear-gradient(140deg, ${proj.imgColor || '#E8E4DA'}, var(--bg-3))`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Zap size={48} strokeWidth={0.5} style={{ color: 'var(--accent)', opacity: 0.3 }} />
-                      </div>
-                  }
-                  {/* Gradient overlay */}
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 50%)' }} />
-
-                  {/* Capacity badge — bottom-left */}
-                  {proj.capacity && (
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 'clamp(16px,3vw,24px)' }}>
-                      <div className="display" style={{ fontSize: 'clamp(28px,5vw,60px)', color: '#FFFFFF', lineHeight: 1, textShadow: '0 2px 24px rgba(0,0,0,0.5)' }}>{proj.capacity}</div>
-                      <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.2em', textTransform: 'uppercase' as const, marginTop: 4 }}>Installed Capacity</div>
-                    </div>
-                  )}
-
-                  {/* Year — top right */}
-                  <div style={{ position: 'absolute', top: 16, right: 16, padding: '4px 10px', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)' }}>
-                    <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9, color: 'rgba(255,255,255,0.8)', letterSpacing: '0.15em' }}>{proj.year}</span>
+                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 700, color: 'var(--fg)', marginBottom: 4 }}>
+                    {pillar.title}
                   </div>
-                </motion.div>
-
-                {/* Meta strip below image */}
-                <div style={{ display: 'flex', gap: 0, marginTop: 2, background: 'var(--border)' }}>
-                  {[
-                    { l: 'Client',   v: proj.client },
-                    { l: 'Location', v: proj.location },
-                    { l: 'Category', v: proj.category },
-                  ].filter(m => m.v).map((m, mi) => (
-                    <div key={mi} style={{ flex: 1, padding: '12px 14px', background: 'var(--bg-2)' }}>
-                      <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 8, letterSpacing: '0.2em', color: 'var(--muted)', textTransform: 'uppercase' as const, marginBottom: 4 }}>{m.l}</div>
-                      <div style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12, color: 'var(--fg)', fontWeight: 500, lineHeight: 1.3 }}>{m.v}</div>
-                    </div>
-                  ))}
+                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11.5, color: 'var(--fg-dim)', lineHeight: 1.5 }}>
+                    {pillar.desc}
+                  </div>
                 </div>
-              </div>
+              ))}
+            </div>
+          </Reveal>
 
-              {/* ── Right: details ── */}
-              <div style={{ paddingTop: 'clamp(0px,2vh,32px)' }}>
-                {/* Title + category */}
-                <div style={{ marginBottom: 'clamp(20px,3vh,36px)' }}>
-                  <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9, letterSpacing: '0.22em', color: 'var(--accent)', textTransform: 'uppercase' as const, marginBottom: 10 }}>{proj.category}</div>
-                  <h3 className="display" style={{ fontSize: 'clamp(28px,4.5vw,56px)', color: 'var(--fg)', lineHeight: 0.95, marginBottom: 16 }}>{proj.title}</h3>
-                  <p style={{ fontFamily: 'Outfit,sans-serif', fontSize: 15, color: 'var(--fg-dim)', lineHeight: 1.75, fontWeight: 300 }}>{proj.summary}</p>
-                </div>
-
-                {/* Scope */}
-                {proj.scope.length > 0 && (
-                  <div style={{ marginBottom: 'clamp(20px,3vh,32px)', paddingBottom: 'clamp(20px,3vh,32px)', borderBottom: '1px solid var(--border)' }}>
-                    <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9, letterSpacing: '0.2em', color: 'var(--muted)', textTransform: 'uppercase' as const, marginBottom: 16 }}>Scope of Work</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      {proj.scope.map((s, j) => (
-                        <div key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                          <div style={{ width: 18, height: 1, background: 'var(--accent)', marginTop: 9, flexShrink: 0 }} />
-                          <span style={{ fontFamily: 'Outfit,sans-serif', fontSize: 14, color: 'var(--fg-dim)', lineHeight: 1.6 }}>{s}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Outcome callout */}
-                {proj.outcome && (
-                  <div style={{ padding: 'clamp(16px,2.5vw,24px)', background: 'var(--accent-dim)', borderLeft: '3px solid var(--accent)', marginBottom: 'clamp(20px,3vh,32px)' }}>
-                    <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9, letterSpacing: '0.22em', color: 'var(--accent)', textTransform: 'uppercase' as const, marginBottom: 8 }}>Key Result</div>
-                    <p style={{ fontFamily: 'Outfit,sans-serif', fontSize: 14, color: 'var(--fg)', lineHeight: 1.65, fontWeight: 400 }}>{proj.outcome}</p>
-                  </div>
-                )}
-
-                {/* Deliverables */}
-                {proj.deliverables.length > 0 && (
-                  <div style={{ marginBottom: 'clamp(20px,3vh,32px)', paddingBottom: 'clamp(20px,3vh,32px)', borderBottom: '1px solid var(--border)' }}>
-                    <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9, letterSpacing: '0.2em', color: 'var(--muted)', textTransform: 'uppercase' as const, marginBottom: 12 }}>Deliverables</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                      {proj.deliverables.map((d, j) => (
-                        <span key={j} style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12, color: 'var(--fg-dim)', padding: '5px 12px', background: 'var(--bg-3)', border: '1px solid var(--border)' }}>{d}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Tools */}
-                {proj.tools.length > 0 && (
-                  <div>
-                    <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9, letterSpacing: '0.2em', color: 'var(--muted)', textTransform: 'uppercase' as const, marginBottom: 12 }}>Software Used</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                      {proj.tools.map((t, j) => <span key={j} className="tag">{t}</span>)}
-                    </div>
-                  </div>
-                )}
-
-                {/* Prev / next navigation */}
-                {projects.length > 1 && (
-                  <div style={{ display: 'flex', gap: 10, marginTop: 'clamp(24px,4vh,40px)', paddingTop: 'clamp(24px,4vh,40px)', borderTop: '1px solid var(--border)' }}>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => setActive(a => (a - 1 + projects.length) % projects.length)}
-                      style={{ flex: 1, padding: '12px', background: 'var(--bg-2)', border: '1px solid var(--border)', cursor: 'pointer', fontFamily: 'JetBrains Mono,monospace', fontSize: 10, letterSpacing: '0.12em', color: 'var(--fg-dim)', textTransform: 'uppercase' as const, transition: 'border-color 0.2s, color 0.2s' }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)'; (e.currentTarget as HTMLElement).style.color = 'var(--accent)' }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--fg-dim)' }}
-                    >← Prev</motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => setActive(a => (a + 1) % projects.length)}
-                      style={{ flex: 1, padding: '12px', background: 'var(--accent)', border: '1px solid var(--accent)', cursor: 'pointer', fontFamily: 'JetBrains Mono,monospace', fontSize: 10, letterSpacing: '0.12em', color: '#FFFFFF', textTransform: 'uppercase' as const, transition: 'opacity 0.2s' }}
-                      onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = '0.85')}
-                      onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = '1')}
-                    >Next →</motion.button>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+          {/* Action Buttons */}
+          <Reveal delay={4}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 32 }}>
+              <button
+                onClick={() => navigate('/cv')}
+                className="btn-primary"
+                style={{ borderRadius: 6, padding: '12px 24px' }}
+              >
+                <Download size={14} /> Download Certified CV
+              </button>
+              <button
+                onClick={() => navigate('/biodata')}
+                className="btn-outline"
+                style={{ borderRadius: 6, padding: '12px 24px' }}
+              >
+                View Complete Biodata
+              </button>
+            </div>
+          </Reveal>
+        </div>
       </div>
     </section>
   )
 }
 
-// ── Services ──────────────────────────────────────────────────────────────────
-function Services() {
-  const { data: { services } } = useSite()
-  const [hov, setHov] = useState<number | null>(null)
+// ════════════════════════════════════════════════════════════════════════════
+// 4. TECHNICAL PRACTICE (BENTO GRID WITH EDITORIAL TYPOGRAPHY)
+// ════════════════════════════════════════════════════════════════════════════
+const PRACTICE_CARDS = [
+  {
+    id: 'substation',
+    num: '01',
+    title: 'High-Voltage Substation Design',
+    desc: 'Turnkey engineering for 33/11kV and 132/33kV substations including Single-Line Diagrams (SLD), AIS/GIS switchgear configuration, and outdoor yard layouts.',
+    icon: <Zap size={22} strokeWidth={1.6} />,
+    tags: ['33/11kV Substation', 'SLD Schematics', 'GIS & AIS', 'Busbar Sizing', 'IEC 61936'],
+    span: 'col-span-1 md:col-span-2',
+    highlight: '100+ MW Substation Capacity Designed',
+  },
+  {
+    id: 'protection',
+    num: '02',
+    title: 'Protection & Arc Flash Coordination',
+    desc: 'Relay coordination studies, short-circuit current calculations (IEC 60909), and trip curve discrimination to guarantee zero cascading outages.',
+    icon: <ShieldCheck size={22} strokeWidth={1.6} />,
+    tags: ['Relay Discrimination', 'Short Circuit IEC 60909', 'Arc Flash IEEE 1584', 'Trip Curves'],
+    span: 'col-span-1',
+  },
+  {
+    id: 'cable',
+    num: '03',
+    title: 'Industrial Power Distribution',
+    desc: 'Precise cable ampacity sizing, thermal derating factors, short-circuit withstand checks, and voltage drop optimization for high-demand industrial plants.',
+    icon: <Activity size={22} strokeWidth={1.6} />,
+    tags: ['Cable Derating', 'Busway Systems', 'Voltage Drop', 'Load Flow ETAP'],
+    span: 'col-span-1',
+  },
+  {
+    id: 'solar',
+    num: '04',
+    title: 'Renewable Solar PV Grid Integration',
+    desc: 'MW-scale solar PV plant electrical balance of system (eBOS), central inverter stations, MV step-up transformers, and utility grid interconnection.',
+    icon: <Wind size={22} strokeWidth={1.6} />,
+    tags: ['Utility Solar PV', 'Inverter Stations', 'PVSyst Simulation', 'Grid-Tie Compliance'],
+    span: 'col-span-1',
+  },
+  {
+    id: 'bnbc',
+    num: '05',
+    title: 'Building Compliance & BNBC 2020',
+    desc: 'Code-compliant building electrical design, lightning protection systems (LPS), Dialux lighting calculations, and deep earthing grid networks.',
+    icon: <Layers size={22} strokeWidth={1.6} />,
+    tags: ['BNBC 2020', 'Dialux evo', 'LPS NFC 17-102', 'Earthing Resistance'],
+    span: 'col-span-1 md:col-span-2',
+    highlight: 'Full Statutory Safety Approvals Guaranteed',
+  },
+]
+
+function Expertise() {
+  const [hovered, setHovered] = useState<string | null>(null)
 
   return (
     <section id="services" style={{ padding: 'var(--section-py) 0', background: 'var(--bg-2)' }}>
       <div style={{ maxWidth: 'var(--max-w)', margin: '0 auto', padding: '0 var(--px)' }}>
         <Reveal>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 'clamp(40px,6vh,72px)', paddingBottom: 'clamp(32px,5vh,56px)', borderBottom: '1px solid var(--border)', flexWrap: 'wrap', gap: 16 }}>
+          <div style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
+            marginBottom: 'clamp(36px, 5vh, 64px)', paddingBottom: 'clamp(28px, 4vh, 48px)',
+            borderBottom: '1px solid var(--border)', flexWrap: 'wrap', gap: 16,
+          }}>
             <div>
-              <SIdx n="05" label="Services" />
-              <h2 className="display" style={{ fontSize: 'clamp(44px,7vw,96px)', color: 'var(--fg)', marginTop: 16 }}>What I<br />Deliver</h2>
+              <SIdx n="03" label="Technical Practice" />
+              <h2 className="display" style={{ fontSize: 'clamp(40px, 6.5vw, 88px)', color: 'var(--fg)', marginTop: 16 }}>
+                <span className="font-playfair italic font-normal" style={{ textTransform: 'none', marginRight: 14 }}>
+                  Technical
+                </span>
+                Practice
+              </h2>
             </div>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: 'var(--fg-dim)', maxWidth: 360, lineHeight: 1.7, fontWeight: 350 }}>
+              Specialized electrical engineering across the complete infrastructure lifecycle — from mathematical feasibility and simulation to physical commissioning.
+            </p>
+          </div>
+        </Reveal>
+
+        {/* Bento Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {PRACTICE_CARDS.map((card, idx) => {
+            const isHov = hovered === card.id
+            return (
+              <Reveal key={card.id} delay={idx} className={card.span}>
+                <motion.div
+                  onMouseEnter={() => setHovered(card.id)}
+                  onMouseLeave={() => setHovered(null)}
+                  whileHover={{ y: -4 }}
+                  transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                  style={{
+                    height: '100%',
+                    padding: 'clamp(24px, 3.5vw, 36px)',
+                    background: isHov ? 'var(--bg-3)' : 'var(--card-bg)',
+                    border: '1px solid',
+                    borderColor: isHov ? 'var(--accent)' : 'var(--border)',
+                    borderRadius: 8,
+                    position: 'relative',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    boxShadow: isHov ? '0 16px 36px rgba(0,0,0,0.08)' : 'none',
+                    transition: 'border-color 0.25s ease, background 0.25s ease',
+                  }}
+                >
+                  {/* Huge background number */}
+                  <div
+                    className="display"
+                    style={{
+                      position: 'absolute', top: -10, right: 14,
+                      fontSize: 'clamp(80px, 9vw, 120px)',
+                      color: 'var(--border)',
+                      lineHeight: 1, pointerEvents: 'none', userSelect: 'none',
+                      opacity: isHov ? 0.35 : 0.2,
+                      transition: 'opacity 0.25s',
+                    }}
+                  >
+                    {card.num}
+                  </div>
+
+                  <div>
+                    {/* Header: Icon + Highlight Badge */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                      <div style={{
+                        width: 44, height: 44, borderRadius: 6,
+                        background: isHov ? 'var(--accent)' : 'var(--accent-dim)',
+                        color: isHov ? '#FFFFFF' : 'var(--accent)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        transition: 'all 0.25s ease',
+                      }}>
+                        {card.icon}
+                      </div>
+
+                      {card.highlight && (
+                        <span style={{
+                          fontFamily: 'JetBrains Mono, monospace', fontSize: 9,
+                          color: 'var(--green)', background: 'rgba(22,163,74,0.12)',
+                          padding: '3px 8px', borderRadius: 4, fontWeight: 700,
+                        }}>
+                          {card.highlight}
+                        </span>
+                      )}
+                    </div>
+
+                    <h3 style={{
+                      fontFamily: "'Inter', sans-serif", fontSize: 'clamp(18px, 1.8vw, 22px)',
+                      fontWeight: 700, color: 'var(--fg)', marginBottom: 12, lineHeight: 1.25,
+                    }}>
+                      {card.title}
+                    </h3>
+
+                    <p style={{
+                      fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: 'var(--fg-dim)',
+                      lineHeight: 1.7, marginBottom: 20, fontWeight: 350,
+                    }}>
+                      {card.desc}
+                    </p>
+                  </div>
+
+                  {/* Tags */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
+                    {card.tags.map(t => (
+                      <span key={t} className="tag" style={{ borderRadius: 4, padding: '3px 8px' }}>
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </motion.div>
+              </Reveal>
+            )
+          })}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 5. BRAND NEW REDESIGNED PROJECTS SECTION (Completely Rebuilt & Dynamic)
+// ════════════════════════════════════════════════════════════════════════════
+function Projects() {
+  const { data: { projects } } = useSite()
+  const [activeCategory, setActiveCategory] = useState('All')
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null)
+
+  const categories = useMemo(() => {
+    const list = new Set(['All'])
+    projects.forEach(p => {
+      if (p.category) list.add(p.category)
+    })
+    return Array.from(list)
+  }, [projects])
+
+  const filtered = useMemo(() => {
+    if (activeCategory === 'All') return projects
+    return projects.filter(p => p.category === activeCategory)
+  }, [projects, activeCategory])
+
+  return (
+    <section id="projects" style={{ padding: 'var(--section-py) 0', background: 'var(--bg)' }}>
+      <div style={{ maxWidth: 'var(--max-w)', margin: '0 auto', padding: '0 var(--px)' }}>
+
+        {/* Section Header */}
+        <Reveal>
+          <div style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
+            marginBottom: 'clamp(36px, 5vh, 64px)', paddingBottom: 'clamp(24px, 4vh, 44px)',
+            borderBottom: '1px solid var(--border)', flexWrap: 'wrap', gap: 16,
+          }}>
+            <div>
+              <SIdx n="04" label="Selected Engineering" />
+              <h2 className="display" style={{ fontSize: 'clamp(40px, 6.5vw, 88px)', color: 'var(--fg)', marginTop: 16 }}>
+                <span className="font-playfair italic font-normal" style={{ textTransform: 'none', marginRight: 14 }}>
+                  Landmark
+                </span>
+                Projects
+              </h2>
+            </div>
+
+            {/* Category Filter Pills */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {categories.map(cat => {
+                const active = activeCategory === cat
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveCategory(cat)}
+                    style={{
+                      padding: '7px 16px', borderRadius: 20,
+                      fontFamily: 'JetBrains Mono, monospace', fontSize: 10,
+                      letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer',
+                      background: active ? 'var(--accent)' : 'var(--bg-2)',
+                      color: active ? '#FFFFFF' : 'var(--fg-dim)',
+                      border: '1px solid',
+                      borderColor: active ? 'var(--accent)' : 'var(--border)',
+                      transition: 'all 0.2s ease',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {cat}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </Reveal>
+
+        {/* Dynamic Project Grid */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 420px), 1fr))',
+          gap: 'clamp(20px, 3vw, 32px)',
+        }}>
+          {filtered.map((proj, idx) => (
+            <Reveal key={proj.id || idx} delay={idx % 4}>
+              <motion.article
+                whileHover={{ y: -5 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 24 }}
+                style={{
+                  background: 'var(--card-bg)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 10,
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%',
+                  boxShadow: '0 8px 30px rgba(0,0,0,0.04)',
+                  transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)'
+                  ;(e.currentTarget as HTMLElement).style.boxShadow = '0 16px 40px rgba(0,0,0,0.08)'
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'
+                  ;(e.currentTarget as HTMLElement).style.boxShadow = '0 8px 30px rgba(0,0,0,0.04)'
+                }}
+              >
+                {/* Image / Graphic Banner */}
+                <div style={{ position: 'relative', aspectRatio: '16/10', overflow: 'hidden', background: proj.imgColor || 'var(--bg-3)' }}>
+                  {proj.img ? (
+                    <img
+                      src={proj.img}
+                      alt={proj.title}
+                      loading="lazy"
+                      className="project-img"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: '100%', height: '100%',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: `linear-gradient(135deg, var(--bg-2) 0%, var(--bg-3) 100%)`,
+                    }}>
+                      <Zap size={48} strokeWidth={0.6} style={{ color: 'var(--accent)', opacity: 0.35 }} />
+                    </div>
+                  )}
+
+                  {/* Gradient Overlay */}
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(10,13,20,0.75) 0%, transparent 60%)' }} />
+
+                  {/* Top Bar: Number & Category Chip */}
+                  <div style={{
+                    position: 'absolute', top: 14, left: 14, right: 14,
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  }}>
+                    <span style={{
+                      fontFamily: 'JetBrains Mono, monospace', fontSize: 10,
+                      fontWeight: 700, color: '#FFFFFF', background: 'rgba(10,13,20,0.75)',
+                      backdropFilter: 'blur(8px)', padding: '3px 8px', borderRadius: 4,
+                      letterSpacing: '0.1em',
+                    }}>
+                      {proj.num || `PRJ-${idx + 1}`}
+                    </span>
+
+                    {proj.year && (
+                      <span style={{
+                        fontFamily: 'JetBrains Mono, monospace', fontSize: 9.5,
+                        color: 'rgba(255,255,255,0.9)', background: 'rgba(10,13,20,0.75)',
+                        backdropFilter: 'blur(8px)', padding: '3px 8px', borderRadius: 4,
+                      }}>
+                        {proj.year}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Bottom Capacity Banner */}
+                  {proj.capacity && (
+                    <div style={{ position: 'absolute', bottom: 12, left: 14, right: 14 }}>
+                      <div className="display" style={{ fontSize: 'clamp(24px, 3vw, 36px)', color: '#FFFFFF', lineHeight: 1 }}>
+                        {proj.capacity}
+                      </div>
+                      <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'rgba(255,255,255,0.75)', letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: 2 }}>
+                        Installed Grid Capacity
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Card Body */}
+                <div style={{ padding: 'clamp(20px, 3vw, 26px)', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  {/* Category & Client */}
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8,
+                    fontFamily: 'JetBrains Mono, monospace', fontSize: 9.5, color: 'var(--accent)',
+                    letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700,
+                  }}>
+                    <span>{proj.category || 'Power Engineering'}</span>
+                    {proj.client && (
+                      <>
+                        <span style={{ color: 'var(--muted)' }}>•</span>
+                        <span style={{ color: 'var(--fg-dim)' }}>{proj.client}</span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Title */}
+                  <h3 style={{
+                    fontFamily: "'Inter', sans-serif", fontSize: 'clamp(18px, 1.8vw, 22px)',
+                    fontWeight: 700, color: 'var(--fg)', lineHeight: 1.25, marginBottom: 12,
+                  }}>
+                    {proj.title}
+                  </h3>
+
+                  {/* Summary */}
+                  <p style={{
+                    fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: 'var(--fg-dim)',
+                    lineHeight: 1.65, fontWeight: 350, marginBottom: 18, flex: 1,
+                  }}>
+                    {proj.summary}
+                  </p>
+
+                  {/* Scope bullets */}
+                  {proj.scope && proj.scope.length > 0 && (
+                    <div style={{
+                      paddingTop: 14, borderTop: '1px solid var(--border)',
+                      marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 6,
+                    }}>
+                      {proj.scope.slice(0, 3).map((sc, sci) => (
+                        <div key={sci} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                          <div style={{ width: 6, height: 1.5, background: 'var(--accent)', marginTop: 8, flexShrink: 0 }} />
+                          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: 'var(--fg-dim)', lineHeight: 1.4 }}>
+                            {sc}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Key Outcome Box */}
+                  {proj.outcome && (
+                    <div style={{
+                      padding: '10px 14px', background: 'var(--accent-dim)',
+                      borderLeft: '2.5px solid var(--accent)', borderRadius: '0 6px 6px 0',
+                      marginBottom: 16,
+                    }}>
+                      <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8.5, color: 'var(--accent)', letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700, marginBottom: 2 }}>
+                        Verified Outcome
+                      </div>
+                      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: 'var(--fg)', fontWeight: 500, lineHeight: 1.4 }}>
+                        {proj.outcome}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Software & Tools Chips */}
+                  {proj.tools && proj.tools.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 'auto' }}>
+                      {proj.tools.map((t, ti) => (
+                        <span
+                          key={ti}
+                          className="tag"
+                          style={{ fontSize: 9.5, padding: '2px 7px', borderRadius: 4 }}
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </motion.article>
+            </Reveal>
+          ))}
+        </div>
+
+        {/* Empty State / Notice */}
+        {filtered.length === 0 && (
+          <div style={{
+            textAlign: 'center', padding: '60px 20px',
+            background: 'var(--bg-2)', borderRadius: 10, border: '1px solid var(--border)',
+          }}>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, color: 'var(--fg-dim)', marginBottom: 8 }}>
+              No projects found in this category.
+            </p>
+            <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: 'var(--muted)' }}>
+              Add or edit projects anytime via the Admin Dashboard.
+            </p>
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 6. SERVICES & ENGAGEMENT MODELS
+// ════════════════════════════════════════════════════════════════════════════
+function Services() {
+  const { data: { services } } = useSite()
+  const [hov, setHov] = useState<number | null>(null)
+
+  return (
+    <section id="services-detailed" style={{ padding: 'var(--section-py) 0', background: 'var(--bg-2)' }}>
+      <div style={{ maxWidth: 'var(--max-w)', margin: '0 auto', padding: '0 var(--px)' }}>
+        <Reveal>
+          <div style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
+            marginBottom: 'clamp(36px, 5vh, 64px)', paddingBottom: 'clamp(24px, 4vh, 44px)',
+            borderBottom: '1px solid var(--border)', flexWrap: 'wrap', gap: 16,
+          }}>
+            <div>
+              <SIdx n="05" label="Engagement Models" />
+              <h2 className="display" style={{ fontSize: 'clamp(40px, 6.5vw, 88px)', color: 'var(--fg)', marginTop: 16 }}>
+                <span className="font-playfair italic font-normal" style={{ textTransform: 'none', marginRight: 14 }}>
+                  Engineering
+                </span>
+                Services
+              </h2>
+            </div>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: 'var(--fg-dim)', maxWidth: 360, lineHeight: 1.7, fontWeight: 350 }}>
+              Tailored consulting agreements, turnkey substation design packages, and statutory compliance certifications for contractors and asset owners.
+            </p>
           </div>
         </Reveal>
 
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {services.map((s, i) => (
-            <Reveal key={s.id} delay={(Math.min(i + 1, 5)) as 1 | 2 | 3 | 4 | 5}>
+            <Reveal key={s.id} delay={Math.min(i + 1, 5)}>
               <div
                 onMouseEnter={() => setHov(i)}
                 onMouseLeave={() => setHov(null)}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 'clamp(20px,4vw,56px)',
-                  padding: 'clamp(20px,3vh,32px) 0',
+                  display: 'flex', alignItems: 'center', gap: 'clamp(18px, 4vw, 54px)',
+                  padding: 'clamp(20px, 3vh, 32px) 0',
                   borderBottom: '1px solid var(--border)',
                   cursor: 'default',
                   transition: 'padding-left 0.3s cubic-bezier(0.16,1,0.3,1)',
-                  paddingLeft: hov === i ? 'clamp(10px,2vw,24px)' : 0,
+                  paddingLeft: hov === i ? 'clamp(12px, 2.5vw, 24px)' : 0,
                 }}
               >
-                <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 10, color: hov === i ? 'var(--accent)' : 'var(--muted)', letterSpacing: '0.2em', flexShrink: 0, minWidth: 28, transition: 'color 0.2s' }}>{s.num}</span>
-                <div style={{ width: hov === i ? 32 : 0, height: 1, background: 'var(--accent)', transition: 'width 0.3s cubic-bezier(0.16,1,0.3,1)', flexShrink: 0 }} />
-                <span style={{ fontFamily: 'Outfit,sans-serif', fontSize: 'clamp(16px,2vw,22px)', fontWeight: 500, color: hov === i ? 'var(--fg)' : 'var(--fg-dim)', transition: 'color 0.2s', flex: 1 }}>{s.name}</span>
-                <span style={{ fontFamily: 'Outfit,sans-serif', fontSize: 13, color: 'var(--muted)', display: 'block', maxWidth: 300, lineHeight: 1.5, textAlign: 'right' as const }}>{s.detail}</span>
-                <ArrowUpRight size={14} strokeWidth={1.5} style={{ color: hov === i ? 'var(--accent)' : 'transparent', transition: 'color 0.2s', flexShrink: 0 }} />
+                <span style={{
+                  fontFamily: 'JetBrains Mono, monospace', fontSize: 11,
+                  color: hov === i ? 'var(--accent)' : 'var(--muted)',
+                  letterSpacing: '0.2em', flexShrink: 0, minWidth: 32, transition: 'color 0.2s', fontWeight: 700,
+                }}>
+                  {s.num}
+                </span>
+
+                <div style={{
+                  width: hov === i ? 36 : 0, height: 1, background: 'var(--accent)',
+                  transition: 'width 0.3s cubic-bezier(0.16,1,0.3,1)', flexShrink: 0,
+                }} />
+
+                <span style={{
+                  fontFamily: "'Inter', sans-serif", fontSize: 'clamp(16px, 2vw, 22px)',
+                  fontWeight: 600, color: hov === i ? 'var(--fg)' : 'var(--fg-dim)',
+                  transition: 'color 0.2s', flex: 1,
+                }}>
+                  {s.name}
+                </span>
+
+                <span style={{
+                  fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: 'var(--muted)',
+                  display: 'block', maxWidth: 340, lineHeight: 1.5, textAlign: 'right',
+                }}>
+                  {s.detail}
+                </span>
+
+                <ArrowUpRight
+                  size={16} strokeWidth={1.8}
+                  style={{
+                    color: hov === i ? 'var(--accent)' : 'transparent',
+                    transition: 'color 0.2s', flexShrink: 0,
+                  }}
+                />
               </div>
             </Reveal>
           ))}
@@ -670,40 +1258,65 @@ function Services() {
   )
 }
 
-// ── Education ─────────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════════
+// 7. ACADEMIC CREDENTIALS, CERTIFICATIONS & TOOLS
+// ════════════════════════════════════════════════════════════════════════════
 function Education() {
   const { data: { education, settings } } = useSite()
 
   return (
-    <section id="education" style={{ padding: 'var(--section-py) 0' }}>
+    <section id="education" style={{ padding: 'var(--section-py) 0', background: 'var(--bg)' }}>
       <div style={{ maxWidth: 'var(--max-w)', margin: '0 auto', padding: '0 var(--px)' }}>
         <Reveal>
-          <div style={{ paddingBottom: 'clamp(32px,5vh,56px)', marginBottom: 'clamp(40px,6vh,72px)', borderBottom: '1px solid var(--border)' }}>
-            <SIdx n="06" label="Education" />
-            <h2 className="display" style={{ fontSize: 'clamp(44px,7vw,96px)', color: 'var(--fg)', marginTop: 16 }}>Background<br />&amp; Training</h2>
+          <div style={{
+            paddingBottom: 'clamp(28px, 4vh, 48px)', marginBottom: 'clamp(36px, 5vh, 64px)',
+            borderBottom: '1px solid var(--border)',
+          }}>
+            <SIdx n="06" label="Qualifications & Software" />
+            <h2 className="display" style={{ fontSize: 'clamp(40px, 6.5vw, 88px)', color: 'var(--fg)', marginTop: 16 }}>
+              <span className="font-playfair italic font-normal" style={{ textTransform: 'none', marginRight: 14 }}>
+                Academic
+              </span>
+              Background
+            </h2>
           </div>
         </Reveal>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,380px),1fr))', gap: 'clamp(40px,7vw,96px)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 380px), 1fr))', gap: 'clamp(36px, 6vw, 84px)' }}>
           {/* Timeline */}
           <div>
             <Reveal>
-              <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9, letterSpacing: '0.2em', color: 'var(--accent)', textTransform: 'uppercase' as const, marginBottom: 32 }}>Academic Timeline</div>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.2em', color: 'var(--accent)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 28 }}>
+                Academic &amp; Certification Timeline
+              </div>
             </Reveal>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
               {education.map((e, i) => (
-                <Reveal key={i} delay={(Math.min(i + 1, 5)) as 1 | 2 | 3 | 4 | 5}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: 0, position: 'relative' }}>
-                    {/* Year */}
-                    <div style={{ paddingTop: 4, paddingRight: 24, textAlign: 'right' as const }}>
-                      <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 11, color: 'var(--accent)', letterSpacing: '0.05em', lineHeight: 1 }}>{e.period}</span>
+                <Reveal key={i} delay={Math.min(i + 1, 5)}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '84px 1fr', gap: 0, position: 'relative' }}>
+                    {/* Period */}
+                    <div style={{ paddingTop: 3, paddingRight: 20, textAlign: 'right' }}>
+                      <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: 'var(--accent)', fontWeight: 600 }}>
+                        {e.period}
+                      </span>
                     </div>
                     {/* Content */}
-                    <div style={{ paddingLeft: 24, paddingBottom: 36, borderLeft: '1px solid var(--border-strong)', position: 'relative' }}>
-                      <div style={{ position: 'absolute', top: 6, left: -4, width: 7, height: 7, border: '1px solid var(--accent)', background: 'var(--bg)', borderRadius: '50%' }} />
-                      <div style={{ fontFamily: 'Outfit,sans-serif', fontSize: 'clamp(15px,1.5vw,17px)', fontWeight: 600, color: 'var(--fg)', marginBottom: 4, lineHeight: 1.3 }}>{e.degree}</div>
-                      <div style={{ fontFamily: 'Outfit,sans-serif', fontSize: 13, color: 'var(--fg-dim)', marginBottom: 4 }}>{e.institution}</div>
-                      {e.note && <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 10, color: 'var(--muted)', letterSpacing: '0.1em' }}>{e.note}</div>}
+                    <div style={{ paddingLeft: 22, paddingBottom: 34, borderLeft: '1px solid var(--border-strong)', position: 'relative' }}>
+                      <div style={{
+                        position: 'absolute', top: 6, left: -4.5, width: 8, height: 8,
+                        border: '1.5px solid var(--accent)', background: 'var(--bg)', borderRadius: '50%',
+                      }} />
+                      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 'clamp(15px, 1.5vw, 17px)', fontWeight: 700, color: 'var(--fg)', lineHeight: 1.3 }}>
+                        {e.degree}
+                      </div>
+                      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: 'var(--fg-dim)', marginTop: 3 }}>
+                        {e.institution}
+                      </div>
+                      {e.note && (
+                        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: 'var(--muted)', marginTop: 4 }}>
+                          {e.note}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </Reveal>
@@ -711,33 +1324,55 @@ function Education() {
             </div>
           </div>
 
-          {/* Tools */}
-          <Reveal delay={2}>
-            <div>
-              <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9, letterSpacing: '0.2em', color: 'var(--accent)', textTransform: 'uppercase' as const, marginBottom: 32 }}>Software &amp; Tools</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {(settings.tools || []).map((t, i) => (
-                  <span key={i} className="tag" style={{ cursor: 'default' }}>{t}</span>
+          {/* Software stack */}
+          <div>
+            <Reveal delay={2}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.2em', color: 'var(--accent)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 28 }}>
+                Engineering Simulation Software
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 32 }}>
+                {(settings.tools || [
+                  'ETAP', 'AutoCAD Electrical', 'PSS/E', 'Dialux evo', 'MATLAB', 'PSCAD', 'CYMGRD', 'PVSyst', 'Python'
+                ]).map((t, i) => (
+                  <span
+                    key={i}
+                    className="tag"
+                    style={{
+                      borderRadius: 4, padding: '6px 12px', fontSize: 11,
+                      background: 'var(--bg-2)', border: '1px solid var(--border)',
+                    }}
+                  >
+                    {t}
+                  </span>
                 ))}
               </div>
 
-              {/* Expertise highlight */}
-              <div style={{ marginTop: 48, padding: 'clamp(24px,4vw,40px)', background: 'var(--bg-2)', border: '1px solid var(--border)' }}>
-                <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9, letterSpacing: '0.2em', color: 'var(--accent)', textTransform: 'uppercase' as const, marginBottom: 20 }}>Core Specialization</div>
-                <div className="display" style={{ fontSize: 'clamp(28px,4.5vw,56px)', color: 'var(--fg)', lineHeight: 0.95, marginBottom: 20 }}>Power<br />Systems<br />Analysis</div>
-                <p style={{ fontFamily: 'Outfit,sans-serif', fontSize: 13, color: 'var(--fg-dim)', lineHeight: 1.7, fontWeight: 300 }}>
-                  From load flow studies to fault analysis, protection coordination to harmonic assessment — delivering engineering rigour on every engagement.
+              {/* Specialization Callout Card */}
+              <div style={{
+                padding: 'clamp(24px, 3.5vw, 36px)', background: 'var(--bg-2)',
+                border: '1px solid var(--border)', borderRadius: 8,
+              }}>
+                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9.5, letterSpacing: '0.2em', color: 'var(--accent)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 14 }}>
+                  Verified Competency
+                </div>
+                <div className="display" style={{ fontSize: 'clamp(28px, 4vw, 48px)', color: 'var(--fg)', lineHeight: 0.95, marginBottom: 14 }}>
+                  Power Systems<br />Analysis
+                </div>
+                <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: 'var(--fg-dim)', lineHeight: 1.7, fontWeight: 350 }}>
+                  From load flow studies to short circuit withstand, protection coordination to harmonic assessment — delivering rigorous engineering models with guaranteed statutory clearance.
                 </p>
               </div>
-            </div>
-          </Reveal>
+            </Reveal>
+          </div>
         </div>
       </div>
     </section>
   )
 }
 
-// ── Contact ───────────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════════
+// 8. CONSULTATION & DIRECT CONTACT
+// ════════════════════════════════════════════════════════════════════════════
 function Contact() {
   const { data: { engineer: E } } = useSite()
   const [form, setForm]     = useState({ name: '', email: '', subject: '', message: '' })
@@ -755,7 +1390,7 @@ function Contact() {
     })
     setSending(false)
     if (error) {
-      setFormErr('Something went wrong. Please try emailing directly.')
+      setFormErr('Something went wrong. Please try contacting directly via WhatsApp or Email.')
     } else {
       setSent(true)
       setForm({ name: '', email: '', subject: '', message: '' })
@@ -764,11 +1399,12 @@ function Contact() {
   }
 
   const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '14px 0',
-    background: 'transparent',
-    border: 'none', borderBottom: '1px solid var(--border-strong)',
-    color: 'var(--fg)', fontFamily: 'Outfit,sans-serif', fontSize: 15,
-    outline: 'none', fontWeight: 300,
+    width: '100%', padding: '14px 16px',
+    background: 'var(--bg-2)',
+    border: '1px solid var(--border)',
+    borderRadius: 6,
+    color: 'var(--fg)', fontFamily: "'Inter', sans-serif", fontSize: 14.5,
+    outline: 'none', fontWeight: 400,
     transition: 'border-color 0.2s',
   }
 
@@ -776,111 +1412,160 @@ function Contact() {
     <section id="contact" style={{ padding: 'var(--section-py) 0', background: 'var(--bg-2)' }}>
       <div style={{ maxWidth: 'var(--max-w)', margin: '0 auto', padding: '0 var(--px)' }}>
         <Reveal>
-          <div style={{ paddingBottom: 'clamp(32px,5vh,56px)', marginBottom: 'clamp(40px,6vh,72px)', borderBottom: '1px solid var(--border)' }}>
-            <SIdx n="07" label="Contact" />
-            <h2 className="display" style={{ fontSize: 'clamp(44px,7vw,96px)', color: 'var(--fg)', marginTop: 16 }}>Start a<br />Project</h2>
+          <div style={{
+            paddingBottom: 'clamp(28px, 4vh, 48px)', marginBottom: 'clamp(36px, 5vh, 64px)',
+            borderBottom: '1px solid var(--border)',
+          }}>
+            <SIdx n="07" label="Project Consultation" />
+            <h2 className="display" style={{ fontSize: 'clamp(40px, 6.5vw, 88px)', color: 'var(--fg)', marginTop: 16 }}>
+              <span className="font-playfair italic font-normal" style={{ textTransform: 'none', marginRight: 14 }}>
+                Project
+              </span>
+              Consultation
+            </h2>
           </div>
         </Reveal>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,380px),1fr))', gap: 'clamp(40px,7vw,100px)' }}>
-          {/* Info panel */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 380px), 1fr))', gap: 'clamp(36px, 6vw, 84px)' }}>
+          {/* Info Side */}
           <Reveal>
             <div>
-              <p style={{ fontFamily: 'Outfit,sans-serif', fontSize: 'clamp(16px,1.8vw,20px)', color: 'var(--fg-dim)', lineHeight: 1.75, fontWeight: 300, marginBottom: 'clamp(28px,5vh,48px)' }}>
-                Available for consulting engagements, full-time opportunities, and infrastructure advisory across energy transition projects.
+              <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 'clamp(16px, 1.8vw, 20px)', color: 'var(--fg-dim)', lineHeight: 1.75, fontWeight: 350, marginBottom: 32 }}>
+                Available for substation turnkey design, industrial power system audits, compliance certification, and expert engineering advisory.
               </p>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginBottom: 48 }}>
+              {/* Direct channels */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {[
-                  { label: 'Email', value: E.email,   href: `mailto:${E.email}` },
-                  { label: 'Phone', value: E.phone,   href: `tel:${E.phone}` },
-                  { label: 'LinkedIn', value: 'Connect on LinkedIn', href: E.linkedin },
+                  { label: 'Official Email', value: E.email, href: `mailto:${E.email}`, icon: <Mail size={16} /> },
+                  { label: 'Direct WhatsApp', value: E.whatsapp || E.phone, href: `https://wa.me/${E.whatsapp || E.phone}`, icon: <Phone size={16} /> },
+                  { label: 'LinkedIn Profile', value: 'Md Sahin Alom on LinkedIn', href: E.linkedin, icon: <Globe size={16} /> },
                 ].filter(r => r.value).map((r, i) => (
-                  <div key={i} style={{ paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>
-                    <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9, letterSpacing: '0.2em', color: 'var(--muted)', textTransform: 'uppercase' as const, marginBottom: 6 }}>{r.label}</div>
-                    <a href={r.href} target={r.label === 'LinkedIn' ? '_blank' : undefined} rel="noopener noreferrer" className="link-line"
-                      style={{ fontFamily: 'Outfit,sans-serif', fontSize: 16, color: 'var(--fg)', fontWeight: 400 }}>
+                  <div key={i} style={{ paddingBottom: 14, borderBottom: '1px solid var(--border)' }}>
+                    <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.18em', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: 4 }}>
+                      {r.label}
+                    </div>
+                    <a
+                      href={r.href}
+                      target={r.label !== 'Official Email' ? '_blank' : undefined}
+                      rel="noopener noreferrer"
+                      className="link-line"
+                      style={{ fontFamily: "'Inter', sans-serif", fontSize: 15.5, color: 'var(--fg)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 8 }}
+                    >
+                      <span style={{ color: 'var(--accent)' }}>{r.icon}</span>
                       {r.value}
                     </a>
                   </div>
                 ))}
               </div>
-
-              {/* Availability callout */}
-              <div style={{ padding: 'clamp(20px,3vw,32px)', border: `1px solid ${E.available ? 'rgba(34,197,94,0.3)' : 'var(--border)'}`, background: E.available ? 'rgba(34,197,94,0.05)' : 'transparent' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: E.available ? 'var(--green)' : 'var(--muted)', boxShadow: E.available ? '0 0 10px var(--green)' : 'none' }} />
-                  <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 10, color: E.available ? 'var(--green)' : 'var(--muted)', letterSpacing: '0.15em', textTransform: 'uppercase' as const }}>
-                    {E.available ? 'Currently available' : 'Not available'}
-                  </span>
-                </div>
-                <p style={{ fontFamily: 'Outfit,sans-serif', fontSize: 13, color: 'var(--fg-dim)', lineHeight: 1.65, fontWeight: 300, margin: 0 }}>
-                  {E.available ? 'Open to new consulting projects and full-time roles starting immediately.' : 'Not currently accepting new projects — check back soon.'}
-                </p>
-                <Link
-                  to="/contact"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    marginTop: 14,
-                    fontFamily: 'JetBrains Mono,monospace',
-                    fontSize: 10,
-                    fontWeight: 700,
-                    color: 'var(--accent)',
-                    textDecoration: 'none',
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Open Dedicated Consultation Page <ArrowUpRight size={12} />
-                </Link>
-              </div>
             </div>
           </Reveal>
 
-          {/* Form */}
+          {/* Form Side */}
           <Reveal delay={2}>
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {[
-                { key: 'name',    label: 'Full Name',     type: 'text' },
-                { key: 'email',   label: 'Email Address', type: 'email' },
-                { key: 'subject', label: 'Subject',       type: 'text' },
-              ].map(f => (
-                <label key={f.key} style={{ display: 'block' }}>
-                  <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9, letterSpacing: '0.2em', color: 'var(--muted)', textTransform: 'uppercase' as const, marginBottom: 4 }}>{f.label}</div>
-                  <input
-                    type={f.type}
-                    value={(form as any)[f.key]}
-                    onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
-                    required
-                    style={inputStyle}
-                    onFocus={e => (e.currentTarget.style.borderBottomColor = 'var(--accent)')}
-                    onBlur={e => (e.currentTarget.style.borderBottomColor = 'var(--border-strong)')}
-                  />
-                </label>
-              ))}
-              <label style={{ display: 'block', marginBottom: 32 }}>
-                <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9, letterSpacing: '0.2em', color: 'var(--muted)', textTransform: 'uppercase' as const, marginBottom: 4, marginTop: 8 }}>Message</div>
+            <form
+              onSubmit={handleSubmit}
+              style={{
+                background: 'var(--card-bg)', border: '1px solid var(--border)',
+                borderRadius: 8, padding: 'clamp(24px, 4vw, 36px)',
+                display: 'flex', flexDirection: 'column', gap: 16,
+                boxShadow: '0 12px 36px rgba(0,0,0,0.06)',
+              }}
+            >
+              <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, fontWeight: 700, color: 'var(--fg)', marginBottom: 4 }}>
+                Send an Inquiry
+              </h3>
+              <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: 'var(--fg-dim)', marginBottom: 8 }}>
+                Share your project scope, timeline, and location to receive a preliminary consultation proposal.
+              </p>
+
+              <div>
+                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.18em', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: 6 }}>
+                  Full Name
+                </div>
+                <input
+                  type="text"
+                  placeholder="e.g. Engr. Rafiqul Islam"
+                  value={form.name}
+                  onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+                  required
+                  style={inputStyle}
+                  onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
+                  onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+                />
+              </div>
+
+              <div>
+                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.18em', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: 6 }}>
+                  Email Address
+                </div>
+                <input
+                  type="email"
+                  placeholder="name@company.com"
+                  value={form.email}
+                  onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
+                  required
+                  style={inputStyle}
+                  onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
+                  onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+                />
+              </div>
+
+              <div>
+                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.18em', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: 6 }}>
+                  Project Type / Subject
+                </div>
+                <input
+                  type="text"
+                  placeholder="e.g. 33/11kV Substation Design & SLD Review"
+                  value={form.subject}
+                  onChange={e => setForm(p => ({ ...p, subject: e.target.value }))}
+                  required
+                  style={inputStyle}
+                  onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
+                  onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+                />
+              </div>
+
+              <div>
+                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.18em', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: 6 }}>
+                  Message &amp; Project Requirements
+                </div>
                 <textarea
-                  rows={5}
+                  rows={4}
+                  placeholder="Describe electrical capacity, timeline, standards, or deliverables needed..."
                   value={form.message}
                   onChange={e => setForm(p => ({ ...p, message: e.target.value }))}
                   required
-                  style={{ ...inputStyle, resize: 'none' as const }}
-                  onFocus={e => (e.currentTarget.style.borderBottomColor = 'var(--accent)')}
-                  onBlur={e => (e.currentTarget.style.borderBottomColor = 'var(--border-strong)')}
+                  style={{ ...inputStyle, resize: 'none' }}
+                  onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
+                  onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
                 />
-              </label>
+              </div>
 
               {formErr && (
-                <div style={{ padding: '10px 14px', background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.2)', fontFamily: 'Outfit,sans-serif', fontSize: 13, color: 'var(--red)', marginBottom: 4 }}>
+                <div style={{
+                  padding: '10px 14px', background: 'rgba(220,38,38,0.08)',
+                  border: '1px solid rgba(220,38,38,0.25)', borderRadius: 6,
+                  fontFamily: "'Inter', sans-serif", fontSize: 13, color: 'var(--red)',
+                }}>
                   {formErr}
                 </div>
               )}
 
-              <button type="submit" disabled={sending} className="btn-primary" style={{ alignSelf: 'flex-start', letterSpacing: '0.08em', opacity: sending ? 0.7 : 1 }}>
-                {sent ? '✓ Message sent' : sending ? 'Sending…' : <>Send message <ArrowUpRight size={14} strokeWidth={2} /></>}
+              <button
+                type="submit"
+                disabled={sending}
+                className="btn-primary"
+                style={{
+                  borderRadius: 6, padding: '14px', width: '100%',
+                  justifyContent: 'center', opacity: sending ? 0.7 : 1,
+                  marginTop: 6,
+                }}
+              >
+                {sent ? '✓ Message Transmitted Successfully' : sending ? 'Transmitting…' : (
+                  <>Submit Consultation Inquiry <ArrowUpRight size={15} strokeWidth={2.2} /></>
+                )}
               </button>
             </form>
           </Reveal>
@@ -890,19 +1575,43 @@ function Contact() {
   )
 }
 
-// ── Footer ────────────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════════
+// 9. EDITORIAL FOOTER
+// ════════════════════════════════════════════════════════════════════════════
 function Footer() {
   const { data: { engineer: E } } = useSite()
+
   return (
-    <footer style={{ borderTop: '1px solid var(--border)', padding: 'clamp(28px,5vh,48px) var(--px)', background: 'var(--bg-2)' }}>
-      <div style={{ maxWidth: 'var(--max-w)', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+    <footer style={{
+      borderTop: '1px solid var(--border)',
+      padding: 'clamp(32px, 5vh, 56px) var(--px)',
+      background: 'var(--bg)',
+    }}>
+      <div style={{
+        maxWidth: 'var(--max-w)', margin: '0 auto',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        flexWrap: 'wrap', gap: 20,
+      }}>
         <HeaderLogo compact={true} showSubtitle={false} />
-        <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, color: 'var(--muted)', letterSpacing: '0.12em', textTransform: 'uppercase' as const }}>
-          &copy; {new Date().getFullYear()} {E.name} · Power Systems Engineer
-        </span>
-        <a href="#hero" style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9.5, color: 'var(--fg-dim)', letterSpacing: '0.15em', textTransform: 'uppercase' as const, textDecoration: 'none', transition: 'color 0.2s', fontWeight: 600 }}
-          onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
-          onMouseLeave={e => (e.currentTarget.style.color = 'var(--fg-dim)')}>
+
+        <div style={{
+          fontFamily: 'JetBrains Mono, monospace', fontSize: 10,
+          color: 'var(--muted)', letterSpacing: '0.12em', textTransform: 'uppercase',
+          textAlign: 'center',
+        }}>
+          &copy; {new Date().getFullYear()} {E.name} · Certified Electrical Engineer · Class ABC Licensed
+        </div>
+
+        <a
+          href="#hero"
+          style={{
+            fontFamily: 'JetBrains Mono, monospace', fontSize: 10,
+            color: 'var(--fg-dim)', letterSpacing: '0.15em', textTransform: 'uppercase',
+            textDecoration: 'none', transition: 'color 0.2s', fontWeight: 700,
+          }}
+          onMouseEnter={e => ((e.currentTarget as HTMLElement).style.color = 'var(--accent)')}
+          onMouseLeave={e => ((e.currentTarget as HTMLElement).style.color = 'var(--fg-dim)')}
+        >
           Back to top ↑
         </a>
       </div>
@@ -910,7 +1619,9 @@ function Footer() {
   )
 }
 
-// ── Root ──────────────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════════
+// ROOT HOMEPAGE COMPONENT
+// ════════════════════════════════════════════════════════════════════════════
 export default function EngineerPortfolio() {
   return (
     <>

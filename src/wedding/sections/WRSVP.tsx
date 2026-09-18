@@ -70,20 +70,20 @@ export default function WRSVP({ config }: WRSVPProps) {
 
   const fieldVariants = {
     hidden: { opacity: 0, y: 24 },
-    visible: (i: number) => ({ opacity: 1, y: 0, transition: { duration: 0.65, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] } }),
+    visible: (i: number) => ({ opacity: 1, y: 0, transition: { duration: 0.65, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] as const } }),
   }
 
   return (
     <section className="w-rsvp w-section">
       <div className="w-container">
         <div className="w-rsvp__inner" ref={ref}>
-          <motion.div className="w-label" initial={{ opacity: 0, y: 16 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}>
+          <motion.div className="w-label" initial={{ opacity: 0, y: 16 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] as const }}>
             <span className="w-label__text">RSVP</span>
             <div className="w-label__line" />
             <span className="w-label__num">06</span>
           </motion.div>
 
-          <motion.h2 className="w-rsvp__heading" initial={{ opacity: 0, y: 30 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.85, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}>
+          <motion.h2 className="w-rsvp__heading" initial={{ opacity: 0, y: 30 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.85, delay: 0.1, ease: [0.16, 1, 0.3, 1] as const }}>
             Will you<br/>join us?
           </motion.h2>
           <motion.p className="w-rsvp__sub" initial={{ opacity: 0 }} animate={isInView ? { opacity: 1 } : {}} transition={{ duration: 0.7, delay: 0.2 }}>

@@ -4,10 +4,11 @@ import { useSite } from '../context/SiteContext'
 type Props = {
   compact?: boolean
   showSubtitle?: boolean
+  textColor?: string
   onClick?: (e: React.MouseEvent) => void
 }
 
-export default function HeaderLogo({ compact = false, showSubtitle = true, onClick }: Props) {
+export default function HeaderLogo({ compact = false, showSubtitle = true, textColor, onClick }: Props) {
   const { data: { engineer: E, settings } } = useSite()
   const B = settings.branding || {}
 
@@ -143,7 +144,7 @@ export default function HeaderLogo({ compact = false, showSubtitle = true, onCli
                   fontWeight: 800,
                   fontSize: compact ? 19 : 22,
                   letterSpacing: '0.04em',
-                  color: 'var(--fg, #0D1218)',
+                  color: textColor || 'var(--fg, #0D1218)',
                   textTransform: 'uppercase',
                   lineHeight: 1,
                 }}

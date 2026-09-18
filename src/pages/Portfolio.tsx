@@ -2,10 +2,12 @@ import { useState, useEffect, useRef, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import {
   ArrowDown, ArrowUpRight, ArrowRight,
-  MoveRight, ChevronRight,
+  MoveRight, ChevronRight, Menu, X,
 } from 'lucide-react'
 import { PROJECTS, type Project } from '../data/projects'
 import sahinPhoto from '../img/sahin.png'
+import designerImg from '../img/designer.png'
+import engineerImg from '../img/engineer.png'
 
 // ── Reveal ──────────────────────────────────────────────────────────────────
 function useReveal() {
@@ -43,118 +45,266 @@ function Label({ children }: { children: string }) {
   )
 }
 
-// ── Hero ─────────────────────────────────────────────────────────────────────
-function Hero() {
-  const [in_, setIn] = useState(false)
-  const [scrollY, setScrollY] = useState(0)
+// ── Spotlight Reveal Layer ─────────────────────────────────────────────────────
+const SPOTLIGHT_R = 260
 
+function RevealLayer({
+  image,
+  cursorX,
+  cursorY,
+}: {
+  image: string
+  cursorX: number
+  cursorY: number
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const revealRef = useRef<HTMLDivElement>(null)
+
+  // Size canvas to viewport
   useEffect(() => {
-    const t = setTimeout(() => setIn(true), 120)
-    const onScroll = () => setScrollY(window.scrollY)
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => { clearTimeout(t); window.removeEventListener('scroll', onScroll) }
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const resize = () => {
+      canvas.width  = window.innerWidth
+      canvas.height = window.innerHeight
+    }
+    resize()
+    window.addEventListener('resize', resize)
+    return () => window.removeEventListener('resize', resize)
   }, [])
 
-  const lines = [
-    { text: 'I design digital', italic: false },
-    { text: 'products that make', italic: false },
-    { text: 'complex things', italic: true },
-    { text: 'feel simple.', italic: false },
-  ]
+  // Update mask every render
+  useEffect(() => {
+    const canvas = canvasRef.current
+    const div    = revealRef.current
+    if (!canvas || !div) return
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+    const grad = ctx.createRadialGradient(
+      cursorX, cursorY, 0,
+      cursorX, cursorY, SPOTLIGHT_R,
+    )
+    grad.addColorStop(0,    'rgba(255,255,255,1)')
+    grad.addColorStop(0.4,  'rgba(255,255,255,1)')
+    grad.addColorStop(0.6,  'rgba(255,255,255,0.75)')
+    grad.addColorStop(0.75, 'rgba(255,255,255,0.4)')
+    grad.addColorStop(0.88, 'rgba(255,255,255,0.12)')
+    grad.addColorStop(1,    'rgba(255,255,255,0)')
+
+    ctx.fillStyle = grad
+    ctx.beginPath()
+    ctx.arc(cursorX, cursorY, SPOTLIGHT_R, 0, Math.PI * 2)
+    ctx.fill()
+
+    const dataUrl = canvas.toDataURL()
+    div.style.maskImage          = `url(${dataUrl})`
+    div.style.webkitMaskImage    = `url(${dataUrl})`
+    div.style.maskSize           = '100% 100%'
+    ;(div.style as any).webkitMaskSize = '100% 100%'
+  })
 
   return (
-    <section style={{
-      minHeight: '100svh', display: 'grid',
-      gridTemplateRows: '1fr auto',
-      padding: 'clamp(96px,12vh,140px) var(--px) clamp(40px,6vh,72px)',
-      position: 'relative', overflow: 'hidden',
-    }}>
-      {/* Ghost monogram */}
-      <div aria-hidden style={{
-        position: 'absolute',
-        right: 'calc(var(--px) * -0.1)',
-        top: '50%',
-        transform: `translateY(calc(-52% + ${scrollY * 0.1}px))`,
-        fontFamily: 'Fraunces, serif',
-        fontSize: 'clamp(120px, 17vw, 260px)',
-        fontWeight: 300, letterSpacing: '-0.07em', lineHeight: 0.85,
-        color: 'transparent',
-        WebkitTextStroke: '1px var(--border)',
-        userSelect: 'none', pointerEvents: 'none',
-        zIndex: 0, opacity: 0.6,
-      }}>
-        SAHIN
+    <>
+      <canvas
+        ref={canvasRef}
+        style={{ display: 'none', position: 'absolute', inset: 0, pointerEvents: 'none' }}
+      />
+      <div
+        ref={revealRef}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: `url(${image})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          zIndex: 30,
+          pointerEvents: 'none',
+        }}
+      />
+    </>
+  )
+}
+
+// ── Spotlight Hero Nav ─────────────────────────────────────────────────────────
+function HeroNav() {
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const navItems = [
+    { label: 'Course',       active: true  },
+    { label: 'Field Guides', active: false },
+    { label: 'Geology',      active: false },
+    { label: 'Plans',        active: false },
+    { label: 'Live Tour',    active: false },
+  ]
+  return (
+    <nav className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between p-4 sm:p-5">
+      {/* Left – logo + wordmark */}
+      <div className="flex items-center gap-2.5">
+        <svg width="26" height="26" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M 256 256 L 128 256 L 0 128 L 128 128 Z M 256 128 L 128 128 L 0 0 L 128 0 Z" fill="#ffffff" />
+        </svg>
+        <span className="text-white text-2xl font-playfair italic">Lithos</span>
       </div>
 
-      {/* Main content */}
-      <div style={{ position: 'relative', zIndex: 1, alignSelf: 'end', maxWidth: 1000 }}>
-        {/* Eyebrow */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 12, marginBottom: 36,
-          opacity: in_ ? 1 : 0, transform: in_ ? 'none' : 'translateY(10px)',
-          transition: 'opacity 0.6s 0.08s ease, transform 0.6s 0.08s ease',
-        }}>
-          <div style={{ width: 28, height: 1, background: 'var(--accent)' }} />
-          <span className="mono" style={{ fontSize: 10, letterSpacing: '0.2em', color: 'var(--muted)', textTransform: 'uppercase' }}>
-            Product Designer · UI/UX · Entrepreneur
-          </span>
-        </div>
+      {/* Center pill – desktop */}
+      <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 bg-white/20 backdrop-blur-md border border-white/30 rounded-full px-2 py-2 items-center gap-1">
+        {navItems.map(({ label, active }) => (
+          <button
+            key={label}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              active
+                ? 'bg-white text-gray-900'
+                : 'text-white/80 hover:bg-white/20 hover:text-white'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
-        {/* Headline */}
-        <h1 style={{ margin: '0 0 36px' }}>
-          {lines.map((l, i) => (
-            <div key={i} style={{ overflow: 'hidden', lineHeight: 1.05 }}>
-              <div style={{
-                fontFamily: 'Fraunces, serif', fontOpticalSizing: 'auto',
-                fontSize: 'clamp(40px, 6.2vw, 92px)', fontWeight: 300,
-                letterSpacing: '-0.03em',
-                color: l.italic ? 'var(--accent)' : 'var(--fg)',
-                fontStyle: l.italic ? 'italic' : 'normal',
-                opacity: in_ ? 1 : 0,
-                transform: in_ ? 'translateY(0)' : 'translateY(105%)',
-                transition: `opacity 0.8s ${0.2 + i * 0.1}s cubic-bezier(0.16,1,0.3,1), transform 0.8s ${0.2 + i * 0.1}s cubic-bezier(0.16,1,0.3,1)`,
-              }}>
-                {l.text}
-              </div>
-            </div>
+      {/* Right – desktop sign up + mobile hamburger */}
+      <div className="flex items-center gap-3">
+        <button className="hidden md:block bg-white text-gray-900 text-sm font-semibold px-6 py-2.5 rounded-full hover:bg-gray-100 transition-colors">
+          Sign Up
+        </button>
+        <button
+          className="md:hidden p-2 text-white"
+          onClick={() => setMobileOpen(v => !v)}
+          aria-label="Toggle menu"
+        >
+          {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
+      </div>
+
+      {/* Mobile dropdown */}
+      {mobileOpen && (
+        <div className="md:hidden absolute top-full left-4 right-4 mt-2 bg-black/90 backdrop-blur-md border border-white/20 rounded-2xl p-4 flex flex-col gap-1">
+          {navItems.map(({ label, active }) => (
+            <button
+              key={label}
+              className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                active ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
+              }`}
+              onClick={() => setMobileOpen(false)}
+            >
+              {label}
+            </button>
           ))}
-        </h1>
-
-        <p style={{
-          fontSize: 'clamp(14px, 1.3vw, 18px)', fontWeight: 300, color: 'var(--muted)',
-          lineHeight: 1.7, maxWidth: 500, marginBottom: 48,
-          opacity: in_ ? 1 : 0, transform: in_ ? 'none' : 'translateY(14px)',
-          transition: 'opacity 0.6s 0.62s, transform 0.6s 0.62s',
-        }}>
-          I'm Md Sahin Alom — a Product Designer and entrepreneur focused on creating
-          useful, intuitive and business-driven digital experiences.
-        </p>
-
-        <div style={{
-          display: 'flex', gap: 12, flexWrap: 'wrap',
-          opacity: in_ ? 1 : 0, transform: in_ ? 'none' : 'translateY(10px)',
-          transition: 'opacity 0.6s 0.74s, transform 0.6s 0.74s',
-        }}>
-          <a href="#work" className="btn-primary">
-            View my work
-            <ArrowDown size={14} strokeWidth={1.5} />
-          </a>
-          <Link to="/contact" className="btn-outline">
-            Let's work together
-            <ArrowUpRight size={14} strokeWidth={1.5} />
-          </Link>
+          <div className="mt-2 pt-2 border-t border-white/10">
+            <button className="w-full bg-white text-gray-900 text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-gray-100 transition-colors">
+              Sign Up
+            </button>
+          </div>
         </div>
-      </div>
+      )}
+    </nav>
+  )
+}
 
-      {/* Scroll indicator */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 16, paddingTop: 40,
-        opacity: in_ ? 1 : 0, transition: 'opacity 0.6s 1.3s',
-      }}>
-        <div style={{ width: 1, height: 52, background: `linear-gradient(var(--border-strong), transparent)` }} />
-        <span className="mono" style={{ fontSize: 9, letterSpacing: '0.18em', color: 'var(--muted-light)', textTransform: 'uppercase', writingMode: 'vertical-rl' }}>scroll</span>
-      </div>
-    </section>
+// ── Hero ─────────────────────────────────────────────────────────────────────
+function Hero() {
+  const [cursorPos, setCursorPos] = useState({ x: -999, y: -999 })
+  const mouseRef  = useRef({ x: -999, y: -999 })
+  const smoothRef = useRef({ x: -999, y: -999 })
+  const rafRef    = useRef<number | null>(null)
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      mouseRef.current.x = e.clientX
+      mouseRef.current.y = e.clientY
+    }
+    window.addEventListener('mousemove', onMove)
+
+    const loop = () => {
+      smoothRef.current.x += (mouseRef.current.x - smoothRef.current.x) * 0.1
+      smoothRef.current.y += (mouseRef.current.y - smoothRef.current.y) * 0.1
+      setCursorPos({ x: smoothRef.current.x, y: smoothRef.current.y })
+      rafRef.current = requestAnimationFrame(loop)
+    }
+    rafRef.current = requestAnimationFrame(loop)
+
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
+    }
+  }, [])
+
+  return (
+    <div style={{ minHeight: '100svh', fontFamily: "'Inter', sans-serif", background: 'white', letterSpacing: '-0.02em' }}>
+      <HeroNav />
+
+      <section
+        className="relative w-full overflow-hidden bg-black"
+        style={{ height: '100dvh' }}
+      >
+        {/* Layer 1: Base image (z-10) */}
+        <div
+          className="hero-zoom absolute inset-0 bg-center bg-cover bg-no-repeat"
+          style={{ backgroundImage: `url(${designerImg})`, zIndex: 10 }}
+        />
+
+        {/* Layer 2: Reveal layer (z-30) */}
+        <div className="absolute inset-0" style={{ zIndex: 30, pointerEvents: 'none' }}>
+          <RevealLayer
+            image={engineerImg}
+            cursorX={cursorPos.x}
+            cursorY={cursorPos.y}
+          />
+        </div>
+
+        {/* Layer 3: Heading (z-50) */}
+        <div
+          className="absolute top-[14%] left-0 right-0 flex flex-col items-center text-center px-5 pointer-events-none"
+          style={{ zIndex: 50 }}
+        >
+          <h1 className="text-white" style={{ lineHeight: 0.95 }}>
+            <span
+              className="block font-playfair italic font-normal hero-anim hero-reveal text-5xl sm:text-7xl md:text-8xl"
+              style={{ letterSpacing: '-0.05em', animationDelay: '0.25s' }}
+            >
+              Layers hold
+            </span>
+            <span
+              className="block font-normal hero-anim hero-reveal text-5xl sm:text-7xl md:text-8xl -mt-1"
+              style={{ letterSpacing: '-0.08em', fontFamily: "'Inter', sans-serif", animationDelay: '0.42s' }}
+            >
+              tales of time
+            </span>
+          </h1>
+        </div>
+
+        {/* Layer 4: Bottom-left paragraph (z-50) */}
+        <div
+          className="hidden sm:block absolute bottom-14 left-10 md:left-14 max-w-[260px] hero-anim hero-fade"
+          style={{ zIndex: 50, animationDelay: '0.7s' }}
+        >
+          <p className="text-sm text-white/80 leading-relaxed">
+            Every layer of sediment records a chapter of our planet, from ancient seabeds
+            to drifting ash, layered across millions of years beneath us.
+          </p>
+        </div>
+
+        {/* Layer 5: Bottom-right CTA block (z-50) */}
+        <div
+          className="absolute bottom-10 sm:bottom-24 left-5 right-5 sm:left-auto sm:right-10 md:right-14 max-w-full sm:max-w-[260px] flex flex-col items-start gap-4 sm:gap-5 hero-anim hero-fade"
+          style={{ zIndex: 50, animationDelay: '0.85s' }}
+        >
+          <p className="text-xs sm:text-sm text-white/80 leading-relaxed">
+            Our interactive maps let you peel back the crust to trace how stones, fossils,
+            and deep time combine to shape the ground beneath your feet.
+          </p>
+          <button
+            className="bg-[#e8702a] hover:bg-[#d2611f] text-white text-sm font-medium px-7 py-3 rounded-full transition-all hover:scale-[1.03] active:scale-95 hover:shadow-lg hover:shadow-[#e8702a]/30"
+          >
+            Start Digging
+          </button>
+        </div>
+      </section>
+    </div>
   )
 }
 
