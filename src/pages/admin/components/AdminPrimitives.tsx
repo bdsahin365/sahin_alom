@@ -766,7 +766,8 @@ export function CommandPaletteModal({
         display: 'flex',
         alignItems: 'flex-start',
         justifyContent: 'center',
-        padding: 'clamp(28px, 9vh, 96px) 16px',
+        padding: 'clamp(12px, 5vh, 96px) clamp(10px, 3vw, 16px)',
+        animation: 'adminFadeInOverlay 0.15s ease-out',
       }}
     >
       <div
@@ -780,7 +781,8 @@ export function CommandPaletteModal({
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          maxHeight: '76vh',
+          maxHeight: '84vh',
+          animation: 'adminModalPop 0.15s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
         <div

@@ -345,16 +345,12 @@ export function getStoredArticles(): Article[] {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed
+      if (Array.isArray(parsed)) return parsed
     }
   } catch (e) {
     console.warn('Error reading local articles storage:', e)
   }
-  // Initialize with seed articles
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_ARTICLES))
-  } catch {}
-  return INITIAL_ARTICLES
+  return []
 }
 
 export function saveStoredArticles(articles: Article[]) {
@@ -365,7 +361,7 @@ export function saveStoredArticles(articles: Article[]) {
   }
 }
 
-const withTimeout = <T>(promise: PromiseLike<T>, ms = 3500): Promise<T> => {
+const withTimeout = <T>(promise: PromiseLike<T>, ms = 5000): Promise<T> => {
   return Promise.race([
     Promise.resolve(promise),
     new Promise<T>((_, reject) => setTimeout(() => reject(new Error('Request timeout')), ms)),
@@ -373,10 +369,9 @@ const withTimeout = <T>(promise: PromiseLike<T>, ms = 3500): Promise<T> => {
 }
 
 /**
- * Fetch all published articles for public view
+ * Fetch all published articles for public view directly from Supabase
  */
 export async function fetchPublishedArticles(): Promise<Article[]> {
-  const local = getStoredArticles().filter(a => a.status === 'published')
   try {
     const res = await withTimeout(
       supabase
@@ -384,50 +379,57 @@ export async function fetchPublishedArticles(): Promise<Article[]> {
         .select('*')
         .eq('status', 'published')
         .order('updated_at', { ascending: false }),
-      3500
+      5000
     ) as any
 
-    if (!res?.error && res?.data && res.data.length > 0) {
-      // Merge supabase articles with local articles
-      const map = new Map<string, Article>()
-      local.forEach(a => map.set(a.id, a))
-      res.data.forEach((a: Article) => map.set(a.id, a))
-      const merged = Array.from(map.values())
-      saveStoredArticles(merged)
-      return merged.filter(a => a.status === 'published')
+    if (!res?.error && res?.data) {
+      saveStoredArticles(res.data)
+      return res.data
     }
   } catch (err) {
     console.warn('Supabase fetch published articles fallback:', err)
   }
-  return local
+  return getStoredArticles().filter(a => a.status === 'published')
 }
 
 /**
- * Fetch all articles (for admin dashboard)
+ * Fetch all articles directly from Supabase (for admin dashboard)
  */
 export async function fetchAllArticles(): Promise<Article[]> {
-  const local = getStoredArticles()
   try {
     const res = await withTimeout(
       supabase
         .from('articles')
         .select('*')
         .order('updated_at', { ascending: false }),
-      3500
+      5000
     ) as any
 
-    if (!res?.error && res?.data && res.data.length > 0) {
-      const map = new Map<string, Article>()
-      local.forEach(a => map.set(a.id, a))
-      res.data.forEach((a: Article) => map.set(a.id, a))
-      const merged = Array.from(map.values())
-      saveStoredArticles(merged)
-      return merged
+    if (!res?.error && res?.data) {
+      saveStoredArticles(res.data)
+      return res.data
     }
   } catch (err) {
     console.warn('Supabase fetch all articles fallback:', err)
   }
-  return local
+  return getStoredArticles()
+}
+
+/**
+ * Fetch exact total count of articles directly from Supabase
+ */
+export async function fetchArticleCount(): Promise<number> {
+  try {
+    const { count, error } = await supabase
+      .from('articles')
+      .select('*', { count: 'exact', head: true })
+    if (!error && typeof count === 'number') {
+      return count
+    }
+  } catch (e) {
+    console.warn('Supabase count articles error:', e)
+  }
+  return getStoredArticles().length
 }
 
 /**

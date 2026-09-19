@@ -10,7 +10,7 @@ import {
 } from '../components/AdminPrimitives'
 
 export default function ExpertiseSection() {
-  const { data: { expertise }, updateExpertise } = useSite()
+  const { data: { expertise }, updateExpertise, deleteItemFromTable } = useSite()
   const [exp, setExp] = useState<number | null>(null)
   const upd = (i: number, p: Partial<ExpertiseItem>) =>
     updateExpertise(expertise.map((e, j) => (j === i ? { ...e, ...p } : e)))
@@ -33,7 +33,11 @@ export default function ExpertiseSection() {
           i={i}
           total={expertise.length}
           onDelete={() => {
+            const item = expertise[i]
             updateExpertise(expertise.filter((_, j) => j !== i))
+            if (item?.id && deleteItemFromTable) {
+              void deleteItemFromTable('expertise', item.id)
+            }
             setExp(null)
           }}
           onMove={d => move(i, d)}

@@ -7,20 +7,72 @@ import {
   CheckCircle2, User, FileCheck, Share2, Compass, BookmarkCheck
 } from 'lucide-react'
 import { useSite } from '../context/SiteContext'
-import { EXPERIENCE } from '../data/engineer'
 import sahinPhoto from '../img/sahin.png'
 
 export default function Biodata() {
   const navigate = useNavigate()
   const onBack = () => navigate('/')
-  const { data: { engineer: E, education, credentials, expertise, projects } } = useSite()
-  const experience = EXPERIENCE
+  const { data: { engineer: E, education, credentials, expertise, projects, experience = [] }, loading } = useSite()
   const [copied, setCopied] = useState<string | null>(null)
 
   useEffect(() => {
-    document.title = `Official Biodata — ${E.name} | Class ABC Licensed Electrical Engineer`
-    return () => { document.title = E.name }
-  }, [E.name])
+    if (!loading) {
+      document.title = `Official Biodata — ${E.name} | Class ABC Licensed Electrical Engineer`
+    }
+    return () => { document.title = E.name || 'Md Sahin Alom' }
+  }, [E.name, loading])
+
+  if (loading) {
+    return (
+      <div className="biodata-root" style={{ minHeight: '100svh', background: '#FAF8F5', color: '#111827', fontFamily: 'Outfit,sans-serif', position: 'relative', overflowX: 'hidden' }}>
+        <header className="no-print" style={{
+          position: 'sticky', top: 0, zIndex: 100,
+          background: 'rgba(250, 248, 245, 0.92)',
+          backdropFilter: 'blur(20px)',
+          borderBottom: '1px solid rgba(215, 207, 192, 0.8)',
+          padding: '0 var(--px)', height: 60,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16
+        }}>
+          <button
+            onClick={onBack}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: '#4B5563', fontFamily: 'Outfit,sans-serif',
+              fontSize: 13, fontWeight: 600, padding: '8px 12px',
+              borderRadius: 6, backgroundColor: 'rgba(0,0,0,0.03)'
+            }}
+          >
+            <ArrowLeft size={16} strokeWidth={2} /> Back to Portfolio
+          </button>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.15em', color: '#9CA3AF' }}>
+            LOADING BIODATA DOSSIER...
+          </div>
+        </header>
+        <div style={{ maxWidth: 960, margin: '40px auto', padding: '0 24px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, padding: 36, display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+              <div className="skeleton-shimmer" style={{ width: 96, height: 96, borderRadius: '50%', flexShrink: 0 }} />
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div className="skeleton-shimmer" style={{ width: '50%', height: 28, borderRadius: 4 }} />
+                <div className="skeleton-shimmer" style={{ width: '60%', height: 16, borderRadius: 4 }} />
+                <div className="skeleton-shimmer" style={{ width: '40%', height: 14, borderRadius: 4 }} />
+              </div>
+            </div>
+            <div style={{ height: 1, background: '#E5E7EB', margin: '8px 0' }} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div className="skeleton-shimmer" style={{ width: '60%', height: 12, borderRadius: 2 }} />
+                  <div className="skeleton-shimmer" style={{ width: '90%', height: 18, borderRadius: 4 }} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   const copyText = (text: string, label: string) => {
     navigator.clipboard.writeText(text)
@@ -310,7 +362,7 @@ export default function Biodata() {
           {/* ── 03. Academic & Educational Qualifications ── */}
           <Section title="03. Educational Background" icon={<GraduationCap size={15} color="#C47D0E" />}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {education.map((e, i) => (
+              {education.filter(e => e.degree?.trim() || e.institution?.trim()).map((e, i) => (
                 <div
                   key={i}
                   style={{

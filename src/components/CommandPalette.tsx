@@ -131,10 +131,11 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
     }
 
     // 5. Portfolio Sections & Key Pages
+    const showServices = data.showServicesSection !== false
     const sections = [
       { name: 'Core Electrical Expertise', href: '#expertise', desc: 'Substation, Switchgear, BNBC Compliance' },
       { name: 'Featured Engineering Projects', href: '#projects', desc: 'Substations, Industrial Plants, Solar PV' },
-      { name: 'Professional Engineering Services', href: '#services', desc: 'Design, Audits, Power Flow Simulation' },
+      ...(showServices ? [{ name: 'Professional Engineering Services', href: '#services', desc: 'Design, Audits, Power Flow Simulation' }] : []),
       { name: 'About Md Sahin Alom', href: '#about', desc: 'Credentials, Experience, ABC License' },
       { name: 'Schedule Engineering Review', to: '/contact', desc: 'Direct technical consultation booking & inquiries' },
       { name: 'Full Engineering CV / Resume', to: '/cv', desc: 'Career history, certifications, education' },

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, Plus, Trash2, Calculator, Sparkles, Check, ChevronRight, BookOpen, Layers, ShieldCheck } from 'lucide-react'
 import type { CalcBlockAttrs, CalcGivenParam, CalcNomenclature, CalcStepItem, CalcEquipmentSpec } from '../extensions/CalcBlock'
 

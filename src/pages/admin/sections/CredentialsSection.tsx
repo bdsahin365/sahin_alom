@@ -9,7 +9,7 @@ import {
 } from '../components/AdminPrimitives'
 
 export default function CredentialsSection() {
-  const { data: { credentials: creds }, updateCredentials } = useSite()
+  const { data: { credentials: creds }, updateCredentials, deleteItemFromTable } = useSite()
   const [exp, setExp] = useState<number | null>(null)
   const upd = (i: number, p: Partial<Credential>) =>
     updateCredentials(creds.map((c, j) => (j === i ? { ...c, ...p } : c)))
@@ -24,7 +24,7 @@ export default function CredentialsSection() {
     <Section title="Credentials & Certifications" description="Shown in the marquee strip, about section, CV, and biodata">
       {creds.map((c, i) => (
         <ItemRow
-          key={i}
+          key={(c as any).id || i}
           label={c.label || <em style={{ color: '#94A3B8' }}>Untitled</em>}
           meta={c.value}
           expanded={exp === i}
@@ -32,7 +32,11 @@ export default function CredentialsSection() {
           i={i}
           total={creds.length}
           onDelete={() => {
+            const item = creds[i]
             updateCredentials(creds.filter((_, j) => j !== i))
+            if ((item as any)?.id && deleteItemFromTable) {
+              void deleteItemFromTable('credentials', (item as any).id)
+            }
             setExp(null)
           }}
           onMove={d => move(i, d)}

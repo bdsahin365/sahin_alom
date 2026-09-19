@@ -123,6 +123,7 @@ export type SiteData = {
   settings: Settings
   shorts: StoryItem[]
   showFloatingShortsBubble?: boolean
+  showServicesSection?: boolean
   wedding: WeddingConfig
 }
 
@@ -143,15 +144,17 @@ type Ctx = {
   updateSettings: (p: Partial<Settings>) => void
   updateShorts: (v: StoryItem[]) => void
   updateFloatingShortsBubble: (v: boolean) => void
+  updateShowServicesSection: (v: boolean) => void
   updateWedding: (p: Partial<WeddingConfig>) => void
   theme: 'light' | 'dark'
   setTheme: (t: 'light' | 'dark') => void
   toggleTheme: () => void
   importSiteData: (imported: Partial<SiteData>) => void
   resetToDefaults: () => Promise<void> | void
+  deleteItemFromTable: (tableName: string, id: string) => Promise<boolean>
 }
 
-const CACHE_KEY = 'msa_site_v13'
+const CACHE_KEY = 'msa_site_v14'
 const DB_ROW_ID = 1
 
 const DEFAULT: SiteData = {
@@ -203,6 +206,7 @@ const DEFAULT: SiteData = {
     },
   ],
   showFloatingShortsBubble: true,
+  showServicesSection: true,
   settings: {
     siteTitle: siteConfig.siteName || 'Md Sahin Alom — Senior Electrical Engineer',
     pageDescription: siteConfig.defaultDescription || 'Power systems engineer specialized in substation design, BNBC 2020, and industrial power distribution.',
@@ -268,7 +272,12 @@ function deepMerge(parsed: Partial<SiteData>): SiteData {
       credentialsTag: parsed.engineer?.credentialsTag || DEFAULT.engineer.credentialsTag,
       whatsapp: parsed.engineer?.whatsapp || DEFAULT.engineer.whatsapp,
     },
-    experience: parsed.experience ?? DEFAULT.experience,
+    credentials: Array.isArray(parsed.credentials) ? parsed.credentials : DEFAULT.credentials,
+    expertise: Array.isArray(parsed.expertise) ? parsed.expertise : DEFAULT.expertise,
+    projects: Array.isArray(parsed.projects) ? parsed.projects : DEFAULT.projects,
+    services: Array.isArray(parsed.services) ? parsed.services : DEFAULT.services,
+    education: Array.isArray(parsed.education) ? parsed.education : DEFAULT.education,
+    experience: Array.isArray(parsed.experience) ? parsed.experience : DEFAULT.experience,
     settings: {
       ...DEFAULT.settings,
       ...(parsed.settings ?? {}),
@@ -278,8 +287,9 @@ function deepMerge(parsed: Partial<SiteData>): SiteData {
       analytics: { ...DEFAULT.settings.analytics, ...(parsed.settings?.analytics ?? {}) },
       verification: { ...DEFAULT.settings.verification, ...(parsed.settings?.verification ?? {}) },
     },
-    shorts: parsed.shorts && parsed.shorts.length > 0 ? parsed.shorts : DEFAULT.shorts,
+    shorts: Array.isArray(parsed.shorts) ? parsed.shorts : DEFAULT.shorts,
     showFloatingShortsBubble: parsed.showFloatingShortsBubble ?? DEFAULT.showFloatingShortsBubble,
+    showServicesSection: parsed.showServicesSection ?? DEFAULT.showServicesSection,
     wedding: {
       ...DEFAULT_WEDDING_CONFIG,
       ...(parsed.wedding ?? {}),
@@ -293,19 +303,25 @@ function readCache(): SiteData | null {
   try {
     const raw = localStorage.getItem(CACHE_KEY)
     if (!raw) return null
-    return deepMerge(JSON.parse(raw))
+    const parsed = JSON.parse(raw)
+    // Only use cached state if it was persisted from real database synchronisation
+    if (!parsed || parsed._persistedFromDb !== true) return null
+    return deepMerge(parsed)
   } catch { return null }
 }
 
 function writeCache(d: SiteData) {
-  try { localStorage.setItem(CACHE_KEY, JSON.stringify(d)) } catch { }
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ ...d, _persistedFromDb: true, _cachedAt: Date.now() }))
+  } catch { }
 }
 
 const SiteCtx = createContext<Ctx | null>(null)
 
 export function SiteProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<SiteData>(() => readCache() ?? DEFAULT)
-  const [loading, setLoading] = useState(true)
+  const initialCache = readCache()
+  const [data, setData] = useState<SiteData>(() => initialCache ?? DEFAULT)
+  const [loading, setLoading] = useState<boolean>(() => !initialCache)
   const [saved, setSaved] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<string>('')
@@ -422,7 +438,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
         const baseData: Partial<SiteData> = configRow?.data ? (configRow.data as Partial<SiteData>) : {}
 
         // 2. Fetch structured tables in parallel to merge any direct edits
-        const [engRes, credRes, expRes, projRes, svcRes, eduRes, exp2Res, setRes, shortsRes] = await Promise.allSettled([
+        const [engRes, credRes, expRes, projRes, svcRes, eduRes, exp2Res, setRes] = await Promise.allSettled([
           supabase.from('engineer_profile').select('*').single(),
           supabase.from('credentials').select('*').order('display_order', { ascending: true }),
           supabase.from('expertise').select('*').order('display_order', { ascending: true }),
@@ -431,7 +447,6 @@ export function SiteProvider({ children }: { children: ReactNode }) {
           supabase.from('education').select('*').order('display_order', { ascending: true }),
           supabase.from('experience').select('*').order('display_order', { ascending: true }),
           supabase.from('site_settings').select('*').single(),
-          supabase.from('shorts').select('*').order('display_order', { ascending: true }),
         ])
 
         if (cancelled) return
@@ -446,7 +461,6 @@ export function SiteProvider({ children }: { children: ReactNode }) {
         const eduData = eduRes.status === 'fulfilled' ? eduRes.value.data : null
         const exp2Data = exp2Res.status === 'fulfilled' ? exp2Res.value.data : null
         const setDataRes = setRes.status === 'fulfilled' ? setRes.value.data : null
-        const shortsData = shortsRes.status === 'fulfilled' ? shortsRes.value.data : null
 
         if (engData) {
           structured.engineer = {
@@ -460,24 +474,23 @@ export function SiteProvider({ children }: { children: ReactNode }) {
             whatsapp: engData.whatsapp ?? baseData.engineer?.whatsapp ?? DEFAULT.engineer.whatsapp,
           }
         }
-        if (credData?.length) structured.credentials = credData
-        if (expData?.length) structured.expertise = expData.map((x: any) => ({ ...x, desc: x.description || x.desc }))
-        if (projData?.length) structured.projects = projData.map((x: any) => ({ ...x, imgColor: x.img_color || x.imgColor }))
-        if (svcData?.length) structured.services = svcData
-        if (eduData?.length) structured.education = eduData
-        if (exp2Data?.length) structured.experience = exp2Data
-
-        if (shortsData?.length) {
-          structured.shorts = shortsData.map((s: any) => ({
-            id: s.id,
-            title: s.title,
-            subtitle: s.subtitle,
-            category: s.category,
-            videoUrl: s.video_url || s.videoUrl,
-            poster: s.poster_url || s.poster,
-            timestamp: s.timestamp_badge || s.timestamp || 'Demo',
-            enabled: s.enabled !== false,
-          }))
+        if (credData !== null && Array.isArray(credData)) {
+          structured.credentials = credData.filter((c: any) => c.label?.trim() || c.value?.trim())
+        }
+        if (expData !== null && Array.isArray(expData)) {
+          structured.expertise = expData.map((x: any) => ({ ...x, desc: x.description || x.desc }))
+        }
+        if (projData !== null && Array.isArray(projData)) {
+          structured.projects = projData.map((x: any) => ({ ...x, imgColor: x.img_color || x.imgColor }))
+        }
+        if (svcData !== null && Array.isArray(svcData)) {
+          structured.services = svcData
+        }
+        if (eduData !== null && Array.isArray(eduData)) {
+          structured.education = eduData.filter((e: any) => e.degree?.trim() || e.institution?.trim())
+        }
+        if (exp2Data !== null && Array.isArray(exp2Data)) {
+          structured.experience = exp2Data
         }
 
         if (setDataRes) {
@@ -486,7 +499,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
             ...(baseData.settings ?? {}),
             siteTitle: setDataRes.site_title || baseData.settings?.siteTitle || DEFAULT.settings.siteTitle,
             pageDescription: setDataRes.page_description || baseData.settings?.pageDescription || DEFAULT.settings.pageDescription,
-            siteUrl: setDataRes.site_url || baseData.settings?.siteUrl || DEFAULT.settings.siteUrl,
+            siteUrl: baseData.settings?.siteUrl || DEFAULT.settings.siteUrl,
             tools: setDataRes.tools || baseData.settings?.tools || DEFAULT.settings.tools,
             branding: {
               ...DEFAULT.settings.branding,
@@ -546,6 +559,27 @@ export function SiteProvider({ children }: { children: ReactNode }) {
     return () => { cancelled = true }
   }, [])
 
+  // ── TABLE SYNC WITH DELETION RECONCILIATION ─────────────────────────────────
+  const syncTableWithCleanup = async (tableName: string, rows: any[], keepIds: string[]) => {
+    try {
+      const { data: existing, error: fetchErr } = await supabase.from(tableName).select('id')
+      if (!fetchErr && existing) {
+        const keepSet = new Set(keepIds)
+        const toDelete = existing.map((r: any) => r.id).filter((id: string) => !keepSet.has(id))
+        if (toDelete.length > 0) {
+          const { error: delErr } = await supabase.from(tableName).delete().in('id', toDelete)
+          if (delErr) console.warn(`Supabase delete error on ${tableName}:`, delErr)
+        }
+      }
+      if (rows.length > 0) {
+        const { error: upsertErr } = await supabase.from(tableName).upsert(rows)
+        if (upsertErr) console.warn(`Supabase upsert error on ${tableName}:`, upsertErr)
+      }
+    } catch (err) {
+      console.warn(`Error syncing table ${tableName}:`, err)
+    }
+  }
+
   // ── MANUAL SAVE / SYNC WITH DATABASE ───────────────────────────────────────
   const saveSiteData = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
     setIsSaving(true)
@@ -578,9 +612,9 @@ export function SiteProvider({ children }: { children: ReactNode }) {
         return { success: false, error: configErr.message || 'Saved to local cache' }
       }
 
-      // 2. Safe background sync to structured tables
+      // 2. Safe background sync to structured tables with deletion cleanup
       try {
-        const promises = []
+        const promises: Promise<any>[] = []
 
         if (current.engineer) {
           promises.push(
@@ -607,123 +641,101 @@ export function SiteProvider({ children }: { children: ReactNode }) {
           )
         }
 
-        if (current.shorts?.length) {
-          promises.push(
-            supabase.from('shorts').upsert(current.shorts.map((s, i) => ({
-              id: s.id,
-              title: s.title,
-              subtitle: s.subtitle,
-              category: s.category,
-              video_url: s.videoUrl,
-              poster_url: s.poster || '',
-              timestamp_badge: s.timestamp,
-              enabled: s.enabled !== false,
-              display_order: i + 1,
-              updated_at: now
-            })))
-          )
-        }
+        // Projects sync & deletion
+        const projRows = (current.projects || []).map((p, i) => ({
+          id: p.id,
+          num: p.num || String(i + 1).padStart(2, '0'),
+          title: p.title,
+          client: p.client,
+          location: p.location,
+          capacity: p.capacity,
+          year: p.year,
+          category: p.category,
+          img: p.img,
+          img_color: p.imgColor,
+          summary: p.summary,
+          scope: p.scope,
+          deliverables: p.deliverables,
+          outcome: p.outcome,
+          tools: p.tools,
+          featured: (p as any).featured ?? true,
+          display_order: i + 1,
+          updated_at: now
+        }))
+        const keepProjIds = projRows.map(p => p.id)
+        promises.push(syncTableWithCleanup('projects', projRows, keepProjIds))
 
-        if (current.projects?.length) {
-          promises.push(
-            supabase.from('projects').upsert(current.projects.map((p, i) => ({
-              id: p.id,
-              num: p.num || String(i + 1).padStart(2, '0'),
-              title: p.title,
-              client: p.client,
-              location: p.location,
-              capacity: p.capacity,
-              year: p.year,
-              category: p.category,
-              img: p.img,
-              img_color: p.imgColor,
-              summary: p.summary,
-              scope: p.scope,
-              deliverables: p.deliverables,
-              outcome: p.outcome,
-              tools: p.tools,
-              featured: (p as any).featured ?? true,
-              display_order: i + 1,
-              updated_at: now
-            })))
-          )
-        }
+        // Services sync & deletion
+        const svcRows = (current.services || []).map((s, i) => ({
+          id: s.id,
+          num: s.num || String(i + 1).padStart(2, '0'),
+          name: s.name,
+          detail: s.detail,
+          display_order: i + 1,
+        }))
+        const keepSvcIds = svcRows.map(s => s.id)
+        promises.push(syncTableWithCleanup('services', svcRows, keepSvcIds))
 
-        if (current.services?.length) {
-          promises.push(
-            supabase.from('services').upsert(current.services.map((s, i) => ({
-              id: s.id,
-              num: s.num || String(i + 1).padStart(2, '0'),
-              name: s.name,
-              detail: s.detail,
-              display_order: i + 1,
-            })))
-          )
-        }
+        // Expertise sync & deletion
+        const expRows = (current.expertise || []).map((e, i) => ({
+          id: e.id,
+          num: e.num || String(i + 1).padStart(2, '0'),
+          title: e.title,
+          tags: e.tags,
+          description: e.desc,
+          display_order: i + 1,
+        }))
+        const keepExpIds = expRows.map(e => e.id)
+        promises.push(syncTableWithCleanup('expertise', expRows, keepExpIds))
 
-        if (current.expertise?.length) {
-          promises.push(
-            supabase.from('expertise').upsert(current.expertise.map((e, i) => ({
-              id: e.id,
-              num: e.num || String(i + 1).padStart(2, '0'),
-              title: e.title,
-              tags: e.tags,
-              description: e.desc,
-              display_order: i + 1,
-            })))
-          )
-        }
+        // Credentials sync & deletion
+        const credRows = (current.credentials || []).map((c, i) => ({
+          id: (c as any).id || `cred-${i + 1}`,
+          label: c.label,
+          value: c.value,
+          detail: c.detail,
+          url: c.url,
+          display_order: i + 1,
+        }))
+        const keepCredIds = credRows.map(c => c.id)
+        promises.push(syncTableWithCleanup('credentials', credRows, keepCredIds))
 
-        if (current.credentials?.length) {
-          promises.push(
-            supabase.from('credentials').upsert(current.credentials.map((c, i) => ({
-              id: `cred-${i + 1}`,
-              label: c.label,
-              value: c.value,
-              detail: c.detail,
-              url: c.url,
-              display_order: i + 1,
-            })))
-          )
-        }
+        // Experience sync & deletion
+        const exp2Rows = (current.experience || []).map((e, i) => ({
+          id: e.id,
+          role: e.role,
+          company: e.company,
+          location: e.location,
+          period: e.period,
+          current: e.current,
+          description: e.description,
+          highlights: e.highlights,
+          display_order: i + 1,
+        }))
+        const keepExp2Ids = exp2Rows.map(e => e.id)
+        promises.push(syncTableWithCleanup('experience', exp2Rows, keepExp2Ids))
 
-        if (current.experience?.length) {
-          promises.push(
-            supabase.from('experience').upsert(current.experience.map((e, i) => ({
-              id: e.id,
-              role: e.role,
-              company: e.company,
-              location: e.location,
-              period: e.period,
-              current: e.current,
-              description: e.description,
-              highlights: e.highlights,
-              display_order: i + 1,
-            })))
-          )
-        }
+        // Education sync & deletion (filter out ghost/empty entries)
+        const validEdu = (current.education || []).filter(e => e.degree?.trim() || e.institution?.trim() || e.period?.trim())
+        const eduRows = validEdu.map((e, i) => ({
+          id: (e as any).id || `edu-${i + 1}`,
+          period: e.period,
+          degree: e.degree,
+          institution: e.institution,
+          note: e.note,
+          display_order: i + 1,
+        }))
+        const keepEduIds = eduRows.map(e => e.id)
+        promises.push(syncTableWithCleanup('education', eduRows, keepEduIds))
 
-        if (current.education?.length) {
-          promises.push(
-            supabase.from('education').upsert(current.education.map((e, i) => ({
-              id: `edu-${i + 1}`,
-              period: e.period,
-              degree: e.degree,
-              institution: e.institution,
-              note: e.note,
-              display_order: i + 1,
-            })))
-          )
-        }
-
+        // Site settings sync (only valid columns on table)
         if (current.settings) {
           promises.push(
             supabase.from('site_settings').upsert({
               id: 'general',
-              site_title: current.settings.siteTitle,
-              page_description: current.settings.pageDescription,
-              site_url: current.settings.siteUrl,
-              tools: current.settings.tools,
+              site_title: current.settings.siteTitle || '',
+              page_description: current.settings.pageDescription || '',
+              tools: current.settings.tools || [],
               social_linkedin: current.settings.social?.linkedin || '',
               social_twitter: current.settings.social?.twitter || '',
               social_github: current.settings.social?.github || '',
@@ -741,7 +753,6 @@ export function SiteProvider({ children }: { children: ReactNode }) {
       setIsSaving(false)
       const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       setLastSaved(timeStr)
-      return { success: true }
     } catch (err: any) {
       console.warn('Network sync interrupted, safely saved to local cache:', err)
       writeCache(current)
@@ -854,6 +865,16 @@ export function SiteProvider({ children }: { children: ReactNode }) {
     setSaved(false)
   }, [])
 
+  const updateShowServicesSection = useCallback((v: boolean) => {
+    setData(prev => {
+      const next = { ...prev, showServicesSection: v }
+      dataRef.current = next
+      writeCache(next)
+      return next
+    })
+    setSaved(false)
+  }, [])
+
   const updateWedding = useCallback((p: Partial<WeddingConfig>) => {
     setData(prev => {
       const next = {
@@ -877,6 +898,20 @@ export function SiteProvider({ children }: { children: ReactNode }) {
     setSaved(false)
   }, [])
 
+  const deleteItemFromTable = useCallback(async (tableName: string, id: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase.from(tableName).delete().eq('id', id)
+      if (error) {
+        console.warn(`Failed to delete ${id} from ${tableName}:`, error)
+        return false
+      }
+      return true
+    } catch (err) {
+      console.warn(`Exception deleting ${id} from ${tableName}:`, err)
+      return false
+    }
+  }, [])
+
   const resetToDefaults = async () => {
     await supabase.from('site_config').delete().eq('id', DB_ROW_ID)
     localStorage.removeItem(CACHE_KEY)
@@ -891,9 +926,11 @@ export function SiteProvider({ children }: { children: ReactNode }) {
       data, loading, saved, isSaving, lastSaved,
       theme, setTheme, toggleTheme,
       saveSiteData,
+      deleteItemFromTable,
       updateEngineer, updateCredentials, updateExpertise,
       updateProjects, updateServices, updateEducation,
       updateExperience, updateSettings, updateShorts, updateFloatingShortsBubble,
+      updateShowServicesSection,
       updateWedding,
       importSiteData,
       resetToDefaults,

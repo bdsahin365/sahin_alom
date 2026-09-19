@@ -42,7 +42,10 @@ export default function EngineerNav({
 }: Props = {}) {
   const navigate  = useNavigate()
   const location  = useLocation()
-  const { data: { engineer: E }, theme, toggleTheme } = useSite()
+  const { data, theme, toggleTheme } = useSite()
+  const E = data.engineer
+  const showServices = data.showServicesSection !== false
+  const primaryLinks = PRIMARY_LINKS.filter(item => item.label !== 'Services' || showServices)
 
   const [scrolled,           setScrolled]           = useState(false)
   const [scrollProgress,     setScrollProgress]     = useState(0)
@@ -175,7 +178,7 @@ export default function EngineerNav({
             className="desktop-only"
             style={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}
           >
-            {PRIMARY_LINKS.map(item => {
+            {primaryLinks.map(item => {
               const active = isActive(item)
               const linkColor = !showSolid
                 ? (active ? '#FFFFFF' : 'rgba(255, 255, 255, 0.82)')
@@ -586,7 +589,7 @@ export default function EngineerNav({
 
           {/* Nav links — Barlow Condensed, 48px min tap target, staggered entrance */}
           <nav aria-label="Mobile navigation">
-            {[...PRIMARY_LINKS, { label: 'Tools', to: '/tools' }].map((item, i) => {
+            {[...primaryLinks, { label: 'Tools', to: '/tools' }].map((item, i) => {
               const active = isActive(item)
               return (
                 <a

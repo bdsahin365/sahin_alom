@@ -242,7 +242,17 @@ a { color: inherit; text-decoration: none; }
 }
 .project-card:hover .project-img {
   transform: scale(1.05);
-  filter: brightness(0.95) saturate(0.9);
+  filter: brightness(0.96) saturate(0.95);
+}
+.project-card:hover .project-arrow-pill {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: #FFFFFF !important;
+  transform: translate(2px, -2px) scale(1.06);
+  box-shadow: 0 4px 14px var(--accent-dim);
+}
+.project-card:hover h3 {
+  color: var(--accent) !important;
 }
 
 /* ══ Link underline ═══════════════════════════════════════════════════════════ */
@@ -392,15 +402,56 @@ a { color: inherit; text-decoration: none; }
   gap: 16px;
 }
 
+/* Momentum scrollable tab strips with hidden scrollbars */
+.admin-scrollable-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  white-space: nowrap;
+  padding-bottom: 2px;
+}
+.admin-scrollable-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes adminSlideUpDrawer {
+  from {
+    transform: translateY(100%);
+    opacity: 0.8;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes adminSlideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes adminFadeInOverlay {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @media (max-width: 768px) {
-  .admin-desktop-sidebar {
-    width: 58px !important;
-  }
   .admin-search-trigger {
-    max-width: 140px !important;
-  }
-  .admin-search-trigger kbd {
     display: none !important;
+  }
+  .admin-mobile-search-btn {
+    display: flex !important;
   }
   .btn-save-text,
   .btn-preview-text,
@@ -409,12 +460,99 @@ a { color: inherit; text-decoration: none; }
   .admin-breadcrumb-sep {
     display: none !important;
   }
+  .admin-content-main {
+    padding: 14px 14px 88px !important;
+  }
 }
 
-@media (max-width: 480px) {
-  .admin-search-trigger {
-    display: none !important;
+@media (max-width: 640px) {
+  .admin-bottom-sheet-drawer {
+    align-self: flex-end !important;
+    max-height: 92vh !important;
+    max-height: 92dvh !important;
+    border-radius: 20px 20px 0 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    animation: adminSlideUpDrawer 0.26s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
+  .admin-kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .admin-kpi-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
+/* ══ Editorial Portfolio Skeleton Loader ═════════════════════════════════════ */
+@keyframes skeletonWave {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--bg-2) 0%,
+    var(--bg-3) 30%,
+    var(--border) 50%,
+    var(--bg-3) 70%,
+    var(--bg-2) 100%
+  );
+  background-size: 250% 100%;
+  animation: skeletonWave 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  border-radius: 4px;
+}
+
+[data-theme="dark"] .skeleton-shimmer,
+.dark .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.06) 30%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0.06) 70%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  background-size: 250% 100%;
+  animation: skeletonWave 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.skeleton-cad-card {
+  position: relative;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+}
+
+.skeleton-cad-card::before,
+.skeleton-cad-card::after {
+  content: '+';
+  position: absolute;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  line-height: 1;
+  color: var(--accent);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.skeleton-cad-card::before {
+  top: 4px;
+  left: 6px;
+}
+
+.skeleton-cad-card::after {
+  bottom: 4px;
+  right: 6px;
 }
 
 

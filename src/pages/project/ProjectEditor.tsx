@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type ChangeEvent } from 'react'
+import { useState, useEffect, useRef, useMemo, type ChangeEvent } from 'react'
 import { useNavigate, useParams, Link } from 'react-router'
 import {
   ArrowLeft, Save, Eye, ExternalLink, Trash2, Plus, X, Upload,
@@ -150,10 +150,11 @@ export default function ProjectEditor() {
         maxWidth: 1600,
         maxHeight: 1200,
         quality: 0.82,
-        format: 'webp',
+        mimeType: 'image/webp',
       })
       setImg(result.base64)
-      setUploadStatus(`Optimized to ${formatBytes(result.size)} (${result.savings}% saved)`)
+      const savings = Math.max(0, Math.round((1 - result.compressedSize / result.originalSize) * 100))
+      setUploadStatus(`Optimized to ${formatBytes(result.compressedSize)} (${savings}% saved)`)
     } catch (err: any) {
       alert(err.message || 'Image compression failed')
     } finally {
@@ -175,7 +176,7 @@ export default function ProjectEditor() {
           maxWidth: 1400,
           maxHeight: 1000,
           quality: 0.8,
-          format: 'webp',
+          mimeType: 'image/webp',
         })
         newImages.push(res.base64)
       }

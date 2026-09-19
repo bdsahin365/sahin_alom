@@ -47,9 +47,19 @@ export default function AdminHeader({
 }: AdminHeaderProps) {
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') return window.innerWidth < 768
+    return false
+  })
 
   const notifRef = useRef<HTMLDivElement>(null)
   const profileRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -88,18 +98,21 @@ export default function AdminHeader({
           type="button"
           onClick={onToggleSidebar}
           className="admin-collapse-toggle"
-          title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={isMobile ? 'Open Navigation Menu' : sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           style={{
-            background: '#F8FAFC',
-            border: '1px solid #E2E8F0',
+            background: isMobile ? '#FEF3C7' : '#F8FAFC',
+            border: isMobile ? '1px solid #FDE68A' : '1px solid #E2E8F0',
             cursor: 'pointer',
-            padding: 7,
-            borderRadius: 6,
-            color: '#64748B',
+            padding: isMobile ? 8 : 7,
+            borderRadius: 8,
+            color: isMobile ? '#92400E' : '#64748B',
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'center',
             transition: 'all 0.15s',
             flexShrink: 0,
+            width: isMobile ? 36 : undefined,
+            height: isMobile ? 36 : undefined,
           }}
           onMouseEnter={e => {
             const el = e.currentTarget as HTMLElement
@@ -108,11 +121,11 @@ export default function AdminHeader({
           }}
           onMouseLeave={e => {
             const el = e.currentTarget as HTMLElement
-            el.style.color = '#64748B'
-            el.style.background = '#F8FAFC'
+            el.style.color = isMobile ? '#92400E' : '#64748B'
+            el.style.background = isMobile ? '#FEF3C7' : '#F8FAFC'
           }}
         >
-          {sidebarCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+          {isMobile ? <Menu size={18} /> : sidebarCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
         </button>
 
         {/* Breadcrumb path */}
@@ -132,7 +145,7 @@ export default function AdminHeader({
           <span
             style={{
               fontFamily: 'Outfit,sans-serif',
-              fontSize: 13,
+              fontSize: 13.5,
               color: '#0F172A',
               fontWeight: 600,
               whiteSpace: 'nowrap',
@@ -145,8 +158,31 @@ export default function AdminHeader({
         </div>
       </div>
 
-      {/* Center / Global Search Bar */}
-      <div style={{ flex: 1, display: 'flex', justifyContent: 'center', maxWidth: 440 }}>
+      {/* Center / Global Search Bar (Desktop + Mobile Trigger) */}
+      <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', maxWidth: 440 }}>
+        {/* Mobile Quick Search Button */}
+        <button
+          type="button"
+          onClick={onOpenCommandPalette}
+          className="admin-mobile-search-btn"
+          title="Search / Command Palette"
+          style={{
+            display: 'none',
+            width: 34,
+            height: 34,
+            borderRadius: 8,
+            border: '1px solid #E2E8F0',
+            background: '#FFFFFF',
+            color: '#475569',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            flexShrink: 0,
+          }}
+        >
+          <Search size={15} />
+        </button>
+
         <button
           type="button"
           onClick={onOpenCommandPalette}
@@ -301,7 +337,7 @@ export default function AdminHeader({
                 position: 'absolute',
                 top: 42,
                 right: 0,
-                width: 320,
+                width: 'min(320px, calc(100vw - 24px))',
                 background: '#FFFFFF',
                 borderRadius: 12,
                 border: '1px solid #E2E8F0',

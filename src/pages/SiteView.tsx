@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import EngineerNav from '../components/EngineerNav'
 import EngineerPortfolio from './EngineerPortfolio'
+import PortfolioSkeleton from '../components/PortfolioSkeleton'
 import StoryModal, { STORIES } from '../components/StoryModal'
 import { useSite } from '../context/SiteContext'
 import sahinAvatar from '../img/sahin.png'
 
 export default function SiteView() {
-  const { data } = useSite()
+  const { data, loading } = useSite()
   const [menuOpen, setMenuOpen] = useState(false)
   const [storyOpen, setStoryOpen] = useState(false)
   const [storyIndex, setStoryIndex] = useState(0)
@@ -61,7 +62,28 @@ export default function SiteView() {
         onOpenStory={handleOpenStory}
       />
       <div style={{ paddingTop: 'var(--nav-h)' }}>
-        <EngineerPortfolio />
+        <AnimatePresence mode="wait">
+          {loading ? (
+            <motion.div
+              key="portfolio-skeleton"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <PortfolioSkeleton />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="portfolio-content"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <EngineerPortfolio />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* ── Facebook / Instagram Stories Full-Screen Video Modal ── */}
@@ -73,7 +95,7 @@ export default function SiteView() {
       />
 
       {/* ── Floating Story Bubble (Bottom Left) ── */}
-      {data.showFloatingShortsBubble !== false && (data.shorts || []).filter(s => s.enabled !== false).length > 0 && (
+      {!loading && data.showFloatingShortsBubble !== false && (data.shorts || []).filter(s => s.enabled !== false).length > 0 && (
         <motion.button
           onClick={() => handleOpenStory(0)}
           title={`Watch Engineering Video Shorts (${(data.shorts || []).filter(s => s.enabled !== false).length})`}

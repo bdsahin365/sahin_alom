@@ -53,11 +53,12 @@ export default function ConfirmationModal({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 16,
-        animation: 'adminFadeIn 0.15s ease-out',
+        padding: 'clamp(0px, 2vw, 16px)',
+        animation: 'adminFadeInOverlay 0.15s ease-out',
       }}
     >
       <div
+        className="admin-bottom-sheet-drawer"
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%',
@@ -70,7 +71,11 @@ export default function ConfirmationModal({
           animation: 'adminModalPop 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
-        <div style={{ padding: '24px 24px 20px' }}>
+        {/* Mobile Drag Indicator */}
+        <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 8, paddingBottom: 2 }}>
+          <div style={{ width: 36, height: 4, borderRadius: 99, background: '#E2E8F0' }} />
+        </div>
+        <div style={{ padding: '18px 24px 20px' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
             <div
               style={{

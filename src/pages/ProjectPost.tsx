@@ -15,13 +15,14 @@ import sahinPhoto from '../img/sahin.png'
 export default function ProjectPost() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
-  const { data: { projects, engineer: E } } = useSite()
+  const { data: { projects, engineer: E }, loading } = useSite()
   const [copied, setCopied] = useState(false)
   const [selectedGalleryImg, setSelectedGalleryImg] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
 
   // Find project by slug or ID
   const project = useMemo(() => {
+    if (loading) return null
     if (!slug) return projects[0] || null
     return (
       projects.find(p => p.slug === slug) ||
@@ -29,7 +30,7 @@ export default function ProjectPost() {
       projects.find(p => p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') === slug) ||
       projects[0] || null
     )
-  }, [slug, projects])
+  }, [slug, projects, loading])
 
   // Previous & Next navigation
   const { prevProject, nextProject } = useMemo(() => {
@@ -44,6 +45,33 @@ export default function ProjectPost() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [slug])
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--fg)', overflowX: 'hidden' }}>
+        <EngineerNav menuOpen={menuOpen} setMenuOpen={setMenuOpen} onBiodata={() => navigate('/biodata')} onCV={() => navigate('/cv')} />
+        <div style={{ paddingTop: 'var(--nav-h)' }}>
+          <div style={{ maxWidth: 'var(--max-w)', margin: '0 auto', padding: 'clamp(32px, 5vh, 56px) var(--px)', display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div className="skeleton-shimmer" style={{ width: 120, height: 24, borderRadius: 4 }} />
+              <div className="skeleton-shimmer" style={{ width: 80, height: 24, borderRadius: 4 }} />
+            </div>
+            <div className="skeleton-shimmer" style={{ width: '70%', height: 'clamp(36px, 5vw, 56px)', borderRadius: 6 }} />
+            <div className="skeleton-shimmer" style={{ width: '50%', height: 20, borderRadius: 4 }} />
+            <div className="skeleton-shimmer" style={{ width: '100%', height: 'clamp(280px, 45vh, 480px)', borderRadius: 12, marginTop: 8 }} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginTop: 16 }}>
+              {[1, 2, 3, 4].map(k => (
+                <div key={k} className="skeleton-cad-card" style={{ padding: 20, borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div className="skeleton-shimmer" style={{ width: 60, height: 12, borderRadius: 2 }} />
+                  <div className="skeleton-shimmer" style={{ width: 120, height: 20, borderRadius: 4 }} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (!project) {
     return (

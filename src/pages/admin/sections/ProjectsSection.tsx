@@ -171,15 +171,18 @@ export function ProjectModal({
         inset: 0,
         background: 'rgba(15, 23, 42, 0.65)',
         backdropFilter: 'blur(6px)',
-        zIndex: 1050,
+        WebkitBackdropFilter: 'blur(6px)',
+        zIndex: 1300,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 16,
+        padding: 'clamp(0px, 2vw, 16px)',
+        animation: 'adminFadeInOverlay 0.15s ease-out',
       }}
       onClick={onClose}
     >
       <div
+        className="admin-bottom-sheet-drawer"
         style={{
           width: '100%',
           maxWidth: 780,
@@ -193,10 +196,15 @@ export function ProjectModal({
         }}
         onClick={e => e.stopPropagation()}
       >
+        {/* Mobile Drag Indicator */}
+        <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 8, paddingBottom: 2, background: '#FAFAFA' }}>
+          <div style={{ width: 36, height: 4, borderRadius: 99, background: '#CBD5E1' }} />
+        </div>
+
         {/* Modal Header */}
         <div
           style={{
-            padding: '18px 24px',
+            padding: '14px 20px',
             borderBottom: '1px solid #E2E8F0',
             display: 'flex',
             alignItems: 'center',
@@ -205,10 +213,10 @@ export function ProjectModal({
           }}
         >
           <div>
-            <h3 style={{ margin: 0, fontFamily: 'Outfit,sans-serif', fontSize: 18, fontWeight: 600, color: '#0F172A' }}>
+            <h3 style={{ margin: 0, fontFamily: 'Outfit,sans-serif', fontSize: 17, fontWeight: 600, color: '#0F172A' }}>
               {isEditing ? 'Edit Engineering Project' : 'Create New Project'}
             </h3>
-            <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748B' }}>
+            <p style={{ margin: '2px 0 0', fontSize: 11.5, color: '#64748B' }}>
               Document substation, renewable solar, or industrial electrical installations
             </p>
           </div>
@@ -841,24 +849,26 @@ export function ProProjectsTable({
           </div>
         </div>
 
-        {/* Categories Tab Pills */}
-        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
+        {/* Categories Tab Pills - Smooth Horizontal Scroll */}
+        <div className="admin-scrollable-tabs" style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
           {categories.map(cat => (
             <button
               key={cat}
               type="button"
               onClick={() => { setCategoryFilter(cat); setPage(1); }}
               style={{
-                padding: '5px 12px',
+                padding: '6px 14px',
                 borderRadius: 6,
                 border: '1px solid',
                 borderColor: categoryFilter === cat ? '#C47D0E' : '#E2E8F0',
                 background: categoryFilter === cat ? '#FEF3C7' : '#FFFFFF',
                 color: categoryFilter === cat ? '#92400E' : '#64748B',
-                fontSize: 11.5,
+                fontSize: 12,
                 fontWeight: categoryFilter === cat ? 600 : 500,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
+                flexShrink: 0,
+                transition: 'all 0.12s ease',
               }}
             >
               {cat}
@@ -868,7 +878,7 @@ export function ProProjectsTable({
       </div>
 
       {/* Table List */}
-      <div style={{ overflowX: 'auto' }}>
+      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
           <thead>
             <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#475569', fontSize: 11.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -1143,7 +1153,7 @@ export function ProProjectsTable({
 // ─── MASTER PROJECTS SECTION ──────────────────────────────────────────────────
 
 export default function ProjectsSection() {
-  const { data: { projects }, updateProjects } = useSite()
+  const { data: { projects }, updateProjects, deleteItemFromTable } = useSite()
   const [modalOpen, setModalOpen] = useState(false)
   const [editingProject, setEditingProject] = useState<Project | null>(null)
 
@@ -1158,6 +1168,9 @@ export default function ProjectsSection() {
 
   const handleDeleteProject = (id: string) => {
     updateProjects(projects.filter(p => p.id !== id))
+    if (deleteItemFromTable) {
+      void deleteItemFromTable('projects', id)
+    }
   }
 
   return (

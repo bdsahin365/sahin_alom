@@ -1,9 +1,10 @@
-import { useState, ReactNode } from 'react'
+import { useState, useEffect, ReactNode } from 'react'
 import {
   ChevronRight, TrendingUp, ArrowUpRight, MessageSquare, Zap, FolderCheck, BookOpen,
   BarChart3, Calendar, Layers, ShieldCheck, Sparkles
 } from 'lucide-react'
 import { useSite, type Project } from '../../../context/SiteContext'
+import { supabase } from '../../../lib/supabase'
 import sahinPhoto from '../../../img/sahin.png'
 import { ProProjectsTable, ProjectModal } from './ProjectsSection'
 import {
@@ -504,6 +505,25 @@ export default function OverviewSection({ onNavigate }: { onNavigate: (s: Sectio
     updateProjects(projects.filter(p => p.id !== id))
   }
 
+  const [articlesCount, setArticlesCount] = useState(0)
+  const [messagesCount, setMessagesCount] = useState(0)
+  const [unreadMessages, setUnreadMessages] = useState(0)
+
+  useEffect(() => {
+    supabase.from('articles').select('*', { count: 'exact', head: true })
+      .then((res: any) => { if (typeof res?.count === 'number') setArticlesCount(res.count) })
+      .catch(() => {})
+
+    supabase.from('contact_messages').select('id, read')
+      .then((res: any) => {
+        if (res?.data) {
+          setMessagesCount(res.data.length)
+          setUnreadMessages(res.data.filter((m: any) => !m.read).length)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
   const sections = [
     { id: 'branding' as SectionId,    label: 'Logo & Visual Identity', ok: true },
     { id: 'shorts' as SectionId,      label: 'Video Shorts & Stories', ok: (data.shorts || []).length > 0 },
@@ -524,13 +544,13 @@ export default function OverviewSection({ onNavigate }: { onNavigate: (s: Sectio
         style={{
           background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
           borderRadius: 14,
-          padding: '22px 24px',
+          padding: 'clamp(14px, 3vw, 22px) clamp(14px, 3.5vw, 24px)',
           color: '#FFFFFF',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: 16,
+          gap: 14,
           boxShadow: '0 8px 24px -4px rgba(15, 23, 42, 0.15)',
         }}
       >
@@ -599,11 +619,11 @@ export default function OverviewSection({ onNavigate }: { onNavigate: (s: Sectio
 
       {/* 1. KPI Summary Cards */}
       <ProKPICards
-        inquiriesCount={48}
-        unreadInquiriesCount={3}
+        inquiriesCount={messagesCount}
+        unreadInquiriesCount={unreadMessages}
         capacityDelivered={E.projectsMW || '15+ MVA'}
-        projectsCount={projects.length || 42}
-        articlesCount={24}
+        projectsCount={projects.length}
+        articlesCount={articlesCount}
         onNavigate={tab => onNavigate(tab as SectionId)}
       />
 

@@ -1,8 +1,8 @@
-import { ReactNode } from 'react'
+import { ReactNode, useState, useEffect } from 'react'
 import {
   LayoutDashboard, FolderOpen, BookOpen, Inbox,
   Sparkles, User, Award, Zap, Briefcase, GraduationCap,
-  Play, Globe, Heart, Download, Upload, LogOut, ChevronRight,
+  Play, Globe, Heart, Download, Upload, LogOut, ChevronRight, X
 } from 'lucide-react'
 import HeaderLogo from '../../components/HeaderLogo'
 import sahinPhoto from '../../img/sahin.png'
@@ -50,6 +50,8 @@ interface AdminSidebarProps {
     education?: number
     shorts?: number
   }
+  mobileOpen?: boolean
+  onCloseMobile?: () => void
   onExportBackup?: () => void
   onImportBackup?: () => void
   onLogout?: () => void
@@ -60,9 +62,40 @@ export default function AdminSidebar({
   onSelectSection,
   collapsed,
   itemCounts,
+  mobileOpen = false,
+  onCloseMobile,
   onExportBackup,
   onLogout,
 }: AdminSidebarProps) {
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') return window.innerWidth < 768
+    return false
+  })
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768
+      setIsMobile(mobile)
+      if (!mobile && onCloseMobile) {
+        onCloseMobile()
+      }
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [onCloseMobile])
+
+  // Handle escape key to close mobile drawer
+  useEffect(() => {
+    if (!isMobile || !mobileOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && onCloseMobile) {
+        onCloseMobile()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isMobile, mobileOpen, onCloseMobile])
+
   const groups: SidebarGroup[] = [
     {
       category: 'Core Operations',
@@ -94,6 +127,247 @@ export default function AdminSidebar({
       ],
     },
   ]
+
+  if (isMobile) {
+    if (!mobileOpen) return null
+
+    return (
+      <>
+        {/* Dark Frosted Backdrop Overlay */}
+        <div
+          onClick={onCloseMobile}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1200,
+            background: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            animation: 'adminFadeInOverlay 0.2s ease-out',
+          }}
+        />
+
+        {/* Off-Canvas Slide Drawer */}
+        <aside
+          className="admin-mobile-drawer"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            bottom: 0,
+            width: 'min(310px, 86vw)',
+            height: '100dvh',
+            background: '#FFFFFF',
+            zIndex: 1210,
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '0 25px 60px -15px rgba(0,0,0,0.35)',
+            animation: 'adminSlideInLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Mobile Drawer Header */}
+          <div
+            style={{
+              height: 60,
+              padding: '0 16px',
+              borderBottom: '1px solid #E2E8F0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexShrink: 0,
+              background: '#FAFAFA',
+            }}
+          >
+            <HeaderLogo compact={true} showSubtitle={false} />
+            <button
+              type="button"
+              onClick={onCloseMobile}
+              aria-label="Close navigation"
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 8,
+                border: '1px solid #E2E8F0',
+                background: '#FFFFFF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#64748B',
+                cursor: 'pointer',
+              }}
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          {/* Navigation Streams */}
+          <div
+            style={{
+              flex: 1,
+              overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
+              padding: '16px 12px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 18,
+            }}
+          >
+            {groups.map((grp, gIdx) => (
+              <div key={grp.category || gIdx}>
+                <div
+                  style={{
+                    fontFamily: 'JetBrains Mono,monospace',
+                    fontSize: 10,
+                    fontWeight: 600,
+                    color: '#94A3B8',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    padding: '4px 10px 6px',
+                  }}
+                >
+                  {grp.category}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  {grp.items.map(item => {
+                    const isActive = currentSection === item.id
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          onSelectSection(item.id)
+                          onCloseMobile?.()
+                        }}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12,
+                          padding: '10px 14px',
+                          borderRadius: 8,
+                          border: 'none',
+                          background: isActive ? '#FEF3C7' : 'transparent',
+                          color: isActive ? '#92400E' : '#334155',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          fontFamily: 'Outfit,sans-serif',
+                          fontSize: 13.5,
+                          fontWeight: isActive ? 600 : 500,
+                          minHeight: 44,
+                          transition: 'all 0.12s ease',
+                        }}
+                      >
+                        <span style={{ color: isActive ? '#C47D0E' : '#64748B', display: 'flex', flexShrink: 0 }}>
+                          {item.icon}
+                        </span>
+                        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {item.label}
+                        </span>
+                        {Boolean(item.badge) && (
+                          <span
+                            style={{
+                              fontFamily: 'JetBrains Mono,monospace',
+                              fontSize: 10.5,
+                              fontWeight: 600,
+                              padding: '2px 7px',
+                              borderRadius: 99,
+                              background: isActive ? '#FDE68A' : '#F1F5F9',
+                              color: isActive ? '#78350F' : '#64748B',
+                            }}
+                          >
+                            {item.badge}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Mobile Drawer Footer with user and actions */}
+          <div
+            style={{
+              borderTop: '1px solid #E2E8F0',
+              padding: '14px 16px',
+              background: '#FAFAFA',
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 10,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                <img
+                  src={sahinPhoto}
+                  alt="Md. Sahin Alom"
+                  style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', border: '1.5px solid #CBD5E1' }}
+                />
+                <span style={{ position: 'absolute', bottom: 0, right: 0, width: 8, height: 8, borderRadius: '50%', background: '#16A34A', border: '1.5px solid #FFFFFF' }} />
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12.5, fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  Md. Sahin Alom
+                </div>
+                <div style={{ fontFamily: 'Outfit,sans-serif', fontSize: 11, color: '#16A34A', fontWeight: 500 }}>
+                  Operations Lead
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              {onExportBackup && (
+                <button
+                  type="button"
+                  onClick={onExportBackup}
+                  title="Download JSON Backup"
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 6,
+                    border: '1px solid #E2E8F0',
+                    background: '#FFFFFF',
+                    color: '#64748B',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Download size={14} />
+                </button>
+              )}
+              {onLogout && (
+                <button
+                  type="button"
+                  onClick={onLogout}
+                  title="Sign Out"
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 6,
+                    border: '1px solid #FCA5A5',
+                    background: '#FEF2F2',
+                    color: '#DC2626',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <LogOut size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+        </aside>
+      </>
+    )
+  }
 
   return (
     <aside
