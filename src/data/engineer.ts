@@ -24,12 +24,6 @@ export const ENGINEER = {
 
 export const CREDENTIALS = [
   {
-    label: 'ABC License',
-    value: 'Electrical Licensing Board',
-    detail: 'Electricity Licensing Board (ELB), Bangladesh · Category A, B & C',
-    url: '',
-  },
-  {
     label: 'Prompt Engineering',
     value: 'Generative AI & Prompting',
     detail: 'LinkedIn Learning · Issued Jan 2025',
