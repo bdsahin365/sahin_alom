@@ -1555,9 +1555,6 @@ export default function CV() {
             font-size: 10pt !important;
             color: #000000 !important;
           }
-          .cv-credentials-grid {
-            display: block !important;
-          }
           .cv-edu-row {
             display: block !important;
           }
@@ -1574,6 +1571,10 @@ export default function CV() {
           }
           section {
             page-break-inside: auto;
+          }
+          /* Final guard: ensure all no-print elements are truly hidden regardless of other rules */
+          .no-print, .cv-credentials-grid.no-print, .cv-bullet-dot.no-print {
+            display: none !important;
           }
           @page {
             margin: 12mm 14mm;
