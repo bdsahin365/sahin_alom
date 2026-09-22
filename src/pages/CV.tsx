@@ -1035,7 +1035,7 @@ export default function CV() {
           {/* ════ SECTION 7: OFFICIAL DECLARATION & FORMAL ATTESTATION (Dynamic from DB) ════ */}
           {E.declaration && (
             <footer className="cv-declaration-footer" style={{
-              marginTop: 30,
+              marginTop: 56,
               paddingTop: 20,
               borderTop: '1.5px solid #0F172A',
             }}>
@@ -1079,12 +1079,12 @@ export default function CV() {
                   alignItems: 'flex-end',
                   textAlign: 'right',
                 }}>
-                  {/* Authentic Signature Hairline */}
-                  <div className="cv-signature-line" style={{
+                  {/* Signature space — room to sign above the line */}
+                  <div className="cv-signature-space" style={{
                     width: 160,
-                    height: '1.5px',
-                    background: '#0F172A',
-                    marginBottom: 8,
+                    height: 52,
+                    borderBottom: '1.5px solid #0F172A',
+                    marginBottom: 6,
                   }} />
 
                   {/* Dynamic Name from DB */}
