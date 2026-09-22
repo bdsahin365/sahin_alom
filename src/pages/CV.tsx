@@ -703,8 +703,7 @@ export default function CV() {
                                 boxShadow: j === 0 ? '0 0 6px rgba(196,125,14,0.5)' : 'none',
                               }}
                             />
-                            {/* Print standard marker */}
-                            <span className="print-only" style={{ display: 'none', marginRight: 4 }}>•</span>
+                            {/* No extra bullet span needed – print CSS uses list-style: disc on the ul */}
                             <span style={{ flex: 1 }}>{h}</span>
                           </li>
                         ))}
@@ -1492,6 +1491,8 @@ export default function CV() {
         /* High-Precision ATS Print Styles */
         @media print {
           .no-print { display: none !important; }
+          /* Explicitly hide the golden bullet dots – some PDF engines ignore class-level display:none */
+          .cv-bullet-dot { display: none !important; width: 0 !important; height: 0 !important; }
           .print-only { display: block !important; }
           html, body, .cv-root {
             background: #FFFFFF !important;
@@ -1522,6 +1523,15 @@ export default function CV() {
             padding-left: 0 !important;
             margin-left: 0 !important;
           }
+          .cv-job-header {
+            display: block !important;
+          }
+          .cv-job-period {
+            display: block !important;
+            text-align: left !important;
+            font-size: 10pt !important;
+            margin-top: 1pt !important;
+          }
           a {
             text-decoration: none !important;
             color: inherit !important;
@@ -1534,10 +1544,27 @@ export default function CV() {
             list-style: disc !important;
             padding-left: 14pt !important;
             margin-top: 4pt !important;
+            gap: 0 !important;
           }
+          /* Switch flex row → standard list-item for proper disc bullet rendering */
           .cv-highlight-item {
             display: list-item !important;
+            align-items: unset !important;
+            gap: 0 !important;
             margin-bottom: 2pt !important;
+            font-size: 10pt !important;
+            color: #000000 !important;
+          }
+          .cv-credentials-grid {
+            display: block !important;
+          }
+          .cv-edu-row {
+            display: block !important;
+          }
+          .cv-edu-period {
+            text-align: left !important;
+            font-size: 10pt !important;
+            margin-top: 1pt !important;
           }
           .cv-reference-card {
             border: none !important;
