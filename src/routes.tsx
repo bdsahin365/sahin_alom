@@ -17,9 +17,26 @@ import ContactPage from './pages/ContactPage'
 import NotFound from './pages/NotFound'
 // Wedding — fully isolated; registered outside Root to prevent global style/cursor bleed
 import WeddingPage from './wedding/WeddingPage'
+// Dedicated Story Page — isolated outside Root (no nav, cursor, or site analytics)
+import OurStory from './pages/OurStory'
 
 export const router = createBrowserRouter(
   [
+    // ── Dedicated page for Sadiya — standalone, no Root wrapper ──────────────
+    // Pure private page: no portfolio navbar, footer, custom cursor, or trackers
+    {
+      path: '/sadiya',
+      Component: OurStory,
+    },
+    {
+      path: '/our-story',
+      Component: OurStory,
+    },
+    {
+      path: '/story',
+      Component: OurStory,
+    },
+
     // ── Wedding invitation — standalone, no Root wrapper ─────────────────────
     // This ensures the global Cursor, SiteProvider, and AnalyticsTracker
     // do NOT mount when visiting /wedding.
